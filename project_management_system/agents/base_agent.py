@@ -1,21 +1,21 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
-from autogen_agentchat.agents import ConversableAgent
+from autogen_agentchat.agents import BaseChatAgent
 from autogen_agentchat.base import Response
 from autogen_agentchat.messages import BaseMessage, TextMessage
-from autogen_core.base import CancellationToken
+from autogen_core import CancellationToken
 import httpx
 import json
 import asyncio
 import os
 from datetime import datetime
 
-from ..models.data_models import AgentRole
-from ..knowledge.knowledge_base import KnowledgeBase
-from ..storage.document_store import DocumentStore
+from models.data_models import AgentRole
+from knowledge.knowledge_base import KnowledgeBase
+from storage.document_store import DocumentStore
 
 
-class BaseProjectAgent(ConversableAgent, ABC):
+class BaseProjectAgent(BaseChatAgent, ABC):
     """Classe base per tutti gli agenti del sistema"""
     
     def __init__(
@@ -39,6 +39,15 @@ class BaseProjectAgent(ConversableAgent, ABC):
         
         if not self.deepseek_api_key:
             raise ValueError("DeepSeek API key is required. Set DEEPSEEK_API_KEY environment variable or pass it as parameter.")
+
+    @property
+    def produced_message_types(self) -> List[type]:
+        """The types of messages that the agent produces."""
+        return [TextMessage]
+
+    async def on_reset(self, cancellation_token: CancellationToken) -> None:
+        """Resets the agent to its initialization state."""
+        self.conversation_history = []
         
     async def on_messages(self, messages: List[BaseMessage], cancellation_token: CancellationToken) -> Response:
         """Gestisce messaggi ricevuti - implementazione base"""

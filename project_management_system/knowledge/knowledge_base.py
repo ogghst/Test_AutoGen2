@@ -516,4 +516,348 @@ class KnowledgeBase:
                         if isinstance(value, list):
                             for related_id in value:
                                 if isinstance(related_id, str):
-                                    if related_id not in self._relationship_cach
+                                    if related_id not in self._relationship_cache:
+                                        self._relationship_cache[related_id] = []
+                                    self._relationship_cache[related_id].append({
+                                        "source": entity_id,
+                                        "relation": key,
+                                        "target": related_id
+                                    })
+                        elif isinstance(value, str):
+                            if value not in self._relationship_cache:
+                                self._relationship_cache[value] = []
+                            self._relationship_cache[value].append({
+                                "source": entity_id,
+                                "relation": key,
+                                "target": value
+                            })
+        
+        logger.debug("Cache ricostruita")
+
+    def save(self):
+        """Salva la KB su file JSON-LD"""
+        try:
+            self.context["metadata"]["last_updated"] = serialize_datetime(datetime.now())
+            self.context["metadata"]["entity_count"] = len(self.context["@graph"])
+            
+            with open(self.kb_path, 'w', encoding='utf-8') as f:
+                json.dump(self.context, f, indent=2, ensure_ascii=False)
+            
+            self._dirty = False
+            logger.info(f"Knowledge Base salvata in {self.kb_path}")
+        except Exception as e:
+            logger.error(f"Errore salvataggio KB: {e}")
+            raise KnowledgeBaseError(f"Impossibile salvare KB: {e}")
+
+    # ============================================================================
+    # PUBLIC API - ENTITY MANAGEMENT
+    # ============================================================================
+
+    def add_entity(self, entity: Dict[str, Any]) -> str:
+        """
+        Aggiunge una nuova entità alla KB
+        
+        Args:
+            entity: Dizionario rappresentante l'entità
+            
+        Returns:
+            ID dell'entità aggiunta
+            
+        Raises:
+            InvalidEntityError: Se l'entità è malformata o ID esiste già
+        """
+        if "@id" not in entity or "type" not in entity:
+            raise InvalidEntityError("Entità deve avere '@id' e 'type'")
+            
+        entity_id = entity["@id"]
+        if self.get_entity(entity_id):
+            raise InvalidEntityError(f"Entità con ID '{entity_id}' già esistente")
+            
+        now = serialize_datetime(datetime.now())
+        entity["createdAt"] = entity.get("createdAt", now)
+        entity["updatedAt"] = now
+        
+        self.context["@graph"].append(entity)
+        self._entity_cache[entity_id] = entity
+        self._dirty = True
+        
+        # Aggiorna cache relazioni
+        self._rebuild_cache()
+        
+        if self.auto_save:
+            self.save()
+            
+        logger.info(f"Entità aggiunta: {entity_id}")
+        return entity_id
+
+    def update_entity(self, entity_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Aggiorna un'entità esistente
+        
+        Args:
+            entity_id: ID dell'entità da aggiornare
+            updates: Dizionario con i campi da aggiornare
+            
+        Returns:
+            L'entità aggiornata
+            
+        Raises:
+            EntityNotFoundError: Se l'entità non esiste
+        """
+        entity = self.get_entity(entity_id)
+        if not entity:
+            raise EntityNotFoundError(f"Entità non trovata: {entity_id}")
+            
+        # Rimuovi campi non aggiornabili
+        updates.pop("@id", None)
+        updates.pop("createdAt", None)
+        
+        entity.update(updates)
+        entity["updatedAt"] = serialize_datetime(datetime.now())
+        
+        self._entity_cache[entity_id] = entity
+        self._dirty = True
+        
+        # Aggiorna cache relazioni
+        self._rebuild_cache()
+        
+        if self.auto_save:
+            self.save()
+            
+        logger.info(f"Entità aggiornata: {entity_id}")
+        return entity
+
+    def remove_entity(self, entity_id: str) -> bool:
+        """
+        Rimuove un'entità dalla KB
+        
+        Args:
+            entity_id: ID dell'entità da rimuovere
+            
+        Returns:
+            True se rimossa, False altrimenti
+        """
+        entity_index = -1
+        for i, entity in enumerate(self.context["@graph"]):
+            if entity.get("@id") == entity_id:
+                entity_index = i
+                break
+        
+        if entity_index != -1:
+            self.context["@graph"].pop(entity_index)
+            self._entity_cache.pop(entity_id, None)
+            self._dirty = True
+            
+            # Rimuovi da cache relazioni
+            self._rebuild_cache()
+            
+            if self.auto_save:
+                self.save()
+                
+            logger.info(f"Entità rimossa: {entity_id}")
+            return True
+            
+        return False
+
+    # ============================================================================
+    # PUBLIC API - QUERY & SEARCH
+    # ============================================================================
+
+    def get_entity(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Recupera un'entità per ID
+        
+        Args:
+            entity_id: ID dell'entità
+            
+        Returns:
+            Dizionario dell'entità o None se non trovata
+        """
+        return self._entity_cache.get(entity_id)
+
+    def find_entities_by_type(self, entity_type: str) -> List[Dict[str, Any]]:
+        """
+        Trova tutte le entità di un certo tipo
+        
+        Args:
+            entity_type: Tipo di entità da cercare
+            
+        Returns:
+            Lista di entità corrispondenti
+        """
+        return [
+            entity for entity in self.context["@graph"]
+            if entity.get("type") == entity_type
+        ]
+
+    def find_entities_by_property(self, prop_name: str, prop_value: Any) -> List[Dict[str, Any]]:
+        """
+        Trova entità che hanno una proprietà con un certo valore
+        
+        Args:
+            prop_name: Nome della proprietà
+            prop_value: Valore della proprietà
+            
+        Returns:
+            Lista di entità corrispondenti
+        """
+        results = []
+        for entity in self.context["@graph"]:
+            if prop_name in entity:
+                if isinstance(entity[prop_name], list):
+                    if prop_value in entity[prop_name]:
+                        results.append(entity)
+                elif entity[prop_name] == prop_value:
+                    results.append(entity)
+        return results
+
+    def search(self, query_dict: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Esegue una query semplice sulla KB
+        
+        Args:
+            query_dict: Dizionario con criteri di ricerca (es. {"type": "Methodology", "name": "Agile"})
+            
+        Returns:
+            Lista di entità che soddisfano tutti i criteri
+        """
+        results = []
+        for entity in self.context["@graph"]:
+            match = True
+            for key, value in query_dict.items():
+                if key not in entity or entity[key] != value:
+                    match = False
+                    break
+            if match:
+                results.append(entity)
+        return results
+
+    def get_related_entities(self, entity_id: str, relation: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Ottiene entità collegate a un'entità data
+        
+        Args:
+            entity_id: ID dell'entità di partenza
+            relation: (Opzionale) Filtra per tipo di relazione (es. "hasTask")
+            
+        Returns:
+            Lista di entità collegate
+            
+        Raises:
+            EntityNotFoundError: Se l'entità di partenza non esiste
+        """
+        entity = self.get_entity(entity_id)
+        if not entity:
+            raise EntityNotFoundError(f"Entità non trovata: {entity_id}")
+            
+        related_ids = []
+        for key, value in entity.items():
+            if relation and key != relation:
+                continue
+            
+            if key.startswith(("has", "belongs", "uses", "depends", "involves", "related")):
+                if isinstance(value, list):
+                    related_ids.extend(v for v in value if isinstance(v, str))
+                elif isinstance(value, str):
+                    related_ids.append(value)
+                    
+        return [
+            self.get_entity(rid) for rid in set(related_ids) if self.get_entity(rid)
+        ]
+
+    # ============================================================================
+    # PUBLIC API - DOMAIN-SPECIFIC QUERIES
+    # ============================================================================
+
+    def get_methodology_details(self, methodology_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Recupera dettagli di una metodologia, incluse fasi, ruoli e best practice
+        
+        Args:
+            methodology_name: Nome della metodologia (es. "Agile")
+            
+        Returns:
+            Dizionario con dettagli o None se non trovata
+        """
+        methodologies = self.find_entities_by_property("name", methodology_name)
+        if not methodologies:
+            return None
+            
+        methodology = methodologies[0]
+        details = {
+            "methodology": methodology,
+            "phases": self.get_related_entities(methodology["@id"], "hasPhase"),
+            "roles": self.get_related_entities(methodology["@id"], "hasRole"),
+            "best_practices": self.get_related_entities(methodology["@id"], "hasBestPractice"),
+            "templates": self.get_related_entities(methodology["@id"], "hasTemplate")
+        }
+        return details
+
+    def get_template(self, template_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Recupera un template di documento per nome
+        
+        Args:
+            template_name: Nome del template (es. "Project Charter")
+            
+        Returns:
+            Dizionario del template o None se non trovato
+        """
+        templates = self.find_entities_by_property("name", template_name)
+        return templates[0] if templates else None
+
+    def get_all_templates(self) -> List[Dict[str, Any]]:
+        """Recupera tutti i template di documento"""
+        return self.find_entities_by_type("DocumentTemplate")
+
+    def get_all_methodologies(self) -> List[Dict[str, Any]]:
+        """Recupera tutte le metodologie"""
+        return self.find_entities_by_type("Methodology")
+
+    # ============================================================================
+    # CONTEXT MANAGEMENT
+    # ============================================================================
+
+    def set_project_context(self, project_context: ProjectContext):
+        """
+        Imposta il contesto del progetto corrente nella KB
+        
+        Args:
+            project_context: Oggetto ProjectContext
+        """
+        context_entity = asdict(project_context)
+        context_entity["@id"] = f"context:project_{project_context.project_id}"
+        context_entity["type"] = "ProjectContext"
+        
+        if self.get_entity(context_entity["@id"]):
+            self.update_entity(context_entity["@id"], context_entity)
+        else:
+            self.add_entity(context_entity)
+            
+        logger.info(f"Contesto progetto impostato: {project_context.project_id}")
+
+    def get_project_context(self, project_id: str) -> Optional[ProjectContext]:
+        """
+        Recupera il contesto di un progetto
+        
+        Args:
+            project_id: ID del progetto
+            
+        Returns:
+            Oggetto ProjectContext o None
+        """
+        context_id = f"context:project_{project_id}"
+        entity = self.get_entity(context_id)
+        if not entity:
+            return None
+        
+        try:
+            # Rimuovi campi non attesi da ProjectContext
+            entity.pop("@id", None)
+            entity.pop("type", None)
+            entity.pop("createdAt", None)
+            entity.pop("updatedAt", None)
+            return ProjectContext(**entity)
+        except Exception as e:
+            logger.error(f"Errore deserializzazione contesto progetto: {e}")
+            return None

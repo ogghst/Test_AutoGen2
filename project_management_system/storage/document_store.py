@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from ..models.data_models import Document, DocumentType
+from models.data_models import Document, DocumentType
 
 
 class DocumentStore:

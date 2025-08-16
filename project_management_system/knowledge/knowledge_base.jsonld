@@ -1,0 +1,389 @@
+{
+  "@context": {
+    "@vocab": "https://projectmanagement.org/vocab/",
+    "name": "http://schema.org/name",
+    "description": "http://schema.org/description",
+    "type": "@type",
+    "id": "@id",
+    "hasObjective": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasStakeholder": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasConstraint": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasRequirement": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasTask": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasPhase": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasDeliverable": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasRisk": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasTemplate": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasBestPractice": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "dependsOn": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "involves": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "belongsToDomain": "@id",
+    "usesMethodology": "@id",
+    "hasRole": "@id",
+    "assignedTo": "@id",
+    "relatedTo": {
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "priority": "http://schema.org/priority",
+    "startDate": {
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "endDate": {
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "createdAt": {
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "updatedAt": {
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "status": "http://schema.org/status",
+    "methodology": "@id",
+    "domain": "@id",
+    "effort": "http://schema.org/duration",
+    "budget": "http://schema.org/MonetaryAmount"
+  },
+  "@graph": [
+    {
+      "@id": "domain:ProjectManagement",
+      "type": "Domain",
+      "name": "Project Management",
+      "description": "Discipline of planning, executing, and controlling projects to achieve specific goals",
+      "hasSubdomain": [
+        "domain:SoftwareDevelopment",
+        "domain:ITProjects",
+        "domain:BusinessTransformation"
+      ]
+    },
+    {
+      "@id": "domain:SoftwareDevelopment",
+      "type": "Domain",
+      "name": "Software Development",
+      "description": "Domain focused on creating software applications and systems",
+      "belongsToDomain": "domain:ProjectManagement"
+    },
+    {
+      "@id": "domain:ITProjects",
+      "type": "Domain",
+      "name": "IT Projects",
+      "description": "Information Technology project management and implementation",
+      "belongsToDomain": "domain:ProjectManagement"
+    },
+    {
+      "@id": "methodology:Agile",
+      "type": "Methodology",
+      "name": "Agile",
+      "description": "Iterative and incremental development methodology emphasizing collaboration and flexibility",
+      "hasPhase": [
+        "phase:ProjectInitiation",
+        "phase:Sprint",
+        "phase:Review",
+        "phase:Retrospective",
+        "phase:Release"
+      ],
+      "hasBestPractice": [
+        "practice:DailyStandups",
+        "practice:SprintPlanning",
+        "practice:UserStories",
+        "practice:ContinuousIntegration"
+      ],
+      "hasRole": [
+        "role:ScrumMaster",
+        "role:ProductOwner",
+        "role:DevelopmentTeam"
+      ]
+    },
+    {
+      "@id": "methodology:Waterfall",
+      "type": "Methodology",
+      "name": "Waterfall",
+      "description": "Sequential development methodology with distinct phases",
+      "hasPhase": [
+        "phase:Requirements",
+        "phase:Design",
+        "phase:Implementation",
+        "phase:Testing",
+        "phase:Deployment",
+        "phase:Maintenance"
+      ],
+      "hasBestPractice": [
+        "practice:DetailedPlanning",
+        "practice:DocumentationFirst",
+        "practice:PhaseGateReviews"
+      ]
+    },
+    {
+      "@id": "methodology:Scrum",
+      "type": "Methodology",
+      "name": "Scrum",
+      "description": "Agile framework for managing product development with fixed-length sprints",
+      "belongsToDomain": "methodology:Agile",
+      "hasPhase": [
+        "phase:SprintPlanning",
+        "phase:Sprint",
+        "phase:SprintReview",
+        "phase:SprintRetrospective"
+      ],
+      "hasDeliverable": [
+        "deliverable:ProductBacklog",
+        "deliverable:SprintBacklog",
+        "deliverable:ProductIncrement"
+      ]
+    },
+    {
+      "@id": "template:ProjectCharter",
+      "type": "DocumentTemplate",
+      "name": "Project Charter",
+      "description": "Document that formally authorizes a project and defines its scope, objectives, and stakeholders",
+      "hasSection": [
+        "section:ExecutiveSummary",
+        "section:ProjectObjectives",
+        "section:Scope",
+        "section:Stakeholders",
+        "section:Budget",
+        "section:Timeline",
+        "section:RiskAssessment",
+        "section:SuccessCriteria"
+      ],
+      "requiredFor": [
+        "methodology:Waterfall",
+        "methodology:Agile"
+      ],
+      "priority": "critical"
+    },
+    {
+      "@id": "template:RequirementsDocument",
+      "type": "DocumentTemplate",
+      "name": "Requirements Document",
+      "description": "Comprehensive specification of functional and non-functional requirements",
+      "hasSection": [
+        "section:Introduction",
+        "section:FunctionalRequirements",
+        "section:NonFunctionalRequirements",
+        "section:Constraints",
+        "section:Assumptions",
+        "section:AcceptanceCriteria"
+      ],
+      "dependsOn": [
+        "template:ProjectCharter"
+      ]
+    },
+    {
+      "@id": "template:TechnicalSpecification",
+      "type": "DocumentTemplate",
+      "name": "Technical Specification",
+      "description": "Detailed technical design and architecture documentation",
+      "hasSection": [
+        "section:Architecture",
+        "section:SystemDesign",
+        "section:DatabaseDesign",
+        "section:APISpecification",
+        "section:SecurityConsiderations",
+        "section:PerformanceRequirements"
+      ],
+      "dependsOn": [
+        "template:RequirementsDocument"
+      ]
+    },
+    {
+      "@id": "template:ProjectPlan",
+      "type": "DocumentTemplate",
+      "name": "Project Plan",
+      "description": "Comprehensive plan outlining project phases, tasks, resources, and timeline",
+      "hasSection": [
+        "section:WorkBreakdownStructure",
+        "section:Timeline",
+        "section:ResourceAllocation",
+        "section:RiskManagement",
+        "section:CommunicationPlan",
+        "section:QualityAssurance"
+      ]
+    },
+    {
+      "@id": "practice:RequirementsTraceability",
+      "type": "BestPractice",
+      "name": "Requirements Traceability",
+      "description": "Maintain traceability between requirements, design, and implementation",
+      "applicableFor": [
+        "methodology:Waterfall",
+        "methodology:Agile"
+      ],
+      "benefit": "Ensures all requirements are addressed and enables impact analysis"
+    },
+    {
+      "@id": "practice:VersionControl",
+      "type": "BestPractice",
+      "name": "Version Control",
+      "description": "Use version control systems for all project artifacts",
+      "applicableFor": [
+        "domain:SoftwareDevelopment"
+      ],
+      "hasTemplate": [
+        "template:ChangeLog"
+      ]
+    },
+    {
+      "@id": "practice:ContinuousIntegration",
+      "type": "BestPractice",
+      "name": "Continuous Integration",
+      "description": "Automatically integrate code changes and run tests frequently",
+      "applicableFor": [
+        "methodology:Agile",
+        "methodology:Scrum"
+      ],
+      "relatedTo": [
+        "practice:AutomatedTesting"
+      ]
+    },
+    {
+      "@id": "role:ProjectManager",
+      "type": "Role",
+      "name": "Project Manager",
+      "description": "Responsible for planning, executing, and closing projects",
+      "hasResponsibility": [
+        "Project planning and scheduling",
+        "Resource allocation and management",
+        "Risk identification and mitigation",
+        "Stakeholder communication",
+        "Project monitoring and control"
+      ],
+      "hasTemplate": [
+        "template:ProjectCharter",
+        "template:ProjectPlan"
+      ]
+    },
+    {
+      "@id": "role:RequirementsAnalyst",
+      "type": "Role",
+      "name": "Requirements Analyst",
+      "description": "Responsible for gathering, analyzing, and documenting requirements",
+      "hasResponsibility": [
+        "Requirements elicitation",
+        "Requirements analysis and validation",
+        "Requirements documentation",
+        "Change management",
+        "Stakeholder engagement"
+      ],
+      "hasTemplate": [
+        "template:RequirementsDocument"
+      ]
+    },
+    {
+      "@id": "role:TechnicalWriter",
+      "type": "Role",
+      "name": "Technical Writer",
+      "description": "Creates and maintains technical documentation",
+      "hasTemplate": [
+        "template:TechnicalSpecification",
+        "template:APIDocumentation",
+        "template:DeploymentGuide"
+      ]
+    },
+    {
+      "@id": "phase:ProjectInitiation",
+      "type": "Phase",
+      "name": "Project Initiation",
+      "description": "Initial phase where project is defined and authorized",
+      "hasDeliverable": [
+        "template:ProjectCharter"
+      ],
+      "typicalDuration": "1-2 weeks",
+      "hasActivity": [
+        "Define project objectives",
+        "Identify stakeholders",
+        "Conduct feasibility analysis",
+        "Create project charter"
+      ]
+    },
+    {
+      "@id": "phase:Planning",
+      "type": "Phase",
+      "name": "Planning",
+      "description": "Detailed planning of project scope, timeline, and resources",
+      "dependsOn": [
+        "phase:ProjectInitiation"
+      ],
+      "hasDeliverable": [
+        "template:ProjectPlan",
+        "template:RequirementsDocument"
+      ],
+      "hasActivity": [
+        "Create work breakdown structure",
+        "Estimate effort and duration",
+        "Allocate resources",
+        "Identify and assess risks"
+      ]
+    },
+    {
+      "@id": "risk:ScopeCreep",
+      "type": "RiskPattern",
+      "name": "Scope Creep",
+      "description": "Uncontrolled expansion of project scope without adjusting time, cost, and resources",
+      "likelihood": "high",
+      "impact": "high",
+      "mitigation": [
+        "Clear scope definition",
+        "Change control process",
+        "Regular stakeholder communication"
+      ]
+    },
+    {
+      "@id": "risk:ResourceConstraints",
+      "type": "RiskPattern",
+      "name": "Resource Constraints",
+      "description": "Insufficient human or technical resources to complete project",
+      "likelihood": "medium",
+      "impact": "high",
+      "mitigation": [
+        "Early resource planning",
+        "Resource leveling",
+        "Cross-training team members"
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created_at": "2025-08-16T17:06:43.069494",
+    "last_updated": "2025-08-16T17:06:43.070151",
+    "entity_count": 20,
+    "schema_version": "2024.1",
+    "initialized_at": "2025-08-16T17:06:43.070139"
+  }
+}

@@ -3,9 +3,9 @@ import re
 from datetime import datetime
 
 from .base_agent import BaseProjectAgent
-from ..models.data_models import AgentRole, ProjectContext
-from ..knowledge.knowledge_base import KnowledgeBase
-from ..storage.document_store import DocumentStore
+from models.data_models import AgentRole, ProjectContext
+from knowledge.knowledge_base import KnowledgeBase
+from storage.document_store import DocumentStore
 from autogen_agentchat.messages import BaseMessage
 
 
@@ -52,3 +52,10 @@ class ProjectManagerAgent(BaseProjectAgent):
         
         Extract and format as valid JSON:
 """
+    
+    async def _handle_general_coordination(self, content: str) -> str:
+        """Handles general messages and provides guidance."""
+        if self.workflow_state == "idle":
+            return "Project not initialized. Please start by initializing a project. For example: 'init_project Name: E-commerce Platform'"
+        else:
+            return f"Received general message. Current project status: {self.workflow_state}. What would you like to do next?"
