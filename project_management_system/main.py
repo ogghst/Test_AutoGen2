@@ -20,13 +20,29 @@ from agents.project_manager import ProjectManagerAgent
 from knowledge.knowledge_base import KnowledgeBase
 from storage.document_store import DocumentStoreFactory
 from config.settings import ConfigManager
+from models.data_models import AgentRole
 
 # Import AutoGen classes for agent orchestration.
 
 from autogen_agentchat.agents import UserProxyAgent
 from autogen_agentchat.teams import RoundRobinGroupChat as GroupChat
+from autogen_agentchat.messages import TextMessage
 from autogen_agentchat.ui import Console
 from autogen_agentchat.conditions import TextMentionTermination
+
+class NonInteractiveUserProxyAgent(UserProxyAgent):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._input_queue = []
+
+    def set_script(self, script: list[str]):
+        self._input_queue = script
+
+    async def _get_input(self, prompt: str, cancellation_token) -> str:
+        if not self._input_queue:
+            return "exit"
+        return self._input_queue.pop(0)
+
 
 # Import logging configuration
 from config.logging_config import setup_logging, get_logger, log_system_info
@@ -53,7 +69,26 @@ except Exception as e:
     sys.exit(1)
 
 
-async def main():
+async def run_non_interactive(project_manager, user_proxy, groupchat):
+    """Runs the system in non-interactive mode with a predefined script."""
+    logger.info("Running in non-interactive mode")
+    
+    script = [
+        "init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team",
+        "status",
+        "requirements",
+        "plan project",
+        "exit"
+    ]
+    
+    messages = [TextMessage(source=user_proxy.name, content=msg) for msg in script]
+    
+    await Console(groupchat.run_stream(task=messages))
+        
+    logger.info("Non-interactive script completed")
+
+
+async def main(non_interactive: bool = False):
     """
     Asynchronous main function to initialize and run the agent system.
     """
@@ -84,8 +119,8 @@ async def main():
         user_proxy = UserProxyAgent(
             name="HumanUser",
             description="A human user who provides commands and information to the project management system.",
-            # Reverted to input_func for compatibility
-            input_func=input,
+            code_execution_config=False,
+            input_func=input if not non_interactive else lambda: None,
         )
         logger.info("Agents initialized successfully.")
     except Exception as e:
@@ -100,27 +135,31 @@ async def main():
         max_turns=config_manager.autogen.max_turns,
     )
     
-    # --- Start Interactive Demo ---
-    print("\n" + "="*60)
-    print("      🤖 Multi-Agent Project Management System 🤖")
-    print("="*60)
-    print("\nWelcome! You are interacting with the Project Manager agent.")
-    print("You can start by initializing a project. For example:")
-    print("\n  init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team\n")
-    print("Other available commands: 'status', 'requirements', 'plan project'")
-    print("\nType 'exit' to end the session.")
-    print("-"*60)
+    if non_interactive:
+        await run_non_interactive(project_manager, user_proxy, groupchat)
+    else:
+        # --- Start Interactive Demo ---
+        print("\n" + "="*60)
+        print("      🤖 Multi-Agent Project Management System 🤖")
+        print("="*60)
+        print("\nWelcome! You are interacting with the Project Manager agent.")
+        print("You can start by initializing a project. For example:")
+        print("\n  init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team\n")
+        print("Other available commands: 'status', 'requirements', 'plan project'")
+        print("\nType 'exit' to end the session.")
+        print("-"*60)
 
-    initial_message = "Hello, I am the user. I am ready to begin managing a project."
+        initial_message = "Hello, I am the user. I am ready to begin managing a project."
 
-    logger.info("Starting group chat session")
-    await Console(groupchat.run_stream(task=initial_message))
-    logger.info("Group chat session completed")
+        logger.info("Starting group chat session")
+        await Console(groupchat.run_stream(task=initial_message))
+        logger.info("Group chat session completed")
 
 
 if __name__ == "__main__":
+    non_interactive_mode = "--non-interactive" in sys.argv
     try:
-        asyncio.run(main())
+        asyncio.run(main(non_interactive=non_interactive_mode))
         logger.info("System shutdown completed successfully")
     except (KeyboardInterrupt, EOFError):
         print("\n\nSession terminated by user. Goodbye!")

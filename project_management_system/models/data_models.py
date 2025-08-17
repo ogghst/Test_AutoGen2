@@ -525,6 +525,41 @@ def validate_requirement(requirement: Requirement) -> bool:
 
 
 # ============================================================================
+# AGENT CONFIGURATION MODELS
+# ============================================================================
+
+@dataclass
+class OllamaConfig:
+    """Configurazione per Ollama"""
+    model: str
+    base_url: str = "http://localhost:11434/v1"
+    api_key: str = "ollama"
+
+@dataclass
+class DeepSeekConfig:
+    """Configurazione per DeepSeek"""
+    model: str
+    api_key: str
+    base_url: str = "https://api.deepseek.com/v1"
+
+@dataclass
+class AgentConfig:
+    """Configurazione generica per un agente"""
+    name: str
+    role: AgentRole
+    llm_config: Union[OllamaConfig, DeepSeekConfig]
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Converte in dizionario per serializzazione"""
+        return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'AgentConfig':
+        """Crea istanza da dizionario"""
+        return cls(**data)
+
+
+# ============================================================================
 # EXPORT ALL
 # ============================================================================
 
@@ -535,7 +570,7 @@ __all__ = [
     
     # Models
     'Document', 'ChangeEvent', 'ProjectContext', 'AgentMessage',
-    'Requirement', 'Task',
+    'Requirement', 'Task', 'OllamaConfig', 'DeepSeekConfig', 'AgentConfig',
     
     # Utilities
     'generate_uuid', 'serialize_datetime', 'deserialize_datetime',

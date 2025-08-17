@@ -3,7 +3,8 @@ import re
 from datetime import datetime
 
 from .base_agent import BaseProjectAgent, DeepSeekConfig, OllamaConfig
-from models.data_models import AgentRole, ProjectContext
+from typing import Union
+from models.data_models import AgentConfig, DeepSeekConfig, OllamaConfig, AgentRole
 from knowledge.knowledge_base import KnowledgeBase
 from storage.document_store import DocumentStore
 from autogen_agentchat.messages import BaseMessage

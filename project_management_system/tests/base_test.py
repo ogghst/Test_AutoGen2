@@ -94,6 +94,51 @@ class BaseTestCase(unittest.TestCase, ABC):
 class AsyncBaseTestCase(BaseTestCase):
     """Base test case class for async tests."""
     
+    def run(self, result=None):
+        """
+        Overrides the default run method to handle async test cases.
+        This allows developers to use `async def test_...` syntax directly
+        without needing a special decorator or runner.
+        """
+        import asyncio
+        
+        # Get the test method to be executed
+        test_method = getattr(self, self._testMethodName)
+        
+        # Check if the test method is an async function
+        if asyncio.iscoroutinefunction(test_method):
+            # If it's async, run it in an event loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                # We need to handle the test execution within the loop
+                # The default run method expects a synchronous function,
+                # so we wrap the async test execution here.
+                
+                # This is a simplified execution flow. A more robust implementation
+                # would integrate more deeply with unittest's result handling.
+                if result is None:
+                    result = self.defaultTestResult()
+                result.startTest(self)
+                
+                try:
+                    self.setUp()
+                    loop.run_until_complete(test_method())
+                    self.tearDown()
+                    result.addSuccess(self)
+                except Exception as e:
+                    result.addError(self, e)
+                finally:
+                    result.stopTest(self)
+                    
+            finally:
+                loop.close()
+                asyncio.set_event_loop(None)
+        else:
+            # If it's a regular synchronous test, run it as usual
+            super().run(result)
+
+    
     def setUp(self):
         """Set up test fixtures before each test method."""
         super().setUp()
