@@ -167,7 +167,27 @@ ollama list
 ollama run llama3.2 "Hello, how are you?"
 ```
 
-### Step 3: Setup Progetto Python
+### Step 3: Configurazione LLM Provider
+
+Il sistema può utilizzare due provider LLM: **DeepSeek** (cloud-based) o **Ollama** (local).
+
+Crea un file `.env` nella root del progetto e imposta le seguenti variabili:
+
+```env
+# Scegli il provider: "deepseek" o "ollama"
+LLM_PROVIDER=ollama
+
+# --- Configurazione per DeepSeek (se LLM_PROVIDER="deepseek") ---
+# DEEPSEEK_API_KEY=your_deepseek_api_key
+
+# --- Configurazione per Ollama (se LLM_PROVIDER="ollama") ---
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+```
+
+**Nota:** Assicurati di aver installato e avviato Ollama se lo selezioni come provider.
+
+### Step 4: Setup Progetto Python
 
 ```bash
 # Clona il progetto
@@ -187,7 +207,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Step 4: Contenuto requirements.txt
+### Step 5: Contenuto requirements.txt
 
 ```txt
 autogen-agentchat>=0.7.2

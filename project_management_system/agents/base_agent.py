@@ -16,34 +16,31 @@ from storage.document_store import DocumentStore
 from config.logging_config import get_logger
 
 
+from config.settings import DeepSeekConfig, OllamaConfig
+
+
 class BaseProjectAgent(BaseChatAgent, ABC):
     """Classe base per tutti gli agenti del sistema"""
-    
+
     def __init__(
-        self, 
+        self,
         name: str,
         role: AgentRole,
         description: str,
         knowledge_base: KnowledgeBase,
         document_store: DocumentStore,
-        deepseek_model: str = "deepseek-chat",
-        deepseek_api_key: str = None
+        llm_config: Union[DeepSeekConfig, OllamaConfig],
     ):
         super().__init__(name=name, description=description)
         self.role = role
         self.knowledge_base = knowledge_base
         self.document_store = document_store
-        self.deepseek_model = deepseek_model
-        self.deepseek_api_key = deepseek_api_key or os.getenv("DEEPSEEK_API_KEY")
-        self.deepseek_url = "https://api.deepseek.com/v1/chat/completions"
+        self.llm_config = llm_config
         self.conversation_history: List[Dict[str, Any]] = []
-        
+
         # Set up logger
         self.logger = get_logger(__name__)
-        
-        if not self.deepseek_api_key:
-            raise ValueError("DeepSeek API key is required. Set DEEPSEEK_API_KEY environment variable or pass it as parameter.")
-        
+
         self.logger.info(f"Agent initialized: {name} ({role.value})")
 
     @property
@@ -97,67 +94,74 @@ class BaseProjectAgent(BaseChatAgent, ABC):
         """Processa un messaggio specifico - da implementare in sottoclassi"""
         pass
     
-    async def _call_deepseek(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        """Chiama DeepSeek API per generazione testo"""
+    async def _call_llm(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        """Calls the configured LLM (DeepSeek or Ollama) for text generation."""
+        if isinstance(self.llm_config, DeepSeekConfig):
+            return await self._execute_deepseek_request(prompt, system_prompt)
+        elif isinstance(self.llm_config, OllamaConfig):
+            return await self._execute_ollama_request(prompt, system_prompt)
+        else:
+            unsupported_error = "Unsupported LLM configuration."
+            self.logger.error(unsupported_error)
+            return unsupported_error
+
+    async def _execute_deepseek_request(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        """Executes a request to the DeepSeek API."""
         messages = []
-        
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-        
         messages.append({"role": "user", "content": prompt})
-        
-        headers = {
-            "Authorization": f"Bearer {self.deepseek_api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "model": self.deepseek_model,
-            "messages": messages,
-            "temperature": 0.7,
-            "max_tokens": 4000,
-            "top_p": 0.95,
-            "frequency_penalty": 0.1,
-            "presence_penalty": 0.1,
-            "stop": None
-        }
+
+        headers = self.llm_config.get_headers()
+        payload = self.llm_config.get_payload_template()
+        payload["messages"] = messages
         
         self.logger.debug(f"Calling DeepSeek API with {len(messages)} messages")
         
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    self.deepseek_url,
-                    headers=headers,
-                    json=payload
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    content = result["choices"][0]["message"]["content"].strip()
-                    self.logger.debug(f"DeepSeek API call successful: {len(content)} characters")
-                    return content
-                elif response.status_code == 401:
-                    error_msg = "❌ Error: Invalid DeepSeek API key. Please check your DEEPSEEK_API_KEY environment variable."
-                    self.logger.error("DeepSeek API authentication failed")
-                    return error_msg
-                elif response.status_code == 429:
-                    error_msg = "⚠️ Rate limit exceeded. Please wait a moment and try again."
-                    self.logger.warning("DeepSeek API rate limit exceeded")
-                    return error_msg
-                else:
-                    error_detail = response.text
-                    error_msg = f"❌ Error calling DeepSeek API: {response.status_code} - {error_detail}"
-                    self.logger.error(f"DeepSeek API error: {response.status_code} - {error_detail}")
-                    return error_msg
-                    
-        except httpx.TimeoutException:
-            error_msg = "⏰ Request timeout. DeepSeek API is taking too long to respond."
-            self.logger.warning("DeepSeek API request timeout")
+            async with httpx.AsyncClient(timeout=self.llm_config.timeout) as client:
+                response = await client.post(self.llm_config.api_url, headers=headers, json=payload)
+                response.raise_for_status()
+                result = response.json()
+                content = result["choices"][0]["message"]["content"].strip()
+                self.logger.debug(f"DeepSeek API call successful: {len(content)} characters")
+                return content
+        except httpx.HTTPStatusError as e:
+            error_msg = f"❌ Error calling DeepSeek API: {e.response.status_code} - {e.response.text}"
+            self.logger.error(error_msg)
             return error_msg
         except Exception as e:
             error_msg = f"❌ Error connecting to DeepSeek API: {str(e)}"
-            self.logger.error(f"DeepSeek API connection error: {e}", exc_info=True)
+            self.logger.error(error_msg, exc_info=True)
+            return error_msg
+
+    async def _execute_ollama_request(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        """Executes a request to the Ollama API."""
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        payload = self.llm_config.get_payload_template()
+        payload["messages"] = messages
+
+        self.logger.debug(f"Calling Ollama API at {self.llm_config.get_api_url()} with model {self.llm_config.model}")
+
+        try:
+            async with httpx.AsyncClient(timeout=self.llm_config.timeout) as client:
+                response = await client.post(self.llm_config.get_api_url(), json=payload)
+                response.raise_for_status()
+                result = response.json()
+                content = result["message"]["content"].strip()
+                self.logger.debug(f"Ollama API call successful: {len(content)} characters")
+                return content
+        except httpx.HTTPStatusError as e:
+            error_msg = f"❌ Error calling Ollama API: {e.response.status_code} - {e.response.text}"
+            self.logger.error(error_msg)
+            return error_msg
+        except Exception as e:
+            error_msg = f"❌ Error connecting to Ollama API: {str(e)}"
+            self.logger.error(error_msg, exc_info=True)
             return error_msg
     
     def _get_agent_context(self, project_id: str = None) -> str:

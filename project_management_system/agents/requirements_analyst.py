@@ -79,7 +79,7 @@ class RequirementsAnalystAgent(BaseProjectAgent):
         """
         
         try:
-            extracted_requirements = await self._call_deepseek(extraction_prompt)
+            extracted_requirements = await self._call_llm(extraction_prompt)
             
             # Prova a parsare la risposta come JSON
             import json
@@ -153,7 +153,7 @@ The requirements are being processed. Type 'analyze requirements' to review what
         """
         
         try:
-            analysis_result = await self._call_deepseek(analysis_prompt)
+            analysis_result = await self._call_llm(analysis_prompt)
             
             return f"""📊 **Requirements Analysis Report**
 
@@ -201,7 +201,7 @@ Type 'document requirements' to create formal documentation."""
         """
         
         try:
-            documentation = await self._call_deepseek(doc_prompt)
+            documentation = await self._call_llm(doc_prompt)
             
             # Salva documentazione
             doc_id = f"requirements_doc_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -287,7 +287,7 @@ Type 'gather requirements' when you have interview responses to process."""
         """
         
         try:
-            validation_result = await self._call_deepseek(validation_prompt)
+            validation_result = await self._call_llm(validation_prompt)
             
             return f"""✅ **Requirements Validation Report**
 

@@ -2,7 +2,7 @@ from typing import Optional, List, Dict, Any
 import re
 from datetime import datetime
 
-from .base_agent import BaseProjectAgent
+from .base_agent import BaseProjectAgent, DeepSeekConfig, OllamaConfig
 from models.data_models import AgentRole, ProjectContext
 from knowledge.knowledge_base import KnowledgeBase
 from storage.document_store import DocumentStore
@@ -12,13 +12,14 @@ from autogen_agentchat.messages import BaseMessage
 class ProjectManagerAgent(BaseProjectAgent):
     """Agente Project Manager - Orchestratore principale"""
     
-    def __init__(self, knowledge_base: KnowledgeBase, document_store: DocumentStore, **kwargs):
+    def __init__(self, knowledge_base: KnowledgeBase, document_store: DocumentStore, llm_config: Union[DeepSeekConfig, OllamaConfig], **kwargs):
         super().__init__(
             name="ProjectManager",
             role=AgentRole.PROJECT_MANAGER,
             description="Coordinates project workflow, manages stakeholder communication, and ensures project objectives are met",
             knowledge_base=knowledge_base,
             document_store=document_store,
+            llm_config=llm_config,
             **kwargs
         )
         self.current_project: Optional[ProjectContext] = None
@@ -68,7 +69,7 @@ class ProjectManagerAgent(BaseProjectAgent):
         
         try:
             # Call DeepSeek to extract project information
-            extracted_info = await self._call_deepseek(extraction_prompt)
+            extracted_info = await self._call_llm(extraction_prompt)
             
             # Try to parse the response as JSON
             import json

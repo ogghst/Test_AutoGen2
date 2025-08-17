@@ -83,7 +83,7 @@ class TechnicalWriterAgent(BaseProjectAgent):
         """
         
         try:
-            extracted_info = await self._call_deepseek(extraction_prompt)
+            extracted_info = await self._call_llm(extraction_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -182,7 +182,7 @@ The document is being created. Type 'review document' to edit, or 'format docume
         """
         
         try:
-            formatting_info = await self._call_deepseek(formatting_prompt)
+            formatting_info = await self._call_llm(formatting_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -270,7 +270,7 @@ The document is being formatted. Type 'review document' to make final edits."""
         """
         
         try:
-            review_info = await self._call_deepseek(review_prompt)
+            review_info = await self._call_llm(review_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -345,7 +345,7 @@ The document is being reviewed. Type 'edit document' to make corrections."""
         """
         
         try:
-            template_info = await self._call_deepseek(template_prompt)
+            template_info = await self._call_llm(template_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -400,7 +400,7 @@ The template system is being managed. Type 'list templates' to see available tem
         """
         
         try:
-            export_info = await self._call_deepseek(export_prompt)
+            export_info = await self._call_llm(export_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -474,7 +474,7 @@ The document is being exported. Type 'export document' to specify format and des
         """
         
         try:
-            organization_info = await self._call_deepseek(organization_prompt)
+            organization_info = await self._call_llm(organization_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -559,7 +559,7 @@ What would you like to do with the technical documentation?"""
         """
         
         try:
-            content = await self._call_deepseek(generation_prompt)
+            content = await self._call_llm(generation_prompt)
             return content
         except Exception as e:
             self.logger.error(f"Error generating document content: {e}")
@@ -616,7 +616,7 @@ What would you like to do with the technical documentation?"""
         """
         
         try:
-            review_result = await self._call_deepseek(review_prompt)
+            review_result = await self._call_llm(review_prompt)
             return review_result
         except Exception as e:
             self.logger.error(f"Error performing document review: {e}")

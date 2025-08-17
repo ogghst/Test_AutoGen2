@@ -373,53 +373,6 @@ class Requirement:
 
 
 @dataclass
-class ProjectContext:
-    """Rappresenta il contesto di un progetto"""
-    project_id: str = field(default_factory=generate_uuid)
-    name: str = ""
-    objectives: List[str] = field(default_factory=list)
-    stakeholders: List[str] = field(default_factory=list)
-    constraints: List[str] = field(default_factory=list)
-    timeline: str = ""
-    budget: str = ""
-    methodology: Methodology = Methodology.AGILE
-    status: ProjectStatus = ProjectStatus.DRAFT
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'created_at': serialize_datetime(self.created_at),
-            'updated_at': serialize_datetime(self.updated_at),
-            'methodology': self.methodology.value,
-            'status': self.status.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectContext':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['created_at'] = deserialize_datetime(data.get('created_at'))
-        data['updated_at'] = deserialize_datetime(data.get('updated_at'))
-        data['methodology'] = Methodology(data.get('methodology', 'agile'))
-        data['status'] = ProjectStatus(data.get('status', 'draft'))
-        return cls(**data)
-    
-    def update_status(self, new_status: ProjectStatus):
-        """Aggiorna status del progetto"""
-        self.status = new_status
-        self.updated_at = datetime.now()
-        self.metadata['status_history'] = self.metadata.get('status_history', [])
-        self.metadata['status_history'].append({
-            'status': new_status.value,
-            'timestamp': serialize_datetime(datetime.now())
-        })
-
-
-@dataclass
 class ChangeRecord:
     """Rappresenta un record di cambiamento per change management"""
     id: str = field(default_factory=generate_uuid)

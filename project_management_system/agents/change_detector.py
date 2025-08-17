@@ -78,7 +78,7 @@ class ChangeDetectorAgent(BaseProjectAgent):
         """
         
         try:
-            extracted_config = await self._call_deepseek(extraction_prompt)
+            extracted_config = await self._call_llm(extraction_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -217,7 +217,7 @@ All monitored artifacts are up to date. The system will continue monitoring for 
         """
         
         try:
-            impact_analysis = await self._call_deepseek(impact_prompt)
+            impact_analysis = await self._call_llm(impact_prompt)
             
             # Aggiorna livelli di impatto
             for change in recent_changes:
@@ -320,7 +320,7 @@ Use specific commands to manage the change workflow."""
         """
         
         try:
-            approval_info = await self._call_deepseek(approval_prompt)
+            approval_info = await self._call_llm(approval_prompt)
             
             # Prova a parsare la risposta come JSON
             try:
@@ -398,7 +398,7 @@ The approval workflow is being processed. Type 'change history' to view updated 
         """
         
         try:
-            rollback_info = await self._call_deepseek(rollback_prompt)
+            rollback_info = await self._call_llm(rollback_prompt)
             
             # Prova a parsare la risposta come JSON
             try:

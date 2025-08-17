@@ -130,6 +130,55 @@ class DeepSeekConfig:
 
 
 @dataclass
+class OllamaConfig:
+    """Configuration for Ollama"""
+    base_url: str = "http://localhost:11434"
+    model: str = "llama3.2"
+    timeout: float = 60.0
+    max_tokens: int = 4000
+    temperature: float = 0.7
+    top_p: float = 0.95
+    frequency_penalty: float = 0.1
+    presence_penalty: float = 0.1
+    max_retries: int = 3
+    retry_delay: float = 1.0
+    enable_streaming: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "base_url": self.base_url,
+            "model": self.model,
+            "timeout": self.timeout,
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "frequency_penalty": self.frequency_penalty,
+            "presence_penalty": self.presence_penalty,
+            "max_retries": self.max_retries,
+            "retry_delay": self.retry_delay,
+            "enable_streaming": self.enable_streaming
+        }
+
+    def get_api_url(self) -> str:
+        """Get the full API URL for chat completions"""
+        return f"{self.base_url.rstrip('/')}/api/chat"
+
+    def get_payload_template(self) -> Dict[str, Any]:
+        """Get template payload for Ollama API requests"""
+        return {
+            "model": self.model,
+            "options": {
+                "temperature": self.temperature,
+                "num_predict": self.max_tokens,
+                "top_p": self.top_p,
+                "frequency_penalty": self.frequency_penalty,
+                "presence_penalty": self.presence_penalty,
+            },
+            "stream": self.enable_streaming
+        }
+
+
+@dataclass
 class AutoGenConfig:
     """Configuration for AutoGen 0.7.2+ system"""
     default_team_pattern: TeamPattern = TeamPattern.ROUND_ROBIN
@@ -335,9 +384,16 @@ class ConfigManager:
         """
         self.config_file = config_file
         self._config_cache: Dict[str, Any] = {}
-        
+
+        # Determine LLM provider
+        provider_str = os.getenv("LLM_PROVIDER", "deepseek").lower()
+        try:
+            self.llm_provider = ModelProvider(provider_str)
+        except ValueError:
+            raise ValueError(f"Invalid LLM_PROVIDER: {provider_str}. Must be one of {[p.value for p in ModelProvider]}")
+
         # Initialize configurations
-        self.deepseek = self._load_deepseek_config()
+        self.llm_config = self._load_llm_config()
         self.autogen = self._load_autogen_config()
         self.system = self._load_system_config()
         
@@ -354,13 +410,23 @@ class ConfigManager:
         
         # Validate configuration
         self._validate_configuration()
-    
+
+    def _load_llm_config(self) -> Union[DeepSeekConfig, OllamaConfig]:
+        """Load configuration for the selected LLM provider."""
+        if self.llm_provider == ModelProvider.DEEPSEEK:
+            return self._load_deepseek_config()
+        elif self.llm_provider == ModelProvider.OLLAMA:
+            return self._load_ollama_config()
+        else:
+            # Default to DeepSeek if provider is somehow unsupported after checks
+            return self._load_deepseek_config()
+
     def _load_deepseek_config(self) -> DeepSeekConfig:
         """Load DeepSeek configuration from environment"""
         api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
             raise ValueError(
-                "DEEPSEEK_API_KEY environment variable is required. "
+                "DEEPSEEK_API_KEY environment variable is required for the 'deepseek' provider. "
                 "Get your API key from https://platform.deepseek.com/"
             )
         
@@ -379,6 +445,22 @@ class ConfigManager:
             enable_streaming=os.getenv("DEEPSEEK_ENABLE_STREAMING", "false").lower() == "true"
         )
     
+    def _load_ollama_config(self) -> OllamaConfig:
+        """Load Ollama configuration from environment"""
+        return OllamaConfig(
+            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            model=os.getenv("OLLAMA_MODEL", "llama3.2"),
+            timeout=float(os.getenv("OLLAMA_TIMEOUT", "60.0")),
+            max_tokens=int(os.getenv("OLLAMA_MAX_TOKENS", "4000")),
+            temperature=float(os.getenv("OLLAMA_TEMPERATURE", "0.7")),
+            top_p=float(os.getenv("OLLAMA_TOP_P", "0.95")),
+            frequency_penalty=float(os.getenv("OLLAMA_FREQUENCY_PENALTY", "0.1")),
+            presence_penalty=float(os.getenv("OLLAMA_PRESENCE_PENALTY", "0.1")),
+            max_retries=int(os.getenv("OLLAMA_MAX_RETRIES", "3")),
+            retry_delay=float(os.getenv("OLLAMA_RETRY_DELAY", "1.0")),
+            enable_streaming=os.getenv("OLLAMA_ENABLE_STREAMING", "false").lower() == "true"
+        )
+
     def _load_autogen_config(self) -> AutoGenConfig:
         """Load AutoGen configuration from environment"""
         default_pattern = os.getenv("AUTOGEN_DEFAULT_PATTERN", "round_robin")
@@ -527,13 +609,14 @@ class ConfigManager:
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
-            
-            # Update configurations from file
-            if "deepseek" in config_data:
-                for key, value in config_data["deepseek"].items():
-                    if hasattr(self.deepseek, key):
-                        setattr(self.deepseek, key, value)
-            
+
+            # Update LLM config from file
+            if self.llm_provider.value in config_data:
+                llm_config_data = config_data[self.llm_provider.value]
+                for key, value in llm_config_data.items():
+                    if hasattr(self.llm_config, key):
+                        setattr(self.llm_config, key, value)
+
             if "autogen" in config_data:
                 for key, value in config_data["autogen"].items():
                     if hasattr(self.autogen, key):
@@ -570,16 +653,21 @@ class ConfigManager:
         errors = []
         warnings = []
         
-        # Validate DeepSeek configuration
-        if not self.deepseek.api_key or not self.deepseek.api_key.startswith("sk-"):
-            errors.append("Invalid DeepSeek API key format (should start with 'sk-')")
+        # Validate LLM configuration
+        if self.llm_provider == ModelProvider.DEEPSEEK:
+            if not self.llm_config.api_key or not self.llm_config.api_key.startswith("sk-"):
+                errors.append("Invalid DeepSeek API key format (should start with 'sk-')")
+            if self.llm_config.temperature < 0.0 or self.llm_config.temperature > 2.0:
+                errors.append("DeepSeek temperature must be between 0.0 and 2.0")
+            if self.llm_config.max_tokens < 1 or self.llm_config.max_tokens > 32000:
+                warnings.append("DeepSeek max_tokens is recommended to be between 1 and 32000")
         
-        if self.deepseek.temperature < 0.0 or self.deepseek.temperature > 2.0:
-            errors.append("DeepSeek temperature must be between 0.0 and 2.0")
-        
-        if self.deepseek.max_tokens < 1 or self.deepseek.max_tokens > 32000:
-            warnings.append("DeepSeek max_tokens should be between 1 and 32000")
-        
+        elif self.llm_provider == ModelProvider.OLLAMA:
+            if not self.llm_config.base_url.startswith("http"):
+                errors.append("Ollama base_url must be a valid URL (e.g., http://localhost:11434)")
+            if not self.llm_config.model:
+                errors.append("Ollama model name cannot be empty")
+
         # Validate AutoGen configuration
         if not AUTOGEN_AVAILABLE:
             warnings.append(f"AutoGen not available (required version: >=0.7.2)")
@@ -643,7 +731,7 @@ class ConfigManager:
     def save_to_file(self, config_file: str):
         """Save current configuration to JSON file"""
         config_data = {
-            "deepseek": self.deepseek.to_dict(),
+            self.llm_provider.value: self.llm_config.to_dict(),
             "autogen": self.autogen.to_dict(),
             "system": self.system.to_dict(),
             "agents": {name: config.to_dict() for name, config in self.agents.items()},
@@ -660,7 +748,8 @@ class ConfigManager:
     def get_config_summary(self) -> Dict[str, Any]:
         """Get a summary of the current configuration"""
         return {
-            "deepseek": self.deepseek.to_dict(),
+            "llm_provider": self.llm_provider.value,
+            "llm_config": self.llm_config.to_dict(),
             "autogen": self.autogen.to_dict(),
             "system": self.system.to_dict(),
             "agents_count": len(self.agents),
@@ -675,7 +764,7 @@ class ConfigManager:
         logger.info("Reloading configuration...")
         
         # Reload from environment
-        self.deepseek = self._load_deepseek_config()
+        self.llm_config = self._load_llm_config()
         self.autogen = self._load_autogen_config()
         self.system = self._load_system_config()
         
@@ -692,7 +781,11 @@ class ConfigManager:
         template = """# Environment Variables Template for Multi-Agent Project Management System
 # Copy this file to .env and fill in your values
 
-# DeepSeek API Configuration
+# ------------------------- LLM Provider Configuration -------------------------
+# Choose your LLM provider: "deepseek" or "ollama"
+LLM_PROVIDER=deepseek
+
+# DeepSeek API Configuration (if LLM_PROVIDER is "deepseek")
 DEEPSEEK_API_KEY=your_api_key_here
 DEEPSEEK_MODEL=deepseek-chat
 DEEPSEEK_TIMEOUT=60.0
@@ -705,7 +798,20 @@ DEEPSEEK_MAX_RETRIES=3
 DEEPSEEK_RETRY_DELAY=1.0
 DEEPSEEK_ENABLE_STREAMING=false
 
-# AutoGen Configuration
+# Ollama Configuration (if LLM_PROVIDER is "ollama")
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+OLLAMA_TIMEOUT=60.0
+OLLAMA_MAX_TOKENS=4000
+OLLAMA_TEMPERATURE=0.7
+OLLAMA_TOP_P=0.95
+OLLAMA_FREQUENCY_PENALTY=0.1
+OLLAMA_PRESENCE_PENALTY=0.1
+OLLAMA_MAX_RETRIES=3
+OLLAMA_RETRY_DELAY=1.0
+OLLAMA_ENABLE_STREAMING=false
+
+# ------------------------- AutoGen Configuration ----------------------------
 AUTOGEN_DEFAULT_PATTERN=round_robin
 AUTOGEN_MAX_TURNS=20
 AUTOGEN_MAX_CONSECUTIVE_REPLY=3

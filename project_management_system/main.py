@@ -77,7 +77,8 @@ async def main():
     try:
         project_manager = ProjectManagerAgent(
             knowledge_base=kb,
-            document_store=ds
+            document_store=ds,
+            llm_config=config_manager.llm_config
         )
 
         user_proxy = UserProxyAgent(
