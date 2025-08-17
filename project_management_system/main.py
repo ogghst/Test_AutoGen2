@@ -69,25 +69,6 @@ except Exception as e:
     sys.exit(1)
 
 
-async def run_non_interactive(project_manager, user_proxy, groupchat):
-    """Runs the system in non-interactive mode with a predefined script."""
-    logger.info("Running in non-interactive mode")
-    
-    script = [
-        "init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team",
-        "status",
-        "requirements",
-        "plan project",
-        "exit"
-    ]
-    
-    messages = [TextMessage(source=user_proxy.name, content=msg) for msg in script]
-    
-    await Console(groupchat.run_stream(task=messages))
-        
-    logger.info("Non-interactive script completed")
-
-
 async def main(non_interactive: bool = False):
     """
     Asynchronous main function to initialize and run the agent system.
@@ -116,12 +97,24 @@ async def main(non_interactive: bool = False):
             llm_config=config_manager.llm_config
         )
 
-        user_proxy = UserProxyAgent(
-            name="HumanUser",
-            description="A human user who provides commands and information to the project management system.",
-            code_execution_config=False,
-            input_func=input if not non_interactive else lambda: None,
-        )
+        if non_interactive:
+            user_proxy = NonInteractiveUserProxyAgent(
+                name="HumanUser",
+                description="A non-interactive user agent that executes a predefined script.",
+            )
+            script = [
+                "init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team",
+                "status",
+                "requirements",
+                "plan project",
+                "exit"
+            ]
+            user_proxy.set_script(script)
+        else:
+            user_proxy = UserProxyAgent(
+                name="HumanUser",
+                description="A human user who provides commands and information to the project management system.",
+            )
         logger.info("Agents initialized successfully.")
     except Exception as e:
         logger.error(f"Failed to initialize agents: {e}", exc_info=True)
@@ -136,7 +129,11 @@ async def main(non_interactive: bool = False):
     )
     
     if non_interactive:
-        await run_non_interactive(project_manager, user_proxy, groupchat)
+        logger.info("Running in non-interactive mode")
+        # The NonInteractiveUserProxyAgent will automatically provide the first message.
+        initial_message = "Please proceed with the project plan."
+        await Console(groupchat.run_stream(task=initial_message))
+        logger.info("Non-interactive script completed")
     else:
         # --- Start Interactive Demo ---
         print("\n" + "="*60)

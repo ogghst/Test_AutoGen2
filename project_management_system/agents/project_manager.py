@@ -2,9 +2,9 @@ from typing import Optional, List, Dict, Any
 import re
 from datetime import datetime
 
-from .base_agent import BaseProjectAgent, DeepSeekConfig, OllamaConfig
+from .base_agent import BaseProjectAgent, DeepSeekConfig, OllamaConfig, LLMConnectionError
 from typing import Union
-from models.data_models import AgentConfig, DeepSeekConfig, OllamaConfig, AgentRole
+from models.data_models import AgentConfig, DeepSeekConfig, OllamaConfig, AgentRole, ProjectContext
 from knowledge.knowledge_base import KnowledgeBase
 from storage.document_store import DocumentStore
 from autogen_agentchat.messages import BaseMessage
@@ -69,30 +69,29 @@ class ProjectManagerAgent(BaseProjectAgent):
         """
         
         try:
-            # Call DeepSeek to extract project information
+            # Call LLM to extract project information
             extracted_info = await self._call_llm(extraction_prompt)
             
             # Try to parse the response as JSON
             import json
-            try:
-                project_data = json.loads(extracted_info)
-                self.logger.info(f"Project information extracted: {project_data.get('name', 'Unknown')}")
-                
-                # Create project context
-                self.current_project = ProjectContext(
-                    project_id=f"proj_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                    name=project_data.get('name', 'New Project'),
-                    objectives=project_data.get('objectives', []),
-                    stakeholders=project_data.get('stakeholders', []),
-                    constraints=project_data.get('constraints', []),
-                    timeline=project_data.get('timeline', 'TBD'),
-                    budget=project_data.get('budget', 'TBD')
-                )
-                
-                # Store in knowledge base
-                self.knowledge_base.set_project_context(self.current_project)
-                
-                return f"""✅ Project initialized successfully!
+            project_data = json.loads(extracted_info)
+            self.logger.info(f"Project information extracted: {project_data.get('name', 'Unknown')}")
+
+            # Create project context
+            self.current_project = ProjectContext(
+                project_id=f"proj_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                name=project_data.get('name', 'New Project'),
+                objectives=project_data.get('objectives', []),
+                stakeholders=project_data.get('stakeholders', []),
+                constraints=project_data.get('constraints', []),
+                timeline=project_data.get('timeline', 'TBD'),
+                budget=project_data.get('budget', 'TBD')
+            )
+
+            # Store in knowledge base
+            self.knowledge_base.set_project_context(self.current_project)
+
+            return f"""✅ Project initialized successfully!
 
 **Project: {self.current_project.name}**
 - **Objectives:** {', '.join(self.current_project.objectives)}
@@ -107,19 +106,21 @@ Next steps:
 3. Assign resources
 
 Type 'requirements' to start requirements gathering, or 'plan project' to create the project plan."""
-                
-            except json.JSONDecodeError:
-                self.logger.warning("Failed to parse extracted project information as JSON")
-                return f"""✅ Project initialization started!
 
-I've extracted the following information:
-{extracted_info}
+        except LLMConnectionError as e:
+            self.logger.error(f"LLM connection error during project initialization: {e}")
+            self.workflow_state = "idle"  # Reset state
+            return f"❌ Error connecting to the LLM. Project initialization failed. Please try again later."
 
-The project is now in initialization phase. Type 'requirements' to start gathering detailed requirements, or 'plan project' to create the project plan."""
+        except json.JSONDecodeError:
+            self.logger.warning("Failed to parse LLM response as JSON during project initialization.")
+            self.workflow_state = "idle"  # Reset state
+            return "❌ The LLM returned an invalid response. Project initialization failed. Please try again."
                 
         except Exception as e:
-            self.logger.error(f"Error during project initialization: {e}")
-            return f"❌ Error during project initialization: {str(e)}"
+            self.logger.error(f"An unexpected error occurred during project initialization: {e}", exc_info=True)
+            self.workflow_state = "idle"  # Reset state
+            return f"❌ An unexpected error occurred during project initialization: {str(e)}"
     
     async def _handle_status_request(self) -> str:
         """Handles status and update requests."""

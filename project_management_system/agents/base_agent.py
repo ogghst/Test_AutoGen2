@@ -19,6 +19,11 @@ from config.logging_config import get_logger
 from config.settings import DeepSeekConfig, OllamaConfig
 
 
+class LLMConnectionError(Exception):
+    """Custom exception for LLM connection errors."""
+    pass
+
+
 class BaseProjectAgent(BaseChatAgent, ABC):
     """Classe base per tutti gli agenti del sistema"""
 
@@ -127,13 +132,13 @@ class BaseProjectAgent(BaseChatAgent, ABC):
                 self.logger.debug(f"DeepSeek API call successful: {len(content)} characters")
                 return content
         except httpx.HTTPStatusError as e:
-            error_msg = f"❌ Error calling DeepSeek API: {e.response.status_code} - {e.response.text}"
+            error_msg = f"Error calling DeepSeek API: {e.response.status_code} - {e.response.text}"
             self.logger.error(error_msg)
-            return error_msg
+            raise LLMConnectionError(error_msg) from e
         except Exception as e:
-            error_msg = f"❌ Error connecting to DeepSeek API: {str(e)}"
+            error_msg = f"Error connecting to DeepSeek API: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
-            return error_msg
+            raise LLMConnectionError(error_msg) from e
 
     async def _execute_ollama_request(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """Executes a request to the Ollama API."""
@@ -156,13 +161,13 @@ class BaseProjectAgent(BaseChatAgent, ABC):
                 self.logger.debug(f"Ollama API call successful: {len(content)} characters")
                 return content
         except httpx.HTTPStatusError as e:
-            error_msg = f"❌ Error calling Ollama API: {e.response.status_code} - {e.response.text}"
+            error_msg = f"Error calling Ollama API: {e.response.status_code} - {e.response.text}"
             self.logger.error(error_msg)
-            return error_msg
+            raise LLMConnectionError(error_msg) from e
         except Exception as e:
-            error_msg = f"❌ Error connecting to Ollama API: {str(e)}"
+            error_msg = f"Error connecting to Ollama API: {str(e)}"
             self.logger.error(error_msg, exc_info=True)
-            return error_msg
+            raise LLMConnectionError(error_msg) from e
     
     def _get_agent_context(self, project_id: str = None) -> str:
         """Ottiene contesto specifico per l'agente dalla knowledge base"""
