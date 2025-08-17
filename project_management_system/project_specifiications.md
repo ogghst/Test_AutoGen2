@@ -67,8 +67,8 @@ Il sistema implementa un framework multi-agente intelligente per l'automazione d
 
 ### Core Framework
 - **AutoGen**: Framework Microsoft per sistemi multi-agente
-- **Ollama**: Runtime locale per Large Language Models
-- **Python 3.8+**: Linguaggio di programmazione principale
+- **Ollama e Deepseek**: Due Large Language Models Utilizzabili
+- **Python 3.12+**: Linguaggio di programmazione principale
 
 ### Modelli di Dati
 - **JSON-LD**: Knowledge representation per entità e relazioni
@@ -104,7 +104,7 @@ project_management_system/
 │   └── document_store.py       # Persistenza documenti output
 │
 ├── agents/
-│   ├── __init__.py
+│   ├── __init__.py            # Export agenti e factory function
 │   ├── base_agent.py          # Classe base per agenti
 │   ├── project_manager.py     # Agente orchestratore
 │   ├── requirements_analyst.py # Agente raccolta requisiti
@@ -134,7 +134,7 @@ project_management_system/
 
 ### Prerequisiti
 
-1. **Python 3.8+** installato
+1. **Python 3.12+** installato
 2. **Ollama** installato e configurato
 3. **Git** per cloning del progetto
 
@@ -190,7 +190,7 @@ pip install -r requirements.txt
 ### Step 4: Contenuto requirements.txt
 
 ```txt
-autogen-agentchat>=0.4.0
+autogen-agentchat>=0.7.2
 httpx>=0.24.0
 asyncio-mqtt>=0.11.0
 pydantic>=2.0.0
@@ -298,6 +298,56 @@ pytest tests/test_agents.py -v
 pytest --cov=agents tests/
 ```
 
+## Implementazione Agenti
+
+### Agenti Implementati
+
+✅ **BaseProjectAgent**: Classe base con funzionalità comuni
+✅ **ProjectManagerAgent**: Orchestrazione workflow e coordinamento progetto
+✅ **RequirementsAnalystAgent**: Raccolta, analisi e validazione requisiti
+✅ **ChangeDetectorAgent**: Monitoraggio cambiamenti e change management
+✅ **TechnicalWriterAgent**: Generazione e gestione documentazione tecnica
+
+### Caratteristiche Implementate
+
+- **Pattern OOP**: Ogni agente ha responsabilità specifiche e ben definite
+- **Async/Await**: Gestione asincrona per operazioni non bloccanti
+- **DeepSeek Integration**: Utilizzo LLM per generazione contenuti intelligenti
+- **Error Handling**: Gestione robusta degli errori con logging
+- **Message Processing**: Sistema di routing messaggi per tipo di comando
+- **Document Management**: Integrazione con storage e knowledge base
+
+### Comandi Supportati
+
+#### Project Manager
+- `init_project` - Inizializzazione nuovo progetto
+- `status` - Stato progetto corrente
+- `requirements` - Avvio raccolta requisiti
+- `plan project` - Pianificazione progetto
+
+#### Requirements Analyst
+- `gather requirements` - Raccolta requisiti da testo
+- `analyze requirements` - Analisi requisiti raccolti
+- `document requirements` - Creazione documentazione formale
+- `interview questions` - Domande per interviste stakeholder
+- `validate requirements` - Validazione qualità requisiti
+
+#### Change Detector
+- `monitor artifacts` - Configurazione monitoring
+- `detect changes` - Rilevazione cambiamenti
+- `analyze impact` - Analisi impatto cambiamenti
+- `change history` - Cronologia cambiamenti
+- `approve changes` - Gestione workflow approvazione
+- `rollback changes` - Gestione rollback
+
+#### Technical Writer
+- `create document` - Creazione documenti tecnici
+- `format document` - Applicazione formattazione
+- `review document` - Revisione documenti
+- `template management` - Gestione template
+- `export document` - Esportazione formati diversi
+- `organize documents` - Organizzazione documenti
+
 ## Estensioni Future
 
 - **ZeroMQ**: Comunicazione inter-processo
@@ -306,4 +356,4 @@ pytest --cov=agents tests/
 - **CI/CD Integration**: Automazione deployment
 - **Metrics & Monitoring**: Osservabilità sistema
 
-Il sistema fornisce una base solida e modulare per l'automazione della documentazione di progetto con capacità di estensione verso architetture distribuite.
+Il sistema fornisce una base solida e modulare per l'automazione della documentazione di progetto con capacità di estensione verso architetture distribuite. Tutti gli agenti sono stati implementati seguendo le best practices di programmazione orientata agli oggetti Python.

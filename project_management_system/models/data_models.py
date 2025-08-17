@@ -78,6 +78,33 @@ class Methodology(Enum):
     HYBRID = "hybrid"
 
 
+class RequirementType(Enum):
+    """Tipi di requisito supportati dal sistema"""
+    FUNCTIONAL = "functional"
+    NON_FUNCTIONAL = "non_functional"
+    BUSINESS = "business"
+    TECHNICAL = "technical"
+    CONSTRAINT = "constraint"
+    ASSUMPTION = "assumption"
+
+
+class ChangeStatus(Enum):
+    """Stati dei cambiamenti per change management"""
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    IMPLEMENTED = "implemented"
+    ROLLED_BACK = "rolled_back"
+
+
+class ImpactLevel(Enum):
+    """Livelli di impatto per change management"""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
@@ -346,6 +373,104 @@ class Requirement:
 
 
 @dataclass
+class ProjectContext:
+    """Rappresenta il contesto di un progetto"""
+    project_id: str = field(default_factory=generate_uuid)
+    name: str = ""
+    objectives: List[str] = field(default_factory=list)
+    stakeholders: List[str] = field(default_factory=list)
+    constraints: List[str] = field(default_factory=list)
+    timeline: str = ""
+    budget: str = ""
+    methodology: Methodology = Methodology.AGILE
+    status: ProjectStatus = ProjectStatus.DRAFT
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Converte in dizionario per serializzazione"""
+        return {
+            **asdict(self),
+            'created_at': serialize_datetime(self.created_at),
+            'updated_at': serialize_datetime(self.updated_at),
+            'methodology': self.methodology.value,
+            'status': self.status.value
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectContext':
+        """Crea istanza da dizionario"""
+        data = data.copy()
+        data['created_at'] = deserialize_datetime(data.get('created_at'))
+        data['updated_at'] = deserialize_datetime(data.get('updated_at'))
+        data['methodology'] = Methodology(data.get('methodology', 'agile'))
+        data['status'] = ProjectStatus(data.get('status', 'draft'))
+        return cls(**data)
+    
+    def update_status(self, new_status: ProjectStatus):
+        """Aggiorna status del progetto"""
+        self.status = new_status
+        self.updated_at = datetime.now()
+        self.metadata['status_history'] = self.metadata.get('status_history', [])
+        self.metadata['status_history'].append({
+            'status': new_status.value,
+            'timestamp': serialize_datetime(datetime.now())
+        })
+
+
+@dataclass
+class ChangeRecord:
+    """Rappresenta un record di cambiamento per change management"""
+    id: str = field(default_factory=generate_uuid)
+    artifact_id: str = ""
+    change_type: ChangeType = ChangeType.MODIFIED
+    previous_hash: str = ""
+    current_hash: str = ""
+    detected_at: datetime = field(default_factory=datetime.now)
+    status: str = "pending_review"  # pending_review, approved, rejected
+    impact_level: str = "unknown"  # low, medium, high, critical
+    approved_at: Optional[datetime] = None
+    approver: Optional[str] = None
+    approval_reason: Optional[str] = None
+    rollback_of: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Converte in dizionario per serializzazione"""
+        return {
+            **asdict(self),
+            'detected_at': serialize_datetime(self.detected_at),
+            'approved_at': serialize_datetime(self.approved_at),
+            'change_type': self.change_type.value
+        }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'ChangeRecord':
+        """Crea istanza da dizionario"""
+        data = data.copy()
+        data['detected_at'] = deserialize_datetime(data.get('detected_at'))
+        data['approved_at'] = deserialize_datetime(data.get('approved_at'))
+        data['change_type'] = ChangeType(data.get('change_type', 'modified'))
+        return cls(**data)
+    
+    def approve(self, approver: str, reason: str = ""):
+        """Approva il cambiamento"""
+        self.status = "approved"
+        self.approved_at = datetime.now()
+        self.approver = approver
+        self.approval_reason = reason
+        self.updated_at = datetime.now()
+    
+    def reject(self, reason: str = ""):
+        """Rifiuta il cambiamento"""
+        self.status = "rejected"
+        self.approval_reason = reason
+        self.updated_at = datetime.now()
+
+
+@dataclass
 class Task:
     """Rappresenta un task di progetto"""
     id: str = field(default_factory=generate_uuid)
@@ -420,10 +545,10 @@ def validate_project_context(project: ProjectContext) -> bool:
 
 def validate_document(document: Document) -> bool:
     """Valida Document"""
-    if not document.title.strip():
+    if not document.title or not document.title.strip():
         raise ValidationError("Document title cannot be empty")
     
-    if not document.content.strip():
+    if not document.content or not document.content.strip():
         raise ValidationError("Document content cannot be empty")
     
     if document.version < 1:

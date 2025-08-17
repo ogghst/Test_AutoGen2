@@ -13,6 +13,7 @@ from datetime import datetime
 from models.data_models import AgentRole
 from knowledge.knowledge_base import KnowledgeBase
 from storage.document_store import DocumentStore
+from config.logging_config import get_logger
 
 
 class BaseProjectAgent(BaseChatAgent, ABC):
@@ -37,8 +38,13 @@ class BaseProjectAgent(BaseChatAgent, ABC):
         self.deepseek_url = "https://api.deepseek.com/v1/chat/completions"
         self.conversation_history: List[Dict[str, Any]] = []
         
+        # Set up logger
+        self.logger = get_logger(__name__)
+        
         if not self.deepseek_api_key:
             raise ValueError("DeepSeek API key is required. Set DEEPSEEK_API_KEY environment variable or pass it as parameter.")
+        
+        self.logger.info(f"Agent initialized: {name} ({role.value})")
 
     @property
     def produced_message_types(self) -> List[type]:
@@ -48,6 +54,7 @@ class BaseProjectAgent(BaseChatAgent, ABC):
     async def on_reset(self, cancellation_token: CancellationToken) -> None:
         """Resets the agent to its initialization state."""
         self.conversation_history = []
+        self.logger.debug(f"Agent {self.name} reset")
         
     async def on_messages(self, messages: List[BaseMessage], cancellation_token: CancellationToken) -> Response:
         """Gestisce messaggi ricevuti - implementazione base"""
@@ -61,6 +68,8 @@ class BaseProjectAgent(BaseChatAgent, ABC):
                         "timestamp": datetime.now().isoformat()
                     })
             
+            self.logger.debug(f"Agent {self.name} received {len(messages)} messages")
+            
             # Processa il messaggio
             response_content = await self._process_message(messages[-1])
             
@@ -72,10 +81,13 @@ class BaseProjectAgent(BaseChatAgent, ABC):
                     "content": response_content,
                     "timestamp": datetime.now().isoformat()
                 })
+                
+                self.logger.debug(f"Agent {self.name} generated response: {len(response_content)} characters")
                 return Response(chat_message=response_msg)
             
         except Exception as e:
             error_msg = f"Error processing message: {str(e)}"
+            self.logger.error(f"Agent {self.name} error processing message: {e}", exc_info=True)
             return Response(chat_message=TextMessage(content=error_msg, source=self.name))
         
         return Response(chat_message=TextMessage(content="Message processed", source=self.name))
@@ -110,6 +122,8 @@ class BaseProjectAgent(BaseChatAgent, ABC):
             "stop": None
         }
         
+        self.logger.debug(f"Calling DeepSeek API with {len(messages)} messages")
+        
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
@@ -120,23 +134,41 @@ class BaseProjectAgent(BaseChatAgent, ABC):
                 
                 if response.status_code == 200:
                     result = response.json()
-                    return result["choices"][0]["message"]["content"].strip()
+                    content = result["choices"][0]["message"]["content"].strip()
+                    self.logger.debug(f"DeepSeek API call successful: {len(content)} characters")
+                    return content
                 elif response.status_code == 401:
-                    return "❌ Error: Invalid DeepSeek API key. Please check your DEEPSEEK_API_KEY environment variable."
+                    error_msg = "❌ Error: Invalid DeepSeek API key. Please check your DEEPSEEK_API_KEY environment variable."
+                    self.logger.error("DeepSeek API authentication failed")
+                    return error_msg
                 elif response.status_code == 429:
-                    return "⚠️ Rate limit exceeded. Please wait a moment and try again."
+                    error_msg = "⚠️ Rate limit exceeded. Please wait a moment and try again."
+                    self.logger.warning("DeepSeek API rate limit exceeded")
+                    return error_msg
                 else:
                     error_detail = response.text
-                    return f"❌ Error calling DeepSeek API: {response.status_code} - {error_detail}"
+                    error_msg = f"❌ Error calling DeepSeek API: {response.status_code} - {error_detail}"
+                    self.logger.error(f"DeepSeek API error: {response.status_code} - {error_detail}")
+                    return error_msg
                     
         except httpx.TimeoutException:
-            return "⏰ Request timeout. DeepSeek API is taking too long to respond."
+            error_msg = "⏰ Request timeout. DeepSeek API is taking too long to respond."
+            self.logger.warning("DeepSeek API request timeout")
+            return error_msg
         except Exception as e:
-            return f"❌ Error connecting to DeepSeek API: {str(e)}"
+            error_msg = f"❌ Error connecting to DeepSeek API: {str(e)}"
+            self.logger.error(f"DeepSeek API connection error: {e}", exc_info=True)
+            return error_msg
     
     def _get_agent_context(self, project_id: str = None) -> str:
         """Ottiene contesto specifico per l'agente dalla knowledge base"""
-        return self.knowledge_base.get_context_for_agent(self.role, project_id)
+        try:
+            context = self.knowledge_base.get_context_for_agent(self.role, project_id)
+            self.logger.debug(f"Retrieved context for agent {self.name} (project: {project_id})")
+            return context
+        except Exception as e:
+            self.logger.warning(f"Failed to get context for agent {self.name}: {e}")
+            return "No specific context available for this agent."
     
     def _create_system_prompt(self, project_id: str = None) -> str:
         """Crea system prompt base per l'agente"""
@@ -160,4 +192,5 @@ Guidelines:
 
 Current conversation history is available for context."""
 
+        self.logger.debug(f"Created system prompt for agent {self.name}: {len(base_prompt)} characters")
         return base_prompt
