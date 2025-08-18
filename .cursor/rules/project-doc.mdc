@@ -1,4 +1,10 @@
 ---
-alwaysApply: true
+description: rules to consider prior to analyze, write or execute any file
+alwaysApply: false
 ---
-analyze and keep updated 'project_specifications.md' and 'project_status.md' with project changes done, according to actual document structure and detail level  
+# project documentation
+- analyze 'README.md' prior to start any code review. if 'README.md' file is not updated with code, ask the user whether to update it.
+
+# autogen libraries related code
+- when working with autogen_core, autogen_ext and autogen_agentchat library related code, always make sure it is compliant with API specs in https://microsoft.github.io/autogen/stable//reference/index.html 
+

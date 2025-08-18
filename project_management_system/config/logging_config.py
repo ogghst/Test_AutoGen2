@@ -33,7 +33,7 @@ def setup_logging(
         backup_count: Number of backup log files to keep
     """
     # Create logs directory if it doesn't exist
-    logs_dir = Path("logs")
+    logs_dir = Path("../logs")
     logs_dir.mkdir(exist_ok=True)
     
     # Default log file path

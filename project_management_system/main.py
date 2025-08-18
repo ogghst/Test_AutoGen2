@@ -49,7 +49,7 @@ from config.logging_config import setup_logging, get_logger, log_system_info
 
 # --- Global Configuration ---
 try:
-    config_manager = ConfigManager()
+    config_manager = ConfigManager("config/config.json")
     settings = config_manager.system
     # Setup logging based on settings
     setup_logging(
@@ -94,7 +94,7 @@ async def main(non_interactive: bool = False):
         project_manager = ProjectManagerAgent(
             knowledge_base=kb,
             document_store=ds,
-            llm_config=config_manager.llm_config
+            llm_config=config_manager.llm_config,
         )
 
         if non_interactive:
@@ -146,10 +146,20 @@ async def main(non_interactive: bool = False):
         print("\nType 'exit' to end the session.")
         print("-"*60)
 
-        initial_message = "Hello, I am the user. I am ready to begin managing a project."
-
         logger.info("Starting group chat session")
-        await Console(groupchat.run_stream(task=initial_message))
+        # Don't send an automatic message - wait for user input instead
+        print("\n💬 Waiting for your input...")
+        print("Type your message and press Enter to begin.")
+        print("-" * 60)
+        
+        # Use a more controlled approach - wait for actual user input
+        try:
+            # Start the group chat without any initial message
+            await Console(groupchat.run_stream())
+        except Exception as e:
+            logger.error(f"Error in group chat: {e}")
+            print(f"\n❌ Error in group chat: {e}")
+        
         logger.info("Group chat session completed")
 
 

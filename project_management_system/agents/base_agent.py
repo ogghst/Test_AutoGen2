@@ -27,16 +27,16 @@ class LLMConnectionError(Exception):
 class BaseProjectAgent(BaseChatAgent, ABC):
     """Classe base per tutti gli agenti del sistema"""
 
-    def __init__(
-        self,
-        name: str,
-        role: AgentRole,
-        description: str,
-        knowledge_base: KnowledgeBase,
-        document_store: DocumentStore,
-        llm_config: Union[DeepSeekConfig, OllamaConfig],
-    ):
-        super().__init__(name=name, description=description)
+    def __init__(self, name: str, role: AgentRole, description: str, knowledge_base: KnowledgeBase, document_store: DocumentStore, llm_config: Union[DeepSeekConfig, OllamaConfig], **kwargs):
+        # Set AutoGen properties to prevent automatic processing
+        # kwargs.setdefault('max_consecutive_auto_reply', 0)
+        # kwargs.setdefault('human_input_mode', 'NEVER')
+        
+        super().__init__(
+            name=name,
+            description=description,
+            **kwargs
+        )
         self.role = role
         self.knowledge_base = knowledge_base
         self.document_store = document_store
@@ -61,6 +61,60 @@ class BaseProjectAgent(BaseChatAgent, ABC):
     async def on_messages(self, messages: List[BaseMessage], cancellation_token: CancellationToken) -> Response:
         """Gestisce messaggi ricevuti - implementazione base"""
         try:
+            # Skip processing if no messages or if it's a system message
+            if not messages:
+                self.logger.debug("No messages to process")
+                return Response(chat_message=TextMessage(content="No messages to process", source=self.name))
+            
+            last_message = messages[-1]
+            
+            # Skip processing system messages or empty messages
+            if not last_message.content or last_message.content.strip() == "":
+                self.logger.debug("Skipping empty message")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Skip processing if it's a system-generated message that shouldn't trigger processing
+            system_phrases = [
+                "hello, i am the user. i am ready to begin managing a project",
+                "hello, i am the user. i am ready to begin managing a project.",
+                "i am ready to begin managing a project",
+                "ready to begin managing a project"
+            ]
+            
+            if last_message.content.lower().strip() in system_phrases:
+                self.logger.debug("Skipping system-generated message")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Skip processing if the message source is the same as the agent (self-reply)
+            if last_message.source == self.name:
+                self.logger.debug("Skipping self-reply message")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Skip processing if the message is clearly not user input
+            if last_message.source and "system" in last_message.source.lower():
+                self.logger.debug("Skipping system message")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Additional check: only process messages from HumanUser or actual user input
+            if last_message.source and last_message.source != "HumanUser" and "user" not in last_message.source.lower():
+                self.logger.debug(f"Skipping message from non-user source: {last_message.source}")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Skip if the message content suggests it's a system message
+            if last_message.content and any(phrase in last_message.content.lower() for phrase in [
+                "ready to begin", "i am ready", "begin managing", "system", "initialization"
+            ]):
+                self.logger.debug("Skipping system-like message content")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Final check: only process if this is clearly user input
+            if not last_message.content or len(last_message.content.strip()) < 3:
+                self.logger.debug("Skipping message with insufficient content")
+                return Response(chat_message=TextMessage(content="", source=self.name))
+            
+            # Log what we're about to process
+            self.logger.info(f"Processing user message: {last_message.content[:100]}... from source: {last_message.source}")
+            
             # Aggiorna cronologia conversazione
             for msg in messages:
                 if isinstance(msg, TextMessage):
@@ -73,7 +127,7 @@ class BaseProjectAgent(BaseChatAgent, ABC):
             self.logger.debug(f"Agent {self.name} received {len(messages)} messages")
             
             # Processa il messaggio
-            response_content = await self._process_message(messages[-1])
+            response_content = await self._process_message(last_message)
             
             # Crea risposta
             if response_content:
@@ -109,6 +163,19 @@ class BaseProjectAgent(BaseChatAgent, ABC):
             unsupported_error = "Unsupported LLM configuration."
             self.logger.error(unsupported_error)
             return unsupported_error
+    
+    async def _test_llm_connectivity(self) -> bool:
+        """Test if the configured LLM is accessible."""
+        try:
+            test_prompt = "Respond with 'OK' if you can see this message."
+            if isinstance(self.llm_config, DeepSeekConfig):
+                await self._execute_deepseek_request(test_prompt)
+            elif isinstance(self.llm_config, OllamaConfig):
+                await self._execute_ollama_request(test_prompt)
+            return True
+        except Exception as e:
+            self.logger.warning(f"LLM connectivity test failed: {e}")
+            return False
 
     async def _execute_deepseek_request(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         """Executes a request to the DeepSeek API."""

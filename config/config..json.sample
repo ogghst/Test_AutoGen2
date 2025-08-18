@@ -1,0 +1,211 @@
+{
+  "llm_provider": "deepseek",
+  "deepseek": {
+    "api_key": "your_deepseek_api_key_here",
+    "model": "deepseek-chat",
+    "api_url": "https://api.deepseek.com/v1/chat/completions",
+    "timeout": 60.0,
+    "max_tokens": 4000,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "frequency_penalty": 0.1,
+    "presence_penalty": 0.1,
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "enable_streaming": false
+  },
+  "ollama": {
+    "base_url": "http://localhost:11434",
+    "model": "llama3.2",
+    "timeout": 60.0,
+    "max_tokens": 4000,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "frequency_penalty": 0.1,
+    "presence_penalty": 0.1,
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "enable_streaming": false
+  },
+  "autogen": {
+    "default_team_pattern": "round_robin",
+    "max_turns": 20,
+    "max_consecutive_auto_reply": 3,
+    "enable_human_input_mode": true,
+    "human_input_timeout": 300.0,
+    "enable_code_execution": false,
+    "code_execution_timeout": 60.0,
+    "enable_function_calling": true,
+    "enable_memory": true,
+    "memory_max_tokens": 8000,
+    "enable_logging": true,
+    "log_conversation": true,
+    "cache_seed": 42,
+    "enable_structured_output": true,
+    "enable_handoffs": true,
+    "enable_tool_calling": true,
+    "enable_workbench": false,
+    "model_client_stream": false,
+    "reflect_on_tool_use": true,
+    "max_tool_iterations": 3,
+    "termination_conditions": [
+      {
+        "type": "max_messages",
+        "value": 20
+      },
+      {
+        "type": "text_mention",
+        "keywords": [
+          "TERMINATE",
+          "FINISHED",
+          "COMPLETE"
+        ]
+      },
+      {
+        "type": "timeout",
+        "value": 1800
+      }
+    ]
+  },
+  "system": {
+    "debug": false,
+    "log_level": "INFO",
+    "log_file": null,
+    "log_format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "log_date_format": "%Y-%m-%d %H:%M:%S",
+    "knowledge_base_path": "../knowledge_base",
+    "documents_path": "../output_documents",
+    "logs_path": "../logs",
+    "temp_path": "../temp",
+    "config_path": "../config",
+    "max_concurrent_operations": 10,
+    "request_timeout": 60.0,
+    "max_retries": 3,
+    "retry_delay": 1.0,
+    "enable_metrics": true,
+    "enable_backup": true,
+    "enable_search_index": true,
+    "enable_versioning": true,
+    "auto_cleanup": true,
+    "max_versions_per_document": 10,
+    "enable_api_key_validation": true,
+    "enable_rate_limiting": false,
+    "rate_limit_requests_per_minute": 100
+  },
+  "agents": {
+    "project_manager": {
+      "name": "ProjectManager",
+      "role": "project_manager",
+      "description": "Coordinates project workflow, manages stakeholder communication, and ensures project objectives are met.",
+      "system_message": "You are a Project Manager agent responsible for coordinating project activities, managing timelines, and ensuring successful project delivery. Use your knowledge of project management best practices to guide the team.",
+      "model_provider": "deepseek",
+      "enable_tools": true,
+      "enable_handoffs": true,
+      "enable_memory": true,
+      "max_consecutive_auto_reply": 3,
+      "human_input_mode": "TERMINATE",
+      "code_execution_config": null,
+      "custom_config": {},
+      "produced_message_types": [
+        "TextMessage"
+      ],
+      "model_client_stream": false,
+      "reflect_on_tool_use": true,
+      "max_tool_iterations": 3
+    },
+    "requirements_analyst": {
+      "name": "RequirementsAnalyst",
+      "role": "requirements_analyst",
+      "description": "Gathers, analyzes, and documents project requirements through stakeholder engagement.",
+      "system_message": "You are a Requirements Analyst agent specialized in gathering, analyzing, and documenting project requirements. Focus on creating comprehensive and clear requirements documentation.",
+      "model_provider": "deepseek",
+      "enable_tools": true,
+      "enable_handoffs": true,
+      "enable_memory": true,
+      "max_consecutive_auto_reply": 3,
+      "human_input_mode": "ALWAYS",
+      "code_execution_config": null,
+      "custom_config": {},
+      "produced_message_types": [
+        "TextMessage"
+      ],
+      "model_client_stream": false,
+      "reflect_on_tool_use": true,
+      "max_tool_iterations": 3
+    },
+    "technical_writer": {
+      "name": "TechnicalWriter",
+      "role": "technical_writer",
+      "description": "Creates and maintains comprehensive technical documentation for projects.",
+      "system_message": "You are a Technical Writer agent responsible for creating clear, comprehensive technical documentation. Focus on structure, clarity, and completeness.",
+      "model_provider": "deepseek",
+      "enable_tools": true,
+      "enable_handoffs": true,
+      "enable_memory": true,
+      "max_consecutive_auto_reply": 3,
+      "human_input_mode": "NEVER",
+      "code_execution_config": null,
+      "custom_config": {},
+      "produced_message_types": [
+        "TextMessage"
+      ],
+      "model_client_stream": false,
+      "reflect_on_tool_use": true,
+      "max_tool_iterations": 3
+    },
+    "change_detector": {
+      "name": "ChangeDetector",
+      "role": "change_detector",
+      "description": "Monitors and analyzes changes to maintain documentation consistency.",
+      "system_message": "You are a Change Detector agent that monitors project changes and ensures documentation remains up-to-date. Focus on identifying impacts and coordinating updates.",
+      "model_provider": "deepseek",
+      "enable_tools": true,
+      "enable_handoffs": true,
+      "enable_memory": true,
+      "max_consecutive_auto_reply": 3,
+      "human_input_mode": "NEVER",
+      "code_execution_config": null,
+      "custom_config": {},
+      "produced_message_types": [
+        "TextMessage"
+      ],
+      "model_client_stream": false,
+      "reflect_on_tool_use": false,
+      "max_tool_iterations": 1
+    }
+  },
+  "teams": {
+    "default": {
+      "name": "DefaultProjectTeam",
+      "pattern": "round_robin",
+      "agents": [
+        "project_manager",
+        "requirements_analyst",
+        "technical_writer",
+        "change_detector"
+      ],
+      "max_turns": 20,
+      "termination_conditions": [
+        {
+          "type": "max_messages",
+          "value": 20
+        },
+        {
+          "type": "text_mention",
+          "keywords": [
+            "TERMINATE",
+            "FINISHED",
+            "COMPLETE"
+          ]
+        },
+        {
+          "type": "timeout",
+          "value": 1800
+        }
+      ],
+      "allow_repeat_speaker": true,
+      "enable_clear_history": true,
+      "custom_speaker_selection": null
+    }
+  }
+}
