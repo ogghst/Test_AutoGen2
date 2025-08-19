@@ -474,7 +474,7 @@ async def main():
             ),
             model_client=model_client,
             tools=[create_project_plan_tool],
-            delegate_tools=[transfer_back_to_triage_tool, transfer_to_execution_tool],
+            delegate_tools=[transfer_back_to_triage_tool],
             agent_topic_type=planning_agent_topic_type,
             user_topic_type=user_topic_type,
         ),
