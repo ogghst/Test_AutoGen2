@@ -63,7 +63,7 @@ class AIAgent(RoutedAgent):
                 cancellation_token=ctx.cancellation_token,
             )
             logger.info(f"{self.id.type}: LLM response received - content: {llm_result.content}")
-            #print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+            print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
         except Exception as e:
             logger.error(f"Error in {self.id.type}: {e}", exc_info=True)
                         # Send error response to user instead of just returning
