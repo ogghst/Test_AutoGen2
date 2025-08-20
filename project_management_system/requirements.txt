@@ -2,6 +2,7 @@ autogen-agentchat>=0.7.2
 autogen-core>=0.7.2
 autogen-ext>=0.7.2
 autogen-ext[openai]>=0.7.2
+autogen-ext[ollama]
 python-dotenv>=0.21.0
 httpx>=0.24.0
 asyncio-mqtt>=0.11.0

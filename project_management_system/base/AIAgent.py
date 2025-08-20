@@ -1,4 +1,4 @@
-from project_management_system.POC.handoffs.base.messaging import AgentResponse, UserTask
+from .messaging import AgentResponse, UserTask
 
 
 from autogen_core import FunctionCall, MessageContext, RoutedAgent, TopicId, message_handler
@@ -7,7 +7,7 @@ from autogen_core.tools import Tool
 
 
 import json
-import logging
+from config.logging_config import get_logger
 from typing import List, Tuple
 
 
@@ -50,7 +50,7 @@ class AIAgent(RoutedAgent):
             message: The user task message containing context
             ctx: The message context for cancellation and routing
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         try:
             logger.info(f"{self.id.type}: Processing task with {len(message.context)} messages")
             logger.debug(f"{self.id.type}: Context messages: {[msg.content for msg in message.context]}")
@@ -63,9 +63,16 @@ class AIAgent(RoutedAgent):
                 cancellation_token=ctx.cancellation_token,
             )
             logger.info(f"{self.id.type}: LLM response received - content: {llm_result.content}")
-            print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+            #print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
         except Exception as e:
             logger.error(f"Error in {self.id.type}: {e}", exc_info=True)
+                        # Send error response to user instead of just returning
+            error_message = f"I encountered an error while processing your request: {str(e)}. Please try again or contact support."
+            message.context.append(AssistantMessage(content=error_message, source=self.id.type))
+            await self.publish_message(
+                AgentResponse(context=message.context, reply_to_topic_type=self._agent_topic_type),
+                topic_id=TopicId(self._user_topic_type, source=self.id.key),
+            )
             return
 
         # Process the LLM result
@@ -127,7 +134,7 @@ class AIAgent(RoutedAgent):
                     await self.publish_message(task, topic_id=topic_id)
 
             if len(tool_call_results) > 0:
-                print(f"{'-'*80}\n{self.id.type}:\n{tool_call_results}", flush=True)
+                #print(f"{'-'*80}\n{self.id.type}:\n{tool_call_results}", flush=True)
                 # Make another call to the model with the tool results
                 logger.info(f"{self.id.type}: Making follow-up LLM call with tool results - {tool_call_results}")
 
@@ -140,7 +147,7 @@ class AIAgent(RoutedAgent):
                     cancellation_token=ctx.cancellation_token,
                 )
                 logger.info(f"{self.id.type}: Follow-up LLM response received - {llm_result.content}")
-                print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+                #print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
             else:
                 logger.info(f"{self.id.type}: No more tool calls to process")
                 break

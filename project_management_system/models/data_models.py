@@ -39,16 +39,6 @@ class ChangeType(Enum):
     MOVED = "moved"
 
 
-class AgentRole(Enum):
-    """Ruoli degli agenti nel sistema"""
-    PROJECT_MANAGER = "project_manager"
-    REQUIREMENTS_ANALYST = "requirements_analyst" 
-    CHANGE_DETECTOR = "change_detector"
-    TECHNICAL_WRITER = "technical_writer"
-    ARCHITECT = "architect"
-    QA_SPECIALIST = "qa_specialist"
-    HUMAN = "human"
-
 
 class ProjectStatus(Enum):
     """Stati del progetto"""
@@ -294,35 +284,7 @@ class ProjectContext:
             self.updated_at = datetime.now()
 
 
-@dataclass
-class AgentMessage:
-    """Messaggio tra agenti nel sistema"""
-    id: str = field(default_factory=generate_uuid)
-    agent_id: str = ""
-    role: AgentRole = AgentRole.HUMAN
-    content: str = ""
-    message_type: str = "text"
-    timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    thread_id: Optional[str] = None
-    parent_message_id: Optional[str] = None
-    attachments: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'timestamp': serialize_datetime(self.timestamp),
-            'role': self.role.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AgentMessage':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['timestamp'] = deserialize_datetime(data.get('timestamp'))
-        data['role'] = AgentRole(data['role'])
-        return cls(**data)
+
 
 
 @dataclass
@@ -542,21 +504,6 @@ class DeepSeekConfig:
     api_key: str
     base_url: str = "https://api.deepseek.com/v1"
 
-@dataclass
-class AgentConfig:
-    """Configurazione generica per un agente"""
-    name: str
-    role: AgentRole
-    llm_config: Union[OllamaConfig, DeepSeekConfig]
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AgentConfig':
-        """Crea istanza da dizionario"""
-        return cls(**data)
 
 
 # ============================================================================

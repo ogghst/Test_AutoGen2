@@ -35,7 +35,7 @@ except ImportError:
     pytest = MockPytest()
 
 from models.data_models import (
-    ProjectContext, Methodology, DocumentType, Priority,
+    ProjectContext, AgentRole, Methodology, DocumentType, Priority,
     ProjectStatus, Document, ChangeEvent, ChangeType, generate_uuid
 )
 from knowledge.knowledge_base import KnowledgeBase

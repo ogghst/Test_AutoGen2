@@ -4,7 +4,7 @@ User Agent for the handoffs pattern.
 This agent manages user sessions and handles user input/output.
 """
 
-import logging
+from config.logging_config import get_logger
 from autogen_core import MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import UserMessage
 
@@ -41,7 +41,7 @@ class UserAgent(RoutedAgent):
             message: The user login message
             ctx: The message context for routing
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.info(f"User login, session ID: {self.id.key}")
         print(f"User login, session ID: {self.id.key}.", flush=True)
         
@@ -66,16 +66,16 @@ class UserAgent(RoutedAgent):
             message: The agent response message
             ctx: The message context for routing
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.info(f"Handling task result from {message.reply_to_topic_type}")
         
         # Get the user's input after receiving a response from an agent.
         user_input = input("User (type 'exit' to close the session): ")
-        print(f"{'-'*80}\n{self.id.type}:\n{user_input}", flush=True)
+        #print(f"{'-'*80}\n{self.id.type}:\n{user_input}", flush=True)
         
         if user_input.strip().lower() == "exit":
             logger.info(f"User session ended, session ID: {self.id.key}")
-            print(f"{'-'*80}\nUser session ended, session ID: {self.id.key}.")
+            #print(f"{'-'*80}\nUser session ended, session ID: {self.id.key}.")
             return
             
         message.context.append(UserMessage(content=user_input, source="User"))
