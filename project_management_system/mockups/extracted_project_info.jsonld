@@ -1,0 +1,257 @@
+[
+    {
+        "@id": "_:b0",
+        "http://schema.org/budget": [
+            {
+                "@value": 120000.0
+            }
+        ],
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/currency": [
+            {
+                "@value": "EUR"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "To successfully migrate the company's on-premise Enterprise Resource Planning (ERP) system to a cloud-based solution. This initiative is critical for modernizing our infrastructure, improving scalability, and enhancing data accessibility."
+            }
+        ],
+        "http://schema.org/due_date": [
+            {
+                "@value": "2026-03-31"
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/requirements": [
+            {
+                "@id": "_:b1"
+            },
+            {
+                "@id": "_:b2"
+            },
+            {
+                "@id": "_:b3"
+            },
+            {
+                "@id": "_:b4"
+            },
+            {
+                "@id": "_:b5"
+            },
+            {
+                "@id": "_:b6"
+            }
+        ],
+        "http://schema.org/risks": [
+            {
+                "@value": "Data quality issues from the legacy on-premise system"
+            },
+            {
+                "@value": "Tight project timeline, potentially leading to rushed decisions or incomplete work"
+            },
+            {
+                "@value": "User resistance to the new system"
+            }
+        ],
+        "http://schema.org/stakeholders": [
+            {
+                "@value": "Giulia Rossi (Project Manager)"
+            },
+            {
+                "@value": "Marco Bianchi (Chief Technology Officer)"
+            }
+        ],
+        "http://schema.org/start_date": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/title": [
+            {
+                "@value": "Project Atlas"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    },
+    {
+        "@id": "_:b1",
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "Zero-Downtime Migration: The migration process must be executed without any disruption to critical business operations. A phased or incremental migration strategy will be explored to minimize impact."
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/status": [
+            {
+                "@value": "todo"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    },
+    {
+        "@id": "_:b2",
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "Single Sign-On (SSO) with Azure AD: The new cloud ERP must seamlessly integrate with our existing Azure Active Directory for user authentication and authorization. This will simplify user access and improve security."
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/status": [
+            {
+                "@value": "todo"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    },
+    {
+        "@id": "_:b3",
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "User Training: Comprehensive training must be provided for a minimum of 50 users to ensure a smooth transition and full adoption of the new system. This will include creating training materials, conducting workshops, and providing post-launch support."
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/status": [
+            {
+                "@value": "todo"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    },
+    {
+        "@id": "_:b4",
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "The cloud ERP solution must meet industry standards for security and data privacy."
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/status": [
+            {
+                "@value": "todo"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    },
+    {
+        "@id": "_:b5",
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "Data must be migrated accurately and completely from the old system to the new one."
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/status": [
+            {
+                "@value": "todo"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    },
+    {
+        "@id": "_:b6",
+        "http://schema.org/created_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ],
+        "http://schema.org/description": [
+            {
+                "@value": "The new system must be scalable to accommodate future business growth."
+            }
+        ],
+        "http://schema.org/priority": [
+            {
+                "@value": "high"
+            }
+        ],
+        "http://schema.org/status": [
+            {
+                "@value": "todo"
+            }
+        ],
+        "http://schema.org/updated_at": [
+            {
+                "@value": "2025-09-01"
+            }
+        ]
+    }
+]

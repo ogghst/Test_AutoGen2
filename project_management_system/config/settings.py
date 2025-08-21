@@ -38,7 +38,7 @@ class LogLevel(Enum):
 @dataclass
 class DeepSeekConfig:
     """Configuration for DeepSeek API"""
-    api_key: str = "redacted"
+    api_key: str = "sk-9a4206f76b4a466095d6b85b859c6a85"
     model: str = "deepseek-chat"
     api_url: str = "https://api.deepseek.com/v1/chat/completions"
     model_info: ModelInfo = field(default_factory=lambda: {
