@@ -441,7 +441,7 @@ def create_sample_requirement(
 @dataclass
 class DeepSeekConfig:
     """Configuration for DeepSeek API"""
-    api_key: str = "sk-9a4206f76b4a466095d6b85b859c6a85"
+    api_key: str = "*** redacted ***"
     model: str = "deepseek-chat"
     api_url: str = "https://api.deepseek.com"
     model_info: ModelInfo = field(default_factory=lambda: {
