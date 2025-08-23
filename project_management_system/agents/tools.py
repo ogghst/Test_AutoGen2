@@ -7,6 +7,7 @@ the various agents in the system.
 
 from config.logging_config import get_logger
 from autogen_core.tools import FunctionTool
+from models.data_models import Project
 
 
 # Topic type constants
@@ -107,13 +108,7 @@ async def execute_project_task(
 
 
 async def create_pmi_project_management_plan(
-    project_name: str,  # Project name: str - The name of the project
-    project_description: str,  # Project description: str - Brief description of the project
-    project_objectives: str,  # Project objectives: str - Key objectives and success criteria
-    project_scope: str,  # Project scope: str - What is included and excluded from the project
-    stakeholder_requirements: str,  # Stakeholder requirements: str - Key stakeholder needs and expectations
-    constraints: str,  # Constraints: str - Time, budget, resource, or technical constraints
-    assumptions: str   # Assumptions: str - Key assumptions about the project
+    project: Project
 ) -> str:
     """
     Create a comprehensive PMI-compliant project management plan in markdown format.
