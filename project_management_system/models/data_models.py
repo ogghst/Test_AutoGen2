@@ -71,8 +71,8 @@ class UserStory(BaseModel):
     definition_of_done: Annotated[Optional[str], Field(default=None, description="Definition of done for this user story", max_length=1000)]
     story_points: Annotated[Literal[1, 2, 3, 5, 8, 13, 21], Field(description="Relative complexity estimate using Fibonacci sequence")]
     issues: List[Issue]
-    epic_id: Annotated[uuid.UUID, Field(description="Parent epic reference")]
-    sprint_id: Annotated[Optional[uuid.UUID], Field(default=None, description="Sprint assignment reference")]
+    #epic_id: Annotated[uuid.UUID, Field(description="Parent epic reference")]
+    #sprint_id: Annotated[Optional[uuid.UUID], Field(default=None, description="Sprint assignment reference")]
     status: Annotated[Literal["Backlog", "To Do", "In Progress", "Review", "Done"], Field(description="Current story status")]
     priority: Annotated[int, Field(description="Implementation priority (1 is highest)", ge=1, le=10)]
 

@@ -58,7 +58,7 @@ class AgentFactory:
         self.registered_agents[TRIAGE_AGENT_TOPIC_TYPE] = await self._register_triage_agent()
         
         # Register the planning agent
-        self.registered_agents[PLANNING_AGENT_TOPIC_TYPE] = await self._register_planning_agent()
+        #self.registered_agents[PLANNING_AGENT_TOPIC_TYPE] = await self._register_planning_agent()
         
         # Register the execution agent
         self.registered_agents[EXECUTION_AGENT_TOPIC_TYPE] = await self._register_execution_agent()
@@ -92,13 +92,13 @@ class AgentFactory:
             factory=lambda: TriageAgent(self.model_client),
         )
     
-    async def _register_planning_agent(self):
-        """Register the planning agent."""
-        return await AIAgent.register(
-            self.runtime,
-            type=PLANNING_AGENT_TOPIC_TYPE,
-            factory=lambda: PlanningAgent(self.model_client),
-        )
+    #async def _register_planning_agent(self):
+    #    """Register the planning agent."""
+    #    return await AIAgent.register(
+    #        self.runtime,
+    #        type=PLANNING_AGENT_TOPIC_TYPE,
+    #        factory=lambda: PlanningAgent(self.model_client),
+    #    )
     
     async def _register_execution_agent(self):
         """Register the execution agent."""

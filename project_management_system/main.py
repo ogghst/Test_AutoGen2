@@ -11,7 +11,7 @@ This module orchestrates the entire handoffs system by:
 import asyncio
 import uuid
 from autogen_core import SingleThreadedAgentRuntime, TopicId
-
+import json
 from config.logging_config import setup_logging, get_logger
 from base.utils import configure_oltp_tracing
 from base.model_client import create_model_client
@@ -19,6 +19,7 @@ from agents.factory import AgentFactory
 from agents.tools import USER_TOPIC_TYPE
 from base.messaging import UserLogin
 from config.settings import get_config_manager
+from models.data_models import Project
 
 
 async def main():
@@ -42,6 +43,8 @@ async def main():
     # Get logger after setup
     logger = get_logger(__name__)
     logger.info("Starting handoffs pattern system")
+    
+    logger.info(json.dumps(Project.model_json_schema(), indent=2))
     
     # Configure tracing based on configuration
     if config_manager.runtime.enable_tracing:
