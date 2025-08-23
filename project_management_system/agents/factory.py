@@ -8,12 +8,13 @@ in the handoffs system.
 from autogen_core import SingleThreadedAgentRuntime, TypeSubscription
 from autogen_core.models import ChatCompletionClient
 
-from ..base.AIAgent import AIAgent
+from base.AIAgent import AIAgent
 from .triage_agent import TriageAgent
 from .planning_agent import PlanningAgent
 from .execution_agent import ExecutionAgent
 from .quality_agent import QualityAgent
 from .human_agent import HumanAgent
+from .project_management_agent import ProjectManagementAgent
 from .user_agent import UserAgent
 from .tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
@@ -21,6 +22,7 @@ from .tools import (
     EXECUTION_AGENT_TOPIC_TYPE,
     QUALITY_AGENT_TOPIC_TYPE,
     HUMAN_AGENT_TOPIC_TYPE,
+    PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
 )
 
@@ -56,13 +58,16 @@ class AgentFactory:
         self.registered_agents[TRIAGE_AGENT_TOPIC_TYPE] = await self._register_triage_agent()
         
         # Register the planning agent
-        self.registered_agents[PLANNING_AGENT_TOPIC_TYPE] = await self._register_planning_agent()
+        #self.registered_agents[PLANNING_AGENT_TOPIC_TYPE] = await self._register_planning_agent()
         
         # Register the execution agent
         self.registered_agents[EXECUTION_AGENT_TOPIC_TYPE] = await self._register_execution_agent()
         
         # Register the quality agent
         self.registered_agents[QUALITY_AGENT_TOPIC_TYPE] = await self._register_quality_agent()
+        
+        # Register the project management agent
+        self.registered_agents[PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE] = await self._register_project_management_agent()
         
         # Register the human agent
         self.registered_agents[HUMAN_AGENT_TOPIC_TYPE] = await self._register_human_agent()
@@ -87,13 +92,13 @@ class AgentFactory:
             factory=lambda: TriageAgent(self.model_client),
         )
     
-    async def _register_planning_agent(self):
-        """Register the planning agent."""
-        return await AIAgent.register(
-            self.runtime,
-            type=PLANNING_AGENT_TOPIC_TYPE,
-            factory=lambda: PlanningAgent(self.model_client),
-        )
+    #async def _register_planning_agent(self):
+    #    """Register the planning agent."""
+    #    return await AIAgent.register(
+    #        self.runtime,
+    #        type=PLANNING_AGENT_TOPIC_TYPE,
+    #        factory=lambda: PlanningAgent(self.model_client),
+    #    )
     
     async def _register_execution_agent(self):
         """Register the execution agent."""
@@ -109,6 +114,14 @@ class AgentFactory:
             self.runtime,
             type=QUALITY_AGENT_TOPIC_TYPE,
             factory=lambda: QualityAgent(self.model_client),
+        )
+    
+    async def _register_project_management_agent(self):
+        """Register the project management agent."""
+        return await AIAgent.register(
+            self.runtime,
+            type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
+            factory=lambda: ProjectManagementAgent(self.model_client),
         )
     
     async def _register_human_agent(self):

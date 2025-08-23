@@ -35,12 +35,9 @@ except ImportError:
     pytest = MockPytest()
 
 from models.data_models import (
-    ProjectContext, AgentRole, Methodology, DocumentType, Priority,
+    ProjectContext, Methodology, DocumentType, Priority,
     ProjectStatus, Document, ChangeEvent, ChangeType, generate_uuid
 )
-from knowledge.knowledge_base import KnowledgeBase
-from storage.document_store import DocumentStore
-
 
 # ============================================================================
 # COMMON FIXTURES
@@ -58,63 +55,6 @@ def temp_file_path(temp_dir: Path) -> Path:
     return temp_dir / "test_file.json"
 
 
-# ============================================================================
-# KNOWLEDGE BASE FIXTURES
-# ============================================================================
-
-def knowledge_base(temp_dir: Path) -> KnowledgeBase:
-    """Provide a KnowledgeBase instance for testing."""
-    kb_path = temp_dir / "test_kb.jsonld"
-    kb = KnowledgeBase(kb_path=str(kb_path), auto_save=False)
-    yield kb
-    # Cleanup is handled by temp_dir fixture
-
-
-def knowledge_base_with_data(knowledge_base: KnowledgeBase) -> KnowledgeBase:
-    """Provide a KnowledgeBase instance with some test data."""
-    # Add test entities
-    test_entities = [
-        {
-            "@id": "test:entity1",
-            "type": "TestEntity",
-            "name": "Test Entity 1",
-            "description": "A test entity for unit testing"
-        },
-        {
-            "@id": "test:entity2",
-            "type": "TestEntity",
-            "name": "Test Entity 2",
-            "description": "Another test entity"
-        }
-    ]
-    
-    for entity in test_entities:
-        knowledge_base.add_entity(entity)
-    
-    return knowledge_base
-
-
-# ============================================================================
-# DOCUMENT STORE FIXTURES
-# ============================================================================
-
-def document_store(temp_dir: Path) -> DocumentStore:
-    """Provide a DocumentStore instance for testing."""
-    store = DocumentStore(storage_path=str(temp_dir))
-    yield store
-    asyncio.run(store.close())
-
-
-def feature_rich_document_store(temp_dir: Path) -> DocumentStore:
-    """Provide a DocumentStore with all features enabled for testing."""
-    store = DocumentStore(
-        storage_path=str(temp_dir),
-        enable_versioning=True,
-        enable_search_index=True,
-        enable_backup=True
-    )
-    yield store
-    asyncio.run(store.close())
 
 
 # ============================================================================
@@ -277,10 +217,6 @@ def auto_cleanup():
 if PYTEST_AVAILABLE:
     # Convert functions to pytest fixtures
     temp_dir = pytest.fixture(temp_dir)
-    knowledge_base = pytest.fixture(knowledge_base)
-    knowledge_base_with_data = pytest.fixture(knowledge_base_with_data)
-    document_store = pytest.fixture(document_store)
-    feature_rich_document_store = pytest.fixture(feature_rich_document_store)
     sample_project_context = pytest.fixture(sample_project_context)
     sample_document = pytest.fixture(sample_document)
     sample_entities = pytest.fixture(sample_entities)

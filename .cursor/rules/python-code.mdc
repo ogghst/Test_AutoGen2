@@ -1,6 +1,4 @@
 ---
-description: rules to write python code
-globs: *.py
 alwaysApply: false
 ---
 ## When writing python code, follow those **Fundamental** Principles

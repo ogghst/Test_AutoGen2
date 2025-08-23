@@ -1,0 +1,76 @@
+{
+    "title": "Project Atlas",
+    "description": "To successfully migrate the company's on-premise Enterprise Resource Planning (ERP) system to a cloud-based solution. This initiative is critical for modernizing our infrastructure, improving scalability, and enhancing data accessibility.",
+    "stakeholders": [
+        "Giulia Rossi (Project Manager)",
+        "Marco Bianchi (Chief Technology Officer)"
+    ],
+    "start_date": "2025-09-01",
+    "due_date": "2026-03-31",
+    "requirements": [
+        {
+            "description": "Zero-Downtime Migration: The migration process must be executed without any disruption to critical business operations. A phased or incremental migration strategy will be explored to minimize impact.",
+            "priority": "high",
+            "status": "todo",
+            "assignee": null,
+            "due_date": null,
+            "created_at": "2025-09-01",
+            "updated_at": "2025-09-01"
+        },
+        {
+            "description": "Single Sign-On (SSO) with Azure AD: The new cloud ERP must seamlessly integrate with our existing Azure Active Directory for user authentication and authorization. This will simplify user access and improve security.",
+            "priority": "high",
+            "status": "todo",
+            "assignee": null,
+            "due_date": null,
+            "created_at": "2025-09-01",
+            "updated_at": "2025-09-01"
+        },
+        {
+            "description": "User Training: Comprehensive training must be provided for a minimum of 50 users to ensure a smooth transition and full adoption of the new system. This will include creating training materials, conducting workshops, and providing post-launch support.",
+            "priority": "high",
+            "status": "todo",
+            "assignee": null,
+            "due_date": null,
+            "created_at": "2025-09-01",
+            "updated_at": "2025-09-01"
+        },
+        {
+            "description": "The cloud ERP solution must meet industry standards for security and data privacy.",
+            "priority": "high",
+            "status": "todo",
+            "assignee": null,
+            "due_date": null,
+            "created_at": "2025-09-01",
+            "updated_at": "2025-09-01"
+        },
+        {
+            "description": "Data must be migrated accurately and completely from the old system to the new one.",
+            "priority": "high",
+            "status": "todo",
+            "assignee": null,
+            "due_date": null,
+            "created_at": "2025-09-01",
+            "updated_at": "2025-09-01"
+        },
+        {
+            "description": "The new system must be scalable to accommodate future business growth.",
+            "priority": "high",
+            "status": "todo",
+            "assignee": null,
+            "due_date": null,
+            "created_at": "2025-09-01",
+            "updated_at": "2025-09-01"
+        }
+    ],
+    "risks": [
+        "Data quality issues from the legacy on-premise system",
+        "Tight project timeline, potentially leading to rushed decisions or incomplete work",
+        "User resistance to the new system"
+    ],
+    "budget": 120000.0,
+    "currency": "EUR",
+    "priority": "high",
+    "created_at": "2025-09-01",
+    "updated_at": "2025-09-01"
+}

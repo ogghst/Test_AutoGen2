@@ -1,581 +1,145 @@
 """
-Data models per il sistema multi-agente di project management
-Definisce strutture dati, enum e classi per gestire entità e relazioni
+Pydantic data models for the project management system, generated from data_model.yaml.
 """
-
-from dataclasses import dataclass, asdict, field
-from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Optional, Any, Union
-import json
 import uuid
-from pathlib import Path
+from datetime import datetime, date
+from typing import List, Optional, Literal, Annotated
 
+from pydantic import BaseModel, Field, EmailStr
 
-# ============================================================================
-# ENUMERATIONS
-# ============================================================================
+def generate_uuid() -> uuid.UUID:
+    """Generates a new UUID."""
+    return uuid.uuid4()
 
-class DocumentType(Enum):
-    """Tipi di documento supportati dal sistema"""
-    PROJECT_CHARTER = "project_charter"
-    REQUIREMENTS = "requirements"
-    TECHNICAL_SPEC = "technical_spec"
-    PROJECT_PLAN = "project_plan"
-    ARCHITECTURE = "architecture"
-    USER_STORIES = "user_stories"
-    TEST_PLAN = "test_plan"
-    DEPLOYMENT_GUIDE = "deployment_guide"
-    API_DOCUMENTATION = "api_documentation"
-    CHANGE_LOG = "change_log"
+class TeamMember(BaseModel):
+    """Individual team member definition with PMI role responsibilities"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique member identifier")]
+    name: Annotated[str, Field(description="Member name", min_length=1, max_length=100)]
+    role: Annotated[Literal["Product Owner", "Scrum Master", "Developer", "QA Engineer", "DevOps Engineer", "UX Designer", "Project Manager"], Field(description="Primary role")]
+    email: Annotated[EmailStr, Field(description="Contact email")]
+    capacity: Annotated[float, Field(description="Weekly availability in hours", ge=0, le=60)]
+    is_active: Annotated[bool, Field(default=True, description="Whether the team member is currently active on the project")]
 
+class Deliverable(BaseModel):
+    """Tangible or intangible product produced as part of project completion"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique deliverable identifier")]
+    name: Annotated[str, Field(description="Deliverable name", min_length=1, max_length=100)]
+    description: Annotated[str, Field(description="Deliverable description and acceptance criteria", max_length=500)]
+    status: Annotated[Literal["Not Started", "In Progress", "Completed", "Accepted", "Rejected"], Field(description="Deliverable status")]
+    acceptance_date: Annotated[Optional[date], Field(default=None, description="Date when deliverable was accepted")]
 
-class ChangeType(Enum):
-    """Tipi di cambiamento per change management"""
-    CREATED = "created"
-    MODIFIED = "modified"
-    DELETED = "deleted"
-    RENAMED = "renamed"
-    MOVED = "moved"
+class Stakeholder(BaseModel):
+    """Project stakeholder following PMI stakeholder management"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique stakeholder identifier")]
+    name: Annotated[str, Field(description="Stakeholder name", min_length=1, max_length=100)]
+    role: Annotated[str, Field(description="Stakeholder role in relation to project")]
+    influence: Annotated[Literal["High", "Medium", "Low"], Field(description="Level of influence on project")]
+    interest: Annotated[Literal["High", "Medium", "Low"], Field(description="Level of interest in project")]
+    communication_preferences: Annotated[str, Field(description="Preferred communication method")]
 
+class Risk(BaseModel):
+    """Project risk following PMI risk management framework"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique risk identifier")]
+    description: Annotated[str, Field(description="Risk description", min_length=1, max_length=500)]
+    category: Annotated[Literal["Technical", "Management", "Organizational", "External", "Requirements"], Field(description="Risk category")]
+    probability: Annotated[Literal["High", "Medium", "Low"], Field(description="Probability of occurrence")]
+    impact: Annotated[Literal["High", "Medium", "Low"], Field(description="Impact if risk occurs")]
+    mitigation_strategy: Annotated[str, Field(description="Planned mitigation strategy")]
+    contingency_plan: Annotated[str, Field(description="Contingency plan if risk occurs")]
+    status: Annotated[Literal["Identified", "Analyzed", "Planned", "Monitored", "Resolved"], Field(description="Current risk status")]
 
-class AgentRole(Enum):
-    """Ruoli degli agenti nel sistema"""
-    PROJECT_MANAGER = "project_manager"
-    REQUIREMENTS_ANALYST = "requirements_analyst" 
-    CHANGE_DETECTOR = "change_detector"
-    TECHNICAL_WRITER = "technical_writer"
-    ARCHITECT = "architect"
-    QA_SPECIALIST = "qa_specialist"
-    HUMAN = "human"
+class Issue(BaseModel):
+    """Technical task or problem resolution item with PMI work breakdown structure alignment"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique issue identifier")]
+    title: Annotated[str, Field(description="Short descriptive title", min_length=1, max_length=100)]
+    description: Annotated[str, Field(description="Detailed technical description", max_length=500)]
+    type: Annotated[Literal["Bug", "Task", "Improvement", "Technical Debt", "Spike"], Field(description="Issue type")]
+    status: Annotated[Literal["Backlog", "To Do", "In Progress", "Review", "Done", "Blocked"], Field(description="Current status")]
+    severity: Annotated[Optional[Literal["Critical", "High", "Medium", "Low"]], Field(default=None, description="Issue severity level")]
+    assignee: TeamMember
+    estimate_hours: Annotated[float, Field(description="Time estimate in hours", ge=0)]
+    actual_hours: Annotated[float, Field(description="Actual time spent in hours", ge=0)]
+    due_date: Annotated[date, Field(description="Target completion date")]
+    created_date: Annotated[datetime, Field(default_factory=datetime.now, description="Issue creation timestamp")]
 
+class UserStory(BaseModel):
+    """End-user perspective feature description with acceptance criteria"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique story identifier")]
+    title: Annotated[str, Field(description="Short descriptive title", min_length=1, max_length=100)]
+    description: Annotated[str, Field(description="Detailed user story narrative following 'As a... I want... So that...' format", max_length=1000)]
+    acceptance_criteria: Annotated[List[str], Field(description="Conditions to satisfy story", min_items=1, max_items=10)]
+    definition_of_done: Annotated[Optional[str], Field(default=None, description="Definition of done for this user story", max_length=1000)]
+    story_points: Annotated[Literal[1, 2, 3, 5, 8, 13, 21], Field(description="Relative complexity estimate using Fibonacci sequence")]
+    issues: List[Issue]
+    #epic_id: Annotated[uuid.UUID, Field(description="Parent epic reference")]
+    #sprint_id: Annotated[Optional[uuid.UUID], Field(default=None, description="Sprint assignment reference")]
+    status: Annotated[Literal["Backlog", "To Do", "In Progress", "Review", "Done"], Field(description="Current story status")]
+    priority: Annotated[int, Field(description="Implementation priority (1 is highest)", ge=1, le=10)]
 
-class ProjectStatus(Enum):
-    """Stati del progetto"""
-    DRAFT = "draft"
-    PLANNING = "planning"
-    IN_PROGRESS = "in_progress"
-    REVIEW = "review"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    ON_HOLD = "on_hold"
+class Epic(BaseModel):
+    """Large work body capturing major capability with traceability to business objectives"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique epic identifier")]
+    name: Annotated[str, Field(description="Epic name", min_length=1, max_length=100)]
+    description: Annotated[str, Field(description="Detailed epic description", max_length=500)]
+    business_value: Annotated[int, Field(description="Business value score (1-10)", ge=1, le=10)]
+    user_stories: List[UserStory]
+    priority: Annotated[Literal["Critical", "High", "Medium", "Low"], Field(description="Business priority")]
+    status: Annotated[Literal["Proposed", "Approved", "In Progress", "Completed", "Deferred"], Field(description="Current epic status")]
+    created_date: Annotated[datetime, Field(default_factory=datetime.now, description="Epic creation timestamp")]
 
+class Scope(BaseModel):
+    """Defines project boundaries and deliverables following PMI scope management"""
+    epics: List[Epic]
+    inclusions: Annotated[List[str], Field(description="Explicitly included items in scope", max_items=50)]
+    exclusions: Annotated[List[str], Field(description="Explicitly excluded items from scope", max_items=50)]
+    assumptions: List[str]
+    constraints: List[str]
+    acceptance_criteria: List[str]
 
-class Priority(Enum):
-    """Livelli di priorità"""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
+class Team(BaseModel):
+    """Group responsible for project delivery with RACI matrix support"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Team identifier")]
+    name: Annotated[str, Field(description="Team name", min_length=1, max_length=50)]
+    members: List[TeamMember]
+    velocity: Annotated[float, Field(description="Team velocity (average story points per sprint)", ge=0)]
+    capacity: Annotated[float, Field(description="Total weekly capacity in hours", ge=0)]
 
+class Milestone(BaseModel):
+    """Project milestone with deliverable tracking following PMI time management"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique milestone identifier")]
+    name: Annotated[str, Field(description="Milestone name", min_length=1, max_length=100)]
+    description: Annotated[str, Field(description="Milestone description and significance", max_length=500)]
+    target_date: Annotated[date, Field(description="Planned completion date")]
+    actual_date: Annotated[Optional[date], Field(default=None, description="Actual completion date")]
+    deliverables: List[Deliverable]
+    status: Annotated[Literal["Planned", "At Risk", "Achieved", "Missed"], Field(description="Milestone status")]
 
-class Methodology(Enum):
-    """Metodologie di project management"""
-    AGILE = "agile"
-    WATERFALL = "waterfall"
-    SCRUM = "scrum"
-    KANBAN = "kanban"
-    HYBRID = "hybrid"
+class Sprint(BaseModel):
+    """Time-boxed iteration in agile development"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique sprint identifier")]
+    name: Annotated[str, Field(description="Sprint name/number", min_length=1, max_length=50)]
+    goal: Annotated[str, Field(description="Sprint goal", max_length=200)]
+    start_date: Annotated[date, Field(description="Sprint start date")]
+    end_date: Annotated[date, Field(description="Sprint end date")]
+    velocity: Annotated[float, Field(description="Actual velocity achieved in this sprint", ge=0)]
+    retrospective_notes: Annotated[Optional[str], Field(default=None, description="Notes from sprint retrospective")]
+    daily_standup_notes: Annotated[Optional[str], Field(default=None, description="Notes from daily stand-up meetings", max_length=2000)]
+    review_notes: Annotated[Optional[str], Field(default=None, description="Notes from sprint review/demo", max_length=2000)]
 
-
-class RequirementType(Enum):
-    """Tipi di requisito supportati dal sistema"""
-    FUNCTIONAL = "functional"
-    NON_FUNCTIONAL = "non_functional"
-    BUSINESS = "business"
-    TECHNICAL = "technical"
-    CONSTRAINT = "constraint"
-    ASSUMPTION = "assumption"
-
-
-class ChangeStatus(Enum):
-    """Stati dei cambiamenti per change management"""
-    PENDING_REVIEW = "pending_review"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    IMPLEMENTED = "implemented"
-    ROLLED_BACK = "rolled_back"
-
-
-class ImpactLevel(Enum):
-    """Livelli di impatto per change management"""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-# ============================================================================
-# UTILITY FUNCTIONS
-# ============================================================================
-
-def generate_uuid() -> str:
-    """Genera UUID unico per entità"""
-    return str(uuid.uuid4())
-
-
-def serialize_datetime(dt: datetime) -> str:
-    """Serializza datetime in formato ISO"""
-    return dt.isoformat() if dt else None
-
-
-def deserialize_datetime(dt_str: str) -> Optional[datetime]:
-    """Deserializza datetime da formato ISO"""
-    try:
-        return datetime.fromisoformat(dt_str) if dt_str else None
-    except (ValueError, TypeError):
-        return None
-
-
-# ============================================================================
-# CORE DATA MODELS
-# ============================================================================
-
-@dataclass
-class Document:
-    """Rappresenta un documento generato dal sistema"""
-    id: str
-    type: DocumentType
-    title: str
-    content: str
-    version: int = 1
-    created_at: datetime = field(default_factory=datetime.now)
-    modified_at: datetime = field(default_factory=datetime.now)
-    hash: str = ""
-    dependencies: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    tags: List[str] = field(default_factory=list)
-    author: str = ""
-    project_id: Optional[str] = None
-    file_path: Optional[str] = None
-    
-    def __post_init__(self):
-        """Post-init per validazione e setup"""
-        if not self.id:
-            self.id = generate_uuid()
-        
-        # Auto-set metadata se non presente
-        if 'created_by' not in self.metadata and self.author:
-            self.metadata['created_by'] = self.author
-            
-        if 'document_format' not in self.metadata:
-            self.metadata['document_format'] = 'markdown'
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'created_at': serialize_datetime(self.created_at),
-            'modified_at': serialize_datetime(self.modified_at),
-            'type': self.type.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Document':
-        """Crea istanza da dizionario"""
-        data = data.copy()  # Avoid modifying original
-        data['created_at'] = deserialize_datetime(data.get('created_at'))
-        data['modified_at'] = deserialize_datetime(data.get('modified_at'))
-        data['type'] = DocumentType(data['type'])
-        return cls(**data)
-    
-    def update_content(self, new_content: str, author: str = "system"):
-        """Aggiorna contenuto e incrementa versione"""
-        self.content = new_content
-        self.modified_at = datetime.now()
-        self.version += 1
-        self.metadata['last_modified_by'] = author
-        
-    def add_dependency(self, doc_id: str):
-        """Aggiunge dipendenza da altro documento"""
-        if doc_id not in self.dependencies:
-            self.dependencies.append(doc_id)
-    
-    def remove_dependency(self, doc_id: str):
-        """Rimuove dipendenza"""
-        if doc_id in self.dependencies:
-            self.dependencies.remove(doc_id)
-
-
-@dataclass 
-class ChangeEvent:
-    """Rappresenta un evento di cambiamento nel sistema"""
-    id: str = field(default_factory=generate_uuid)
-    document_id: str = ""
-    change_type: ChangeType = ChangeType.MODIFIED
-    old_hash: Optional[str] = None
-    new_hash: str = ""
-    timestamp: datetime = field(default_factory=datetime.now)
-    description: str = ""
-    author: str = "system"
-    details: Dict[str, Any] = field(default_factory=dict)
-    affected_documents: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'timestamp': serialize_datetime(self.timestamp),
-            'change_type': self.change_type.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ChangeEvent':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['timestamp'] = deserialize_datetime(data.get('timestamp'))
-        data['change_type'] = ChangeType(data['change_type'])
-        return cls(**data)
-
-
-@dataclass
-class ProjectContext:
-    """Contesto completo di un progetto"""
-    project_id: str = field(default_factory=generate_uuid)
-    project_name: str = ""
-    description: str = ""
-    objectives: List[str] = field(default_factory=list)
-    stakeholders: List[str] = field(default_factory=list)
-    constraints: List[str] = field(default_factory=list)
-    assumptions: List[str] = field(default_factory=list)
-    timeline: Optional[str] = None
-    budget: Optional[str] = None
-    domain: Optional[str] = None
-    methodology: Methodology = Methodology.AGILE
-    status: ProjectStatus = ProjectStatus.DRAFT
-    priority: Priority = Priority.MEDIUM
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    # Relazioni
-    team_members: List[str] = field(default_factory=list)
-    related_projects: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'created_at': serialize_datetime(self.created_at),
-            'updated_at': serialize_datetime(self.updated_at),
-            'methodology': self.methodology.value,
-            'status': self.status.value,
-            'priority': self.priority.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ProjectContext':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['created_at'] = deserialize_datetime(data.get('created_at'))
-        data['updated_at'] = deserialize_datetime(data.get('updated_at'))
-        data['methodology'] = Methodology(data.get('methodology', 'agile'))
-        data['status'] = ProjectStatus(data.get('status', 'draft'))
-        data['priority'] = Priority(data.get('priority', 'medium'))
-        return cls(**data)
-    
-    def update_status(self, new_status: ProjectStatus):
-        """Aggiorna status del progetto"""
-        self.status = new_status
-        self.updated_at = datetime.now()
-        self.metadata['status_changed_at'] = serialize_datetime(datetime.now())
-    
-    def add_stakeholder(self, stakeholder: str):
-        """Aggiunge stakeholder"""
-        if stakeholder not in self.stakeholders:
-            self.stakeholders.append(stakeholder)
-            self.updated_at = datetime.now()
-    
-    def add_objective(self, objective: str):
-        """Aggiunge obiettivo"""
-        if objective not in self.objectives:
-            self.objectives.append(objective)
-            self.updated_at = datetime.now()
-
-
-@dataclass
-class AgentMessage:
-    """Messaggio tra agenti nel sistema"""
-    id: str = field(default_factory=generate_uuid)
-    agent_id: str = ""
-    role: AgentRole = AgentRole.HUMAN
-    content: str = ""
-    message_type: str = "text"
-    timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    thread_id: Optional[str] = None
-    parent_message_id: Optional[str] = None
-    attachments: List[str] = field(default_factory=list)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'timestamp': serialize_datetime(self.timestamp),
-            'role': self.role.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AgentMessage':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['timestamp'] = deserialize_datetime(data.get('timestamp'))
-        data['role'] = AgentRole(data['role'])
-        return cls(**data)
-
-
-@dataclass
-class Requirement:
-    """Rappresenta un singolo requisito"""
-    id: str = field(default_factory=generate_uuid)
-    title: str = ""
-    description: str = ""
-    type: str = "functional"  # functional, non_functional, constraint
-    priority: Priority = Priority.MEDIUM
-    status: str = "draft"  # draft, approved, implemented, tested
-    acceptance_criteria: List[str] = field(default_factory=list)
-    dependencies: List[str] = field(default_factory=list)
-    stakeholder: str = ""
-    effort_estimate: Optional[int] = None  # in hours
-    project_id: str = ""
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'created_at': serialize_datetime(self.created_at),
-            'updated_at': serialize_datetime(self.updated_at),
-            'priority': self.priority.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Requirement':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['created_at'] = deserialize_datetime(data.get('created_at'))
-        data['updated_at'] = deserialize_datetime(data.get('updated_at'))
-        data['priority'] = Priority(data.get('priority', 'medium'))
-        return cls(**data)
-    
-    def update_status(self, new_status: str):
-        """Aggiorna status del requisito"""
-        self.status = new_status
-        self.updated_at = datetime.now()
-        self.metadata['status_history'] = self.metadata.get('status_history', [])
-        self.metadata['status_history'].append({
-            'status': new_status,
-            'timestamp': serialize_datetime(datetime.now())
-        })
-
-
-@dataclass
-class ChangeRecord:
-    """Rappresenta un record di cambiamento per change management"""
-    id: str = field(default_factory=generate_uuid)
-    artifact_id: str = ""
-    change_type: ChangeType = ChangeType.MODIFIED
-    previous_hash: str = ""
-    current_hash: str = ""
-    detected_at: datetime = field(default_factory=datetime.now)
-    status: str = "pending_review"  # pending_review, approved, rejected
-    impact_level: str = "unknown"  # low, medium, high, critical
-    approved_at: Optional[datetime] = None
-    approver: Optional[str] = None
-    approval_reason: Optional[str] = None
-    rollback_of: Optional[str] = None
-    rollback_reason: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'detected_at': serialize_datetime(self.detected_at),
-            'approved_at': serialize_datetime(self.approved_at),
-            'change_type': self.change_type.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'ChangeRecord':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['detected_at'] = deserialize_datetime(data.get('detected_at'))
-        data['approved_at'] = deserialize_datetime(data.get('approved_at'))
-        data['change_type'] = ChangeType(data.get('change_type', 'modified'))
-        return cls(**data)
-    
-    def approve(self, approver: str, reason: str = ""):
-        """Approva il cambiamento"""
-        self.status = "approved"
-        self.approved_at = datetime.now()
-        self.approver = approver
-        self.approval_reason = reason
-        self.updated_at = datetime.now()
-    
-    def reject(self, reason: str = ""):
-        """Rifiuta il cambiamento"""
-        self.status = "rejected"
-        self.approval_reason = reason
-        self.updated_at = datetime.now()
-
-
-@dataclass
-class Task:
-    """Rappresenta un task di progetto"""
-    id: str = field(default_factory=generate_uuid)
-    title: str = ""
-    description: str = ""
-    assignee: str = ""
-    status: str = "todo"  # todo, in_progress, review, done
-    priority: Priority = Priority.MEDIUM
-    effort_estimate: Optional[int] = None  # in hours
-    actual_effort: Optional[int] = None
-    due_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    dependencies: List[str] = field(default_factory=list)
-    subtasks: List[str] = field(default_factory=list)
-    project_id: str = ""
-    requirement_id: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return {
-            **asdict(self),
-            'created_at': serialize_datetime(self.created_at),
-            'updated_at': serialize_datetime(self.updated_at),
-            'due_date': serialize_datetime(self.due_date),
-            'completed_at': serialize_datetime(self.completed_at),
-            'priority': self.priority.value
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Task':
-        """Crea istanza da dizionario"""
-        data = data.copy()
-        data['created_at'] = deserialize_datetime(data.get('created_at'))
-        data['updated_at'] = deserialize_datetime(data.get('updated_at'))
-        data['due_date'] = deserialize_datetime(data.get('due_date'))
-        data['completed_at'] = deserialize_datetime(data.get('completed_at'))
-        data['priority'] = Priority(data.get('priority', 'medium'))
-        return cls(**data)
-    
-    def mark_completed(self):
-        """Marca task come completato"""
-        self.status = "done"
-        self.completed_at = datetime.now()
-        self.updated_at = datetime.now()
-
-
-# ============================================================================
-# VALIDATION HELPERS
-# ============================================================================
-
-class ValidationError(Exception):
-    """Eccezione per errori di validazione"""
-    pass
-
-
-def validate_project_context(project: ProjectContext) -> bool:
-    """Valida ProjectContext"""
-    if not project.project_name.strip():
-        raise ValidationError("Project name cannot be empty")
-    
-    if not project.objectives:
-        raise ValidationError("Project must have at least one objective")
-    
-    if project.budget and not project.budget.replace('$', '').replace(',', '').replace('.', '').isdigit():
-        raise ValidationError("Invalid budget format")
-    
-    return True
-
-
-def validate_document(document: Document) -> bool:
-    """Valida Document"""
-    if not document.title or not document.title.strip():
-        raise ValidationError("Document title cannot be empty")
-    
-    if not document.content or not document.content.strip():
-        raise ValidationError("Document content cannot be empty")
-    
-    if document.version < 1:
-        raise ValidationError("Document version must be >= 1")
-    
-    return True
-
-
-def validate_requirement(requirement: Requirement) -> bool:
-    """Valida Requirement"""
-    if not requirement.title.strip():
-        raise ValidationError("Requirement title cannot be empty")
-    
-    if not requirement.description.strip():
-        raise ValidationError("Requirement description cannot be empty")
-    
-    if requirement.type not in ["functional", "non_functional", "constraint"]:
-        raise ValidationError("Invalid requirement type")
-    
-    return True
-
-
-# ============================================================================
-# AGENT CONFIGURATION MODELS
-# ============================================================================
-
-@dataclass
-class OllamaConfig:
-    """Configurazione per Ollama"""
-    model: str
-    base_url: str = "http://localhost:11434/v1"
-    api_key: str = "ollama"
-
-@dataclass
-class DeepSeekConfig:
-    """Configurazione per DeepSeek"""
-    model: str
-    api_key: str
-    base_url: str = "https://api.deepseek.com/v1"
-
-@dataclass
-class AgentConfig:
-    """Configurazione generica per un agente"""
-    name: str
-    role: AgentRole
-    llm_config: Union[OllamaConfig, DeepSeekConfig]
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Converte in dizionario per serializzazione"""
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AgentConfig':
-        """Crea istanza da dizionario"""
-        return cls(**data)
-
-
-# ============================================================================
-# EXPORT ALL
-# ============================================================================
-
-__all__ = [
-    # Enums
-    'DocumentType', 'ChangeType', 'AgentRole', 'ProjectStatus', 
-    'Priority', 'Methodology',
-    
-    # Models
-    'Document', 'ChangeEvent', 'ProjectContext', 'AgentMessage',
-    'Requirement', 'Task', 'OllamaConfig', 'DeepSeekConfig', 'AgentConfig',
-    
-    # Utilities
-    'generate_uuid', 'serialize_datetime', 'deserialize_datetime',
-    
-    # Validation
-    'ValidationError', 'validate_project_context', 'validate_document',
-    'validate_requirement'
-]
+class Project(BaseModel):
+    """Root entity representing the entire software project with PMI governance"""
+    id: Annotated[uuid.UUID, Field(default_factory=generate_uuid, description="Unique project identifier following PMI standards")]
+    name: Annotated[str, Field(description="Project name", min_length=1, max_length=100)]
+    vision: Annotated[str, Field(description="Project vision statement guiding agile execution", max_length=500)]
+    methodology: Annotated[Literal["Agile", "Scrum", "Kanban", "XP", "Hybrid"], Field(default="Agile", description="Project methodology")]
+    description: Annotated[str, Field(description="Project charter description", max_length=1000)]
+    release_plan: Annotated[Optional[str], Field(default=None, description="High-level release plan and roadmap", max_length=1000)]
+    team: Team
+    scope: Scope
+    stakeholders: List[Stakeholder]
+    risks: List[Risk]
+    milestones: List[Milestone]
+    status: Annotated[Literal["Initiation", "Planning", "Execution", "Monitoring", "Closing"], Field(description="Current project status")]
+    created_date: Annotated[datetime, Field(default_factory=datetime.now, description="Project creation timestamp")]
+    last_updated: Annotated[datetime, Field(default_factory=datetime.now, description="Last project update timestamp")]
+    knowledge_transfer: Annotated[Optional[str], Field(default=None, description="Knowledge transfer activities and documentation", max_length=1000)]

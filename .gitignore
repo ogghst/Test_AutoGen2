@@ -208,3 +208,4 @@ __marimo__/
 
 #project specific
 config.json
+output_documents/

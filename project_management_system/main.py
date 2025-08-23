@@ -1,177 +1,98 @@
 """
-Main entry point for the Multi-Agent Project Management System.
+Main application entry point for the handoffs pattern.
 
-This script initializes and runs the interactive command-line interface (CLI)
-for managing software projects using a team of autonomous agents.
+This module orchestrates the entire handoffs system by:
+1. Setting up logging
+2. Creating the runtime and model client
+3. Registering all agents
+4. Starting the system and managing the user session
 """
 
 import asyncio
-import os
-import sys
-import logging
-
-# Add the project root directory to the Python path to ensure correct module imports.
-project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-# Import core components of the system.
-from agents.project_manager import ProjectManagerAgent
-from knowledge.knowledge_base import KnowledgeBase
-from storage.document_store import DocumentStoreFactory
-from config.settings import ConfigManager
-from models.data_models import AgentRole
-
-# Import AutoGen classes for agent orchestration.
-
-from autogen_agentchat.agents import UserProxyAgent
-from autogen_agentchat.teams import RoundRobinGroupChat as GroupChat
-from autogen_agentchat.messages import TextMessage
-from autogen_agentchat.ui import Console
-from autogen_agentchat.conditions import TextMentionTermination
-
-class NonInteractiveUserProxyAgent(UserProxyAgent):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._input_queue = []
-
-    def set_script(self, script: list[str]):
-        self._input_queue = script
-
-    async def _get_input(self, prompt: str, cancellation_token) -> str:
-        if not self._input_queue:
-            return "exit"
-        return self._input_queue.pop(0)
+import uuid
+from autogen_core import SingleThreadedAgentRuntime, TopicId
+import json
+from config.logging_config import setup_logging, get_logger
+from base.utils import configure_oltp_tracing
+from base.model_client import create_model_client
+from agents.factory import AgentFactory
+from agents.tools import USER_TOPIC_TYPE
+from base.messaging import UserLogin
+from config.settings import get_config_manager
+from models.data_models import Project
 
 
-# Import logging configuration
-from config.logging_config import setup_logging, get_logger, log_system_info
-
-# --- Global Configuration ---
-try:
-    config_manager = ConfigManager("config/config.json")
-    settings = config_manager.system
-    # Setup logging based on settings
+async def main():
+    """
+    Main function that orchestrates the handoffs pattern system.
+    
+    This function sets up the entire system, registers all agents, and manages
+    the user session lifecycle.
+    """
+    # Load configuration - get_config_manager handles all fallback cases
+    config_manager = get_config_manager("../config/config.json")
+    
+    # Setup logging with configuration
     setup_logging(
-        log_level=settings.log_level.value,
-        log_file=settings.log_file or os.path.join(settings.logs_path, "system.log"),
-        console_logging=False,  # Keep console clean for UI
-        max_bytes=10 * 1024 * 1024,  # 10MB
-        backup_count=5
-    )
-    logger = get_logger(__name__)
-except ValueError as e:
-    print(f"\n❌ Configuration Error: {e}")
-    print("Please ensure your .env file or environment variables are set correctly.")
-    sys.exit(1)
-except Exception as e:
-    print(f"\n❌ An unexpected error occurred during initial setup: {e}")
-    sys.exit(1)
-
-
-async def main(non_interactive: bool = False):
-    """
-    Asynchronous main function to initialize and run the agent system.
-    """
-    log_system_info()
-    logger.info("Starting Multi-Agent Project Management System")
-
-    logger.info("Initializing system components...")
-    try:
-        kb = KnowledgeBase(kb_path=settings.knowledge_base_path)
-        ds = DocumentStoreFactory.create_production(
-            storage_path=settings.documents_path
-        )
-        logger.info("KnowledgeBase and DocumentStore initialized successfully.")
-    except Exception as e:
-        logger.error(f"Failed to initialize components: {e}", exc_info=True)
-        print(f"\n❌ Error initializing system components: {e}")
-        return
-
-    # --- Agent Initialization ---
-    logger.info("Initializing agents...")
-    try:
-        project_manager = ProjectManagerAgent(
-            knowledge_base=kb,
-            document_store=ds,
-            llm_config=config_manager.llm_config,
-        )
-
-        if non_interactive:
-            user_proxy = NonInteractiveUserProxyAgent(
-                name="HumanUser",
-                description="A non-interactive user agent that executes a predefined script.",
-            )
-            script = [
-                "init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team",
-                "status",
-                "requirements",
-                "plan project",
-                "exit"
-            ]
-            user_proxy.set_script(script)
-        else:
-            user_proxy = UserProxyAgent(
-                name="HumanUser",
-                description="A human user who provides commands and information to the project management system.",
-            )
-        logger.info("Agents initialized successfully.")
-    except Exception as e:
-        logger.error(f"Failed to initialize agents: {e}", exc_info=True)
-        print(f"\n❌ Error initializing agents: {e}")
-        return
-
-    # --- Group Chat Setup ---
-    termination = TextMentionTermination("exit", sources=[user_proxy])
-    groupchat = GroupChat(
-        participants=[project_manager, user_proxy],
-        max_turns=config_manager.autogen.max_turns,
+        log_level=config_manager.logging.log_level,
+        console_logging=config_manager.logging.console_logging,
+        max_bytes=config_manager.logging.max_bytes,
+        backup_count=config_manager.logging.backup_count
     )
     
-    if non_interactive:
-        logger.info("Running in non-interactive mode")
-        # The NonInteractiveUserProxyAgent will automatically provide the first message.
-        initial_message = "Please proceed with the project plan."
-        await Console(groupchat.run_stream(task=initial_message))
-        logger.info("Non-interactive script completed")
+    # Get logger after setup
+    logger = get_logger(__name__)
+    logger.info("Starting handoffs pattern system")
+    
+    logger.info(json.dumps(Project.model_json_schema(), indent=2))
+    
+    # Configure tracing based on configuration
+    if config_manager.runtime.enable_tracing:
+        tracing_endpoint = config_manager.runtime.tracing_endpoint
+        tracer_provider = configure_oltp_tracing(endpoint=tracing_endpoint)
     else:
-        # --- Start Interactive Demo ---
-        print("\n" + "="*60)
-        print("      🤖 Multi-Agent Project Management System 🤖")
-        print("="*60)
-        print("\nWelcome! You are interacting with the Project Manager agent.")
-        print("You can start by initializing a project. For example:")
-        print("\n  init_project Name: E-commerce Platform, Objectives: Increase online sales, Stakeholders: Sales Team, IT Team\n")
-        print("Other available commands: 'status', 'requirements', 'plan project'")
-        print("\nType 'exit' to end the session.")
-        print("-"*60)
-
-        logger.info("Starting group chat session")
-        # Don't send an automatic message - wait for user input instead
-        print("\n💬 Waiting for your input...")
-        print("Type your message and press Enter to begin.")
-        print("-" * 60)
-        
-        # Use a more controlled approach - wait for actual user input
-        try:
-            # Start the group chat without any initial message
-            await Console(groupchat.run_stream())
-        except Exception as e:
-            logger.error(f"Error in group chat: {e}")
-            print(f"\n❌ Error in group chat: {e}")
-        
-        logger.info("Group chat session completed")
+        tracer_provider = configure_oltp_tracing()
+    
+    # Create the runtime
+    runtime = SingleThreadedAgentRuntime(tracer_provider=tracer_provider)
+    
+    
+    # Create the model client with configuration
+    logger.info(f"LLM Provider: {config_manager.llm_provider.value}")
+    
+    # Pass configuration to model client creation
+    model_client = create_model_client(config_manager=config_manager)
+    
+    # Create agent factory and register all agents
+    logger.info("Creating agent factory and registering agents")
+    agent_factory = AgentFactory(runtime, model_client)
+    registered_agents = await agent_factory.register_all_agents()
+    
+    # Add subscriptions for all agents
+    logger.info("Adding subscriptions for all agents")
+    await agent_factory.add_all_subscriptions()
+    
+    # Start the runtime
+    logger.info("Starting runtime")
+    runtime.start()
+    
+    # Create a new session for the user
+    session_id = str(uuid.uuid4())
+    logger.info(f"Creating user session: {session_id}")
+    await runtime.publish_message(
+        UserLogin(), 
+        topic_id=TopicId(USER_TOPIC_TYPE, source=session_id)
+    )
+    
+    # Run until completion
+    logger.info("Waiting for runtime to complete")
+    await runtime.stop_when_idle()
+    
+    # Cleanup
+    logger.info("Runtime completed, closing model client")
+    await model_client.close()
+    logger.info("Handoffs pattern system shutdown complete")
 
 
 if __name__ == "__main__":
-    non_interactive_mode = "--non-interactive" in sys.argv
-    try:
-        asyncio.run(main(non_interactive=non_interactive_mode))
-        logger.info("System shutdown completed successfully")
-    except (KeyboardInterrupt, EOFError):
-        print("\n\nSession terminated by user. Goodbye!")
-        logger.info("Session terminated by user")
-    except Exception as e:
-        print(f"\n\n❌ Unexpected error: {e}")
-        print("Check the logs for more details.")
-        logger.error(f"Unexpected error during system execution: {e}", exc_info=True)
+    asyncio.run(main())

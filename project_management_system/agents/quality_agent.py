@@ -7,7 +7,7 @@ This agent is responsible for quality assurance and project reviews.
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
-from ..base.AIAgent import AIAgent
+from base.AIAgent import AIAgent
 from .tools import (
     QUALITY_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,

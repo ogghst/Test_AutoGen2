@@ -7,7 +7,7 @@ This agent is responsible for creating project plans and gathering requirements.
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
-from ..base.AIAgent import AIAgent
+from base.AIAgent import AIAgent
 from .tools import (
     PLANNING_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,

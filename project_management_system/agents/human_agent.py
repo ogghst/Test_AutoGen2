@@ -4,11 +4,11 @@ Human Agent for the handoffs pattern.
 This agent handles complex requests that require human intervention.
 """
 
-import logging
+from config.logging_config import get_logger
 from autogen_core import MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import AssistantMessage
 
-from ..base.messaging import UserTask, AgentResponse
+from base.messaging import UserTask, AgentResponse
 from .tools import HUMAN_AGENT_TOPIC_TYPE, USER_TOPIC_TYPE
 
 
@@ -41,12 +41,12 @@ class HumanAgent(RoutedAgent):
             message: The user task message containing context
             ctx: The message context for routing
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.info(f"{self.id.type}: Human intervention required")
 
         # Get human input
         human_input = input("Human Agent: ")
-        print(f"{'-'*80}\n{self.id.type}:\nHuman response: {human_input}", flush=True)
+        #print(f"{'-'*80}\n{self.id.type}:\nHuman response: {human_input}", flush=True)
         
         logger.info(f"{self.id.type}: Human response received: {human_input}")
 

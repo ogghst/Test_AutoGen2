@@ -8,13 +8,14 @@ appropriate specialized agents.
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
-from ..base.AIAgent import AIAgent
+from base.AIAgent import AIAgent
 from .tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
-    transfer_to_planning_tool,
+    #transfer_to_planning_tool,
     transfer_to_execution_tool,
     transfer_to_quality_tool,
+    transfer_to_project_management_tool,
     escalate_to_human_tool,
 )
 
@@ -40,13 +41,20 @@ class TriageAgent(AIAgent):
             "1. Understand the user's request\n"
             "2. Route them to the appropriate specialized agent\n"
             "3. Use the transfer tools to delegate tasks\n\n"
+            "Available specialized agents:\n"
+            #"- Planning Agent: For basic project planning and requirements gathering\n"
+            "- Project Management Agent: For PMI-compliant project management plans and best practices\n"
+            "- Execution Agent: For task execution and project management\n"
+            "- Quality Agent: For quality assurance and project reviews\n"
+            "- Human Agent: For complex requests requiring human intervention\n\n"
             "Always be helpful and professional. Route users to the most appropriate agent."
         )
         
         delegate_tools = [
-            transfer_to_planning_tool,
+        #    transfer_to_planning_tool,
             transfer_to_execution_tool,
             transfer_to_quality_tool,
+            transfer_to_project_management_tool,
             escalate_to_human_tool,
         ]
         
