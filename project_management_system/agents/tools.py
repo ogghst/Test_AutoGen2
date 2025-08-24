@@ -37,6 +37,7 @@ EXECUTION_AGENT_TOPIC_TYPE = "execution_agent"
 QUALITY_AGENT_TOPIC_TYPE = "quality_agent"
 HUMAN_AGENT_TOPIC_TYPE = "human_agent"
 PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE = "project_management_agent"
+USER_STORIES_AGENT_TOPIC_TYPE = "user_stories_agent"
 USER_TOPIC_TYPE = "user"
 
 
@@ -69,6 +70,11 @@ async def escalate_to_human() -> str:
 async def transfer_to_project_management_agent() -> str:
     """Transfer control to the project management agent."""
     return PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE
+
+
+async def transfer_to_user_stories_agent() -> str:
+    """Transfer control to the user stories gathering agent."""
+    return USER_STORIES_AGENT_TOPIC_TYPE
 
 
 # Tool functions for project management tasks
@@ -414,6 +420,7 @@ This project follows the **{project.methodology}** methodology and will adhere t
     return plan
 
 
+
 # Tool instances for delegation
 transfer_to_planning_tool = FunctionTool(
     transfer_to_planning_agent,
@@ -479,4 +486,10 @@ save_project_data_tool = FunctionTool(
 create_uuid_tool = FunctionTool(
     create_uuid,
     description="Only call this if explicitly asked to create a uuid.",
+)
+
+# Tool instances for user story generation
+transfer_to_user_stories_tool = FunctionTool(
+    transfer_to_user_stories_agent,
+    description="Only call this if explicitly asked to generate user stories or unpack requirements into detailed user stories with acceptance criteria.",
 )

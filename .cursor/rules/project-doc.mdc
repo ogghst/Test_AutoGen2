@@ -1,8 +1,8 @@
 ---
-alwaysApply: false
+alwaysApply: true
 ---
 # project documentation
-- analyze 'project_specification.md' prior to start any code review. if 'project_specification.md.md' file is not updated with code, ask the user whether to update it and explain changes to be made.
+- analyze 'project_general.md' to gather project informations
 
 # autogen libraries related code
 - when working with autogen_core, autogen_ext and autogen_agentchat library related code, always make sure it is compliant with API specs in https://microsoft.github.io/autogen/stable//reference/index.html 
