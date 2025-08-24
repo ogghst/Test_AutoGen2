@@ -15,6 +15,7 @@ from .execution_agent import ExecutionAgent
 from .quality_agent import QualityAgent
 from .human_agent import HumanAgent
 from .project_management_agent import ProjectManagementAgent
+from .user_stories_agent import UserStoriesAgent
 from .user_agent import UserAgent
 from .tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
@@ -23,6 +24,7 @@ from .tools import (
     QUALITY_AGENT_TOPIC_TYPE,
     HUMAN_AGENT_TOPIC_TYPE,
     PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
+    USER_STORIES_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
 )
 
@@ -68,6 +70,9 @@ class AgentFactory:
         
         # Register the project management agent
         self.registered_agents[PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE] = await self._register_project_management_agent()
+        
+        # Register the user stories agent
+        self.registered_agents[USER_STORIES_AGENT_TOPIC_TYPE] = await self._register_user_stories_agent()
         
         # Register the human agent
         self.registered_agents[HUMAN_AGENT_TOPIC_TYPE] = await self._register_human_agent()
@@ -122,6 +127,14 @@ class AgentFactory:
             self.runtime,
             type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
             factory=lambda: ProjectManagementAgent(self.model_client),
+        )
+    
+    async def _register_user_stories_agent(self):
+        """Register the user stories agent."""
+        return await AIAgent.register(
+            self.runtime,
+            type=USER_STORIES_AGENT_TOPIC_TYPE,
+            factory=lambda: UserStoriesAgent(self.model_client),
         )
     
     async def _register_human_agent(self):
