@@ -29,7 +29,14 @@ While explicit installation steps are not provided, the `project_management_syst
 Environment variables, such as `OPENAI_API_KEY`, are used for LLM authentication.  The system uses a `config.json` file for centralized configuration, which can be loaded via `get_config_manager()`.  If `config.json` is missing, a default configuration is created. 
 
 ### How to run the project locally
-The main entry point for the application is `project_management_system/main.py`.  It can be run using `asyncio.run(main())` within a Python environment. 
+The project has two main entry points:
+
+*   **CLI Application**: The main entry point for the command-line application is `project_management_system/main.py`. It can be run using `python project_management_system/main.py` from the root directory, after installing dependencies.
+*   **Web Server**: The project also includes a FastAPI web server that provides a WebSocket interface for chatting with the agent team. To run the server, execute the following command from the `project_management_system` directory:
+    ```bash
+    uvicorn server:app --host 0.0.0.0 --port 8000
+    ```
+    You can then access the chat interface at `http://localhost:8000`.
 
 ## Code Organization
 ### Coding standards and conventions
@@ -54,7 +61,14 @@ The system's main feature is multi-agent project management.  This is implemente
 The core business logic resides within the agents' `handle_task` methods.  This involves sending messages to an LLM, processing its response, and executing tools based on the LLM's output.  Tool execution can involve direct actions or delegation to other agents. 
 
 ### API endpoints (if applicable)
-The system primarily interacts with LLM APIs (e.g., DeepSeek, Ollama) through the `ChatCompletionClient`.  It also integrates with OpenTelemetry for tracing, which typically involves sending data to an OTLP collector endpoint. 
+The system interacts with several APIs:
+
+*   **LLM APIs**: The system connects to LLM providers like DeepSeek or Ollama through the `ChatCompletionClient`.
+*   **OpenTelemetry**: For observability, the system can send tracing data to an OTLP collector endpoint.
+*   **WebSocket API**: A FastAPI server provides a WebSocket endpoint for real-time chat with the agent team.
+    *   **Endpoint**: `/ws/{session_id}`
+    *   **Description**: Establishes a WebSocket connection for a user session. The `session_id` is a unique string that identifies the conversation.
+    *   **Usage**: Clients can send chat messages (as text) to the server over the WebSocket connection. The server will broadcast agent responses back to the client.
 
 ### Database schema (if applicable)
 The system defines data models for project management entities like `Project`, `Epic`, `UserStory`, and `Team` using Pydantic `BaseModel`s.  These models include fields with type annotations, descriptions, and validation rules.  The `project_management_system/models/data_model.yaml` file provides a YAML representation of this schema. 

@@ -6,7 +6,7 @@ autogen-ext[ollama]
 python-dotenv>=0.21.0
 httpx>=0.24.0
 asyncio-mqtt>=0.11.0
-pydantic>=2.0.
+pydantic>=2.0
 pydantic[email]
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
@@ -17,3 +17,5 @@ opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-http
 opentelemetry-exporter-otlp-proto-grpc
 opentelemetry-instrumentation-openai
+fastapi
+uvicorn
