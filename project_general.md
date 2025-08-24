@@ -11,6 +11,7 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 *   `project_management_system/base/`: Provides base classes and utilities, such as the base agent class `AIAgent` and `configure_oltp_tracing` to add observability through OpenTelemetry. 
 *   `project_management_system/models/`: Defines data models used across the system, such as `Project` and `UserStory`. 
 *   `project_management_system/tests/`: Contains test files and fixtures for the system. 
+*   `frontend/`: Contains the React-based frontend application for interacting with the agent system.
 
 ### Main components and how they interact
 The `main()` function in `project_management_system/main.py` orchestrates the system startup.  It initializes the `ConfigManager`, sets up logging, configures OpenTelemetry tracing, creates a `SingleThreadedAgentRuntime`, and initializes the `ChatCompletionClient`.  The `AgentFactory` then registers all agents and their subscriptions with the runtime.  Agents communicate via a message-based publish-subscribe pattern using `TopicId` instances. 
@@ -36,7 +37,15 @@ The project has two main entry points:
     ```bash
     uvicorn server:app --host 0.0.0.0 --port 8000
     ```
-    You can then access the chat interface at `http://localhost:8000`.
+*   **Frontend Application**: The project includes a React-based chat interface. To run it, navigate to the `frontend` directory and run the following commands:
+    ```bash
+    # Install dependencies
+    npm install
+
+    # Run the development server
+    npm run dev
+    ```
+    The frontend will be available at `http://localhost:5173` by default and will connect to the backend server running on port 8000.
 
 ## Code Organization
 ### Coding standards and conventions

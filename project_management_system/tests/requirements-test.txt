@@ -31,10 +31,10 @@ pytest-black>=0.3.0
 pytest-isort>=1.0.0
 
 # Documentation testing
-pytest-docstyle>=2.2.0
+pytest-docstyle==2.0.1
 
 # Memory leak detection (optional)
-pytest-leaks>=0.5.0
+pytest-leaks==0.3.1
 
 # Test reporting
 pytest-html>=3.1.0
