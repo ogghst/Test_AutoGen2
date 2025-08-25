@@ -5,10 +5,13 @@ This module provides factory functions for creating and registering all agent ty
 in the handoffs system.
 """
 
+import asyncio
+
 from autogen_core import SingleThreadedAgentRuntime, TypeSubscription
 from autogen_core.models import ChatCompletionClient
 
 from base.AIAgent import AIAgent
+from .websocket_agent import WebSocketAgent
 from .triage_agent import TriageAgent
 from .planning_agent import PlanningAgent
 from .execution_agent import ExecutionAgent
@@ -48,6 +51,8 @@ class AgentFactory:
         self.runtime = runtime
         self.model_client = model_client
         self.registered_agents = {}
+        self.input_queue = asyncio.Queue()
+        self.response_queue = asyncio.Queue()
     
     async def register_all_agents(self):
         """
@@ -78,7 +83,9 @@ class AgentFactory:
         self.registered_agents[HUMAN_AGENT_TOPIC_TYPE] = await self._register_human_agent()
         
         # Register the user agent
-        self.registered_agents[USER_TOPIC_TYPE] = await self._register_user_agent()
+        #self.registered_agents[USER_TOPIC_TYPE] = await self._register_user_agent()
+        
+        self.registered_agents[USER_TOPIC_TYPE] = await self._register_websocket_agent()
         
         return self.registered_agents
     
@@ -158,3 +165,18 @@ class AgentFactory:
                 agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,  # Start with the triage agent
             ),
         )
+
+    async def _register_websocket_agent(self):
+        # Create a websocket agent for this session
+        return await WebSocketAgent.register(
+            self.runtime,
+            type=USER_TOPIC_TYPE,
+            factory=lambda: WebSocketAgent(
+                input_queue=self.input_queue,
+                response_queue=self.response_queue,
+                user_topic_type=USER_TOPIC_TYPE,
+                agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,
+            )
+        )
+        
+        

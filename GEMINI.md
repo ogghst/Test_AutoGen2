@@ -35,7 +35,7 @@ The project has two main entry points:
 *   **CLI Application**: The main entry point for the command-line application is `project_management_system/main.py`. It can be run using `python project_management_system/main.py` from the root directory, after installing dependencies.
 *   **Web Server**: The project also includes a FastAPI web server that provides a WebSocket interface for chatting with the agent team. To run the server, execute the following command from the `project_management_system` directory:
     ```bash
-    uvicorn server:app --host 0.0.0.0 --port 8000
+    uvicorn server:app --host 0.0.0.0 --port 8001
     ```
 *   **Frontend Application**: The project includes a React-based chat interface. To run it, navigate to the `frontend` directory and run the following commands:
     ```bash
@@ -45,7 +45,7 @@ The project has two main entry points:
     # Run the development server
     npm run dev
     ```
-    The frontend will be available at `http://localhost:5173` by default and will connect to the backend server running on port 8000.
+    The frontend will be available at `http://localhost:5173` by default and will connect to the backend server running on port 8001.
 
 ## Code Organization
 ### Coding standards and conventions

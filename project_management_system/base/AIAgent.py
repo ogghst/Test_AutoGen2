@@ -156,6 +156,7 @@ class AIAgent(RoutedAgent):
         if not isinstance(llm_result.content, list):
             logger.info(f"{self.id.type}: Sending final response to user - {llm_result.content}")
             message.context.append(AssistantMessage(content=llm_result.content, source=self.id.type))
+            logger.info(f"{self.id.type}: Publishing AgentResponse to topic {self._user_topic_type} for user {self.id.key}")
             await self.publish_message(
                 AgentResponse(context=message.context, reply_to_topic_type=self._agent_topic_type),
                 topic_id=TopicId(self._user_topic_type, source=self.id.key),

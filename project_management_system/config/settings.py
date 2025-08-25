@@ -125,6 +125,16 @@ class SystemConfig:
         return asdict(self)
 
 
+@dataclass
+class ServerConfig:
+    """Configuration for the web server"""
+    host: str = "0.0.0.0"
+    port: int = 8000
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
 # ============================================================================
 # MAIN CONFIGURATION MANAGER
 # ============================================================================
@@ -137,6 +147,7 @@ class ConfigManager:
     system: SystemConfig = SystemConfig()
     logging: LoggingConfig = LoggingConfig()
     runtime: RuntimeConfig = RuntimeConfig()
+    server: ServerConfig = ServerConfig()
     
     def __init__(self, config_file: str):
         """
@@ -178,6 +189,7 @@ class ConfigManager:
         self.system = self._load_system_config()
         self.logging = self._load_logging_config()
         self.runtime = self._load_runtime_config()
+        self.server = self._load_server_config()
 
     def _create_default_config(self):
         """Create default configuration file"""
@@ -190,6 +202,7 @@ class ConfigManager:
             "system": SystemConfig().to_dict(),
             "logging": LoggingConfig().to_dict(),
             "runtime": RuntimeConfig().to_dict(),
+            "server": ServerConfig().to_dict(),
         }
         
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -227,6 +240,11 @@ class ConfigManager:
         config_data = self._config_cache.get("runtime", {})
         return RuntimeConfig(**config_data)
 
+    def _load_server_config(self) -> ServerConfig:
+        """Load server configuration from file"""
+        config_data = self._config_cache.get("server", {})
+        return ServerConfig(**config_data)
+
     def save_to_file(self, config_file: Optional[str] = None):
         """Save current configuration to JSON file"""
         path = Path(config_file) if config_file else self.config_file
@@ -237,6 +255,7 @@ class ConfigManager:
             "system": self.system.to_dict(),
             "logging": self.logging.to_dict(),
             "runtime": self.runtime.to_dict(),
+            "server": self.server.to_dict(),
         }
         
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -251,6 +270,7 @@ class ConfigManager:
             "system": self.system.to_dict(),
             "logging": self.logging.to_dict(),
             "runtime": self.runtime.to_dict(),
+            "server": self.server.to_dict(),
         }
 
 
@@ -280,6 +300,7 @@ def create_default_config(config_file: str = "../config/config.json"):
         "system": SystemConfig().to_dict(),
         "logging": LoggingConfig().to_dict(),
         "runtime": RuntimeConfig().to_dict(),
+        "server": ServerConfig().to_dict(),
     }
     
     path = Path(config_file)

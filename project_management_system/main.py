@@ -44,8 +44,6 @@ async def main():
     logger = get_logger(__name__)
     logger.info("Starting handoffs pattern system")
     
-    logger.info(json.dumps(Project.model_json_schema(), indent=2))
-    
     # Configure tracing based on configuration
     if config_manager.runtime.enable_tracing:
         tracing_endpoint = config_manager.runtime.tracing_endpoint
@@ -74,6 +72,9 @@ async def main():
     
     # Start the runtime
     logger.info("Starting runtime")
+        
+    logger.info(f"Runtime: {runtime}")
+
     runtime.start()
     
     # Create a new session for the user

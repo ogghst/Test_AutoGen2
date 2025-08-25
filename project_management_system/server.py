@@ -2,7 +2,7 @@ import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-from autogen_core import SingleThreadedAgentRuntime, TopicId, MessageContext
+from autogen_core import SingleThreadedAgentRuntime, TopicId, MessageContext, TypeSubscription
 import json
 from config.logging_config import setup_logging, get_logger
 from base.utils import configure_oltp_tracing
@@ -13,18 +13,16 @@ from base.messaging import UserLogin, UserTask, AgentResponse
 from config.settings import get_config_manager
 from models.data_models import Project
 from autogen_core.models import UserMessage
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+from contextlib import asynccontextmanager
 
-runtime: SingleThreadedAgentRuntime = None
-model_client = None
-logger = None
 
-@app.on_event("startup")
-async def startup_event():
-    global runtime, model_client, logger
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global runtime, model_client, logger, agent_factory
     # Load configuration - get_config_manager handles all fallback cases
-    config_manager = get_config_manager("config.json")
+    config_manager = get_config_manager("../config/config.json")
 
     # Setup logging with configuration
     setup_logging(
@@ -38,7 +36,7 @@ async def startup_event():
     logger = get_logger(__name__)
     logger.info("Starting handoffs pattern system")
 
-    logger.info(json.dumps(Project.model_json_schema(), indent=2))
+    #logger.info(json.dumps(Project.model_json_schema(), indent=2))
 
     # Configure tracing based on configuration
     if config_manager.runtime.enable_tracing:
@@ -70,79 +68,56 @@ async def startup_event():
     logger.info("Starting runtime")
     runtime.start()
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    global runtime, model_client
+    #await runtime.stop_when_idle()  
+    yield
+    
+    # Shutdown logic
     if runtime:
         await runtime.stop()
     if model_client:
         await model_client.close()
 
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var ws = new WebSocket("ws://localhost:8000/ws/test_session");
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
+app = FastAPI(lifespan=lifespan)
 
-@app.get("/")
-async def get():
-    return HTMLResponse(html)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+@app.post("/api/session")
+async def create_session():
+    session_id = str(uuid.uuid4())
+    logger.info(f"Created new session: {session_id}")
+    
+    # Start a new user session by sending a login message.
+    await runtime.publish_message(
+        UserLogin(), 
+        topic_id=TopicId(USER_TOPIC_TYPE, source=session_id)
+    ) 
+    
+    return {"session_id": session_id}
+
+from agents.websocket_agent import WebSocketAgent
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
     logger.info(f"Client connected: {session_id}")
 
-    # Queue for receiving agent responses
-    response_queue = asyncio.Queue()
+    logger.info(f"Runtime: {runtime}")
 
-    # Subscription to handle agent responses
-    async def handle_response(message: AgentResponse, ctx: MessageContext):
-        await response_queue.put(message)
-
-    # Subscribe to the user topic for this session
-    user_topic = TopicId(USER_TOPIC_TYPE, source=session_id)
-    subscription_id = await runtime.subscribe(handle_response, topic_id=user_topic)
-
-    # Start a new user session by sending a login message.
-    await runtime.publish_message(
-        UserLogin(),
-        topic_id=user_topic
+    # Subscribe the agent to the user topic for this session
+    subscription_id = await runtime.add_subscription(
+        TypeSubscription(topic_type=USER_TOPIC_TYPE, agent_type=TRIAGE_AGENT_TOPIC_TYPE)
     )
 
     # Task to send agent responses to the client
     async def send_responses():
         while True:
-            response = await response_queue.get()
+            response = await agent_factory.response_queue.get()
             if response is None:
                 break
             if response.context and len(response.context) > 0:
@@ -154,18 +129,26 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     try:
         while True:
             data = await websocket.receive_text()
+            await agent_factory.input_queue.put(data)
             logger.info(f"Received message from {session_id}: {data}")
-
-            triage_topic = TopicId(TRIAGE_AGENT_TOPIC_TYPE, source=session_id)
-            await runtime.publish_message(
-                UserTask(context=[UserMessage(content=data)]),
-                topic_id=triage_topic
-            )
 
     except WebSocketDisconnect:
         logger.info(f"Client disconnected: {session_id}")
     finally:
         logger.info(f"Closing connection for {session_id}")
-        await response_queue.put(None)
+        await agent_factory.response_queue.put(None)
         send_task.cancel()
         await runtime.unsubscribe(subscription_id)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    # Load configuration to get server settings
+    config_manager = get_config_manager("../config/config.json")
+    server_settings = config_manager.server
+    
+    uvicorn.run(
+        app, 
+        host=server_settings.host, 
+        port=server_settings.port
+    )
