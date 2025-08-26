@@ -1,56 +1,75 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, TextField, Button, List, ListItem, Paper, Typography, Container, AppBar, Toolbar } from '@mui/material';
 import { v4 as uuidv4 } from 'uuid';
+import ReactMarkdown from 'react-markdown';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Define a type for the message structure
 interface Message {
   id: string;
   text: string;
-  sender: 'user' | 'agent';
+  type: 'user' | 'system' | 'thinking' | 'log' | 'agent';
+}
+
+const getAvatarForType = (type: Message['type']) => {
+  switch (type) {
+    case 'user':
+      return 'U';
+    case 'agent':
+      return 'A';
+    case 'system':
+      return 'S';
+    case 'thinking':
+      return 'T';
+    case 'log':
+      return 'L';
+    default:
+      return '?';
+  }
+};
+
+const getCardColorForType = (type: Message['type']) => {
+  switch (type) {
+    case 'user':
+      return 'bg-primary text-primary-foreground';
+    case 'agent':
+      return 'bg-secondary text-secondary-foreground';
+    case 'system':
+      return 'bg-muted text-muted-foreground';
+    case 'thinking':
+      return 'bg-accent text-accent-foreground';
+    case 'log':
+      return 'bg-card text-card-foreground';
+    default:
+      return 'bg-card text-card-foreground';
+  }
 }
 
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>('');
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId] = useState<string>(uuidv4());
   const ws = useRef<WebSocket | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const createNewSession = async () => {
-    try {
-      const response = await fetch('http://localhost:8001/api/session', {
-        method: 'POST',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSessionId(data.session_id);
-      } else {
-        console.error('Failed to create a new session');
-      }
-    } catch (error) {
-      console.error('Error creating new session:', error);
-    }
-  };
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!sessionId) {
-      return;
-    }
-
     // Connect to the WebSocket server
     try {
       ws.current = new WebSocket(`ws://localhost:8001/ws/${sessionId}`);
 
       ws.current.onopen = () => {
         console.log('WebSocket connection established');
-        setMessages(prev => [...prev, { id: uuidv4(), text: "Hello! How can I help you with your project today?", sender: 'agent' }]);
+        setMessages(prev => [...prev, { id: uuidv4(), text: "Hello! How can I help you with your project today?", type: 'agent' }]);
       };
 
       ws.current.onmessage = (event) => {
         const newMessage: Message = {
           id: uuidv4(),
           text: event.data,
-          sender: 'agent',
+          type: 'agent',
         };
         setMessages(prev => [...prev, newMessage]);
       };
@@ -74,9 +93,12 @@ const ChatPage: React.FC = () => {
     };
   }, [sessionId]);
 
-    useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollContainer) {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
     }
   }, [messages]);
 
@@ -85,7 +107,7 @@ const ChatPage: React.FC = () => {
       const newMessage: Message = {
         id: uuidv4(),
         text: input,
-        sender: 'user',
+        type: 'user',
       };
       setMessages(prev => [...prev, newMessage]);
       ws.current.send(input);
@@ -94,68 +116,49 @@ const ChatPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
-        <AppBar position="static">
-          <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Multi-Agent Chat
-            </Typography>
-            {!sessionId && (
-              <Button color="inherit" onClick={createNewSession}>
-                New Session
-              </Button>
-            )}
-          </Toolbar>
-        </AppBar>
-        <Box ref={scrollRef} sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
-          <List>
-            {messages.map((message) => (
-              <ListItem key={message.id} sx={{ justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: 1.5,
-                    bgcolor: message.sender === 'user' ? 'primary.main' : 'grey.300',
-                    color: message.sender === 'user' ? 'primary.contrastText' : 'black',
-                    borderRadius: message.sender === 'user' ? '20px 20px 5px 20px' : '20px 20px 20px 5px',
-                    mb: 1,
-                  }}
-                >
-                  <Typography variant="body1">{message.text}</Typography>
-                </Paper>
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-        <Box sx={{ p: 2, borderTop: '1px solid #ddd' }}>
-          <Box sx={{ display: 'flex' }}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSend();
-                }
-              }}
-              disabled={!sessionId}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSend}
-              sx={{ ml: 1 }}
-              disabled={!sessionId}
+    <div className="flex flex-col h-full p-4">
+      <ScrollArea className="flex-grow mb-4" ref={scrollAreaRef}>
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex items-start gap-4 ${
+                message.type === 'user' ? 'justify-end' : 'justify-start'
+              }`}
             >
-              Send
-            </Button>
-          </Box>
-        </Box>
-      </Paper>
-    </Container>
+              {message.type !== 'user' && (
+                <Avatar>
+                  <AvatarFallback>{getAvatarForType(message.type)}</AvatarFallback>
+                </Avatar>
+              )}
+              <Card className={`w-3/4 ${getCardColorForType(message.type)}`}>
+                <CardContent className="p-4">
+                  <ReactMarkdown>{message.text}</ReactMarkdown>
+                </CardContent>
+              </Card>
+              {message.type === 'user' && (
+                <Avatar>
+                  <AvatarFallback>{getAvatarForType(message.type)}</AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+      <div className="flex items-center gap-4">
+        <Input
+          placeholder="Type a message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSend();
+            }
+          }}
+        />
+        <Button onClick={handleSend}>Send</Button>
+      </div>
+    </div>
   );
 };
 
