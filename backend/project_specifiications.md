@@ -88,14 +88,12 @@ Il sistema implementa un framework multi-agente intelligente per l'automazione d
 ## Struttura dei File
 
 ```
-backend/      # python code root folder
+backend/
 │
 ├── models/
 │   ├── __init__.py
 │   └── data_models.py          # Dataclasses e enum
 │
-├── venv                        # python virtual environment
-|
 ├── knowledge/
 │   ├── __init__.py
 │   ├── knowledge_base.py       # Gestione knowledge base JSON-LD
@@ -341,10 +339,8 @@ pytest --cov=agents tests/
 
 ### Comandi Supportati
 
-gli agenti possono dialogare con utente in modalità conversazionale, e traducono richieste utente in comandi:
-
 #### Project Manager
-- `init project` - Inizializzazione nuovo progetto
+- `init_project` - Inizializzazione nuovo progetto
 - `status` - Stato progetto corrente
 - `requirements` - Avvio raccolta requisiti
 - `plan project` - Pianificazione progetto

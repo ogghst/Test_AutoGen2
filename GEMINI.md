@@ -6,15 +6,15 @@ The Multi-Agent Project Management System automates project management tasks usi
 The system employs a multi-agent architecture built on the AutoGen framework, utilizing an event-driven pattern with asynchronous message passing between specialized agents.  The core components include a `SingleThreadedAgentRuntime`, an `AgentFactory`, and a `ChatCompletionClient` for LLM integration. 
 
 ### Key directories and their purposes
-*   `project_management_system/agents/`: Contains the implementations of various agents like `TriageAgent`, `ProjectManagementAgent`, and `AgentFactory`. 
-*   `project_management_system/config/`: Manages system configurations, including LLM provider settings, logging, and runtime parameters. 
-*   `project_management_system/base/`: Provides base classes and utilities, such as the base agent class `AIAgent` and `configure_oltp_tracing` to add observability through OpenTelemetry. 
-*   `project_management_system/models/`: Defines data models used across the system, such as `Project` and `UserStory`. 
-*   `project_management_system/tests/`: Contains test files and fixtures for the system. 
+*   `backend/agents/`: Contains the implementations of various agents like `TriageAgent`, `ProjectManagementAgent`, and `AgentFactory`. 
+*   `backend/config/`: Manages system configurations, including LLM provider settings, logging, and runtime parameters. 
+*   `backend/base/`: Provides base classes and utilities, such as the base agent class `AIAgent` and `configure_oltp_tracing` to add observability through OpenTelemetry. 
+*   `backend/models/`: Defines data models used across the system, such as `Project` and `UserStory`. 
+*   `backend/tests/`: Contains test files and fixtures for the system. 
 *   `frontend/`: Contains the React-based frontend application for interacting with the agent system.
 
 ### Main components and how they interact
-The `main()` function in `project_management_system/main.py` orchestrates the system startup.  It initializes the `ConfigManager`, sets up logging, configures OpenTelemetry tracing, creates a `SingleThreadedAgentRuntime`, and initializes the `ChatCompletionClient`.  The `AgentFactory` then registers all agents and their subscriptions with the runtime.  Agents communicate via a message-based publish-subscribe pattern using `TopicId` instances. 
+The `main()` function in `backend/main.py` orchestrates the system startup.  It initializes the `ConfigManager`, sets up logging, configures OpenTelemetry tracing, creates a `SingleThreadedAgentRuntime`, and initializes the `ChatCompletionClient`.  The `AgentFactory` then registers all agents and their subscriptions with the runtime.  Agents communicate via a message-based publish-subscribe pattern using `TopicId` instances. 
 
 ### Data flow and system design
 The system's data flow begins with a `UserLogin` message published to the `USER_TOPIC_TYPE`.  The `TriageAgent` acts as the entry point, routing user requests to specialized agents based on the request's content.  Agents process messages using their `handle_task` method, which interacts with the LLM via `model_client.create()` and executes tools. 
@@ -24,7 +24,7 @@ The system's data flow begins with a `UserLogin` message published to the `USER_
 The system relies on `autogen_core` and `autogen_ext` for its multi-agent framework and LLM integrations.  Specific LLM providers like DeepSeek and Ollama are supported. 
 
 ### Installation steps
-While explicit installation steps are not provided, the `project_management_system/mockups/test_functools.py` file suggests `pip install "autogen-agentchat>=0.3.0" "autogen-core>=0.4.0" "autogen-ext[openai]>=0.4.0"` as a starting point for dependencies. 
+While explicit installation steps are not provided, the `backend/mockups/test_functools.py` file suggests `pip install "autogen-agentchat>=0.3.0" "autogen-core>=0.4.0" "autogen-ext[openai]>=0.4.0"` as a starting point for dependencies. 
 
 ### Environment configuration
 Environment variables, such as `OPENAI_API_KEY`, are used for LLM authentication.  The system uses a `config.json` file for centralized configuration, which can be loaded via `get_config_manager()`.  If `config.json` is missing, a default configuration is created. 
@@ -32,8 +32,8 @@ Environment variables, such as `OPENAI_API_KEY`, are used for LLM authentication
 ### How to run the project locally
 The project has two main entry points:
 
-*   **CLI Application**: The main entry point for the command-line application is `project_management_system/main.py`. It can be run using `python project_management_system/main.py` from the root directory, after installing dependencies.
-*   **Web Server**: The project also includes a FastAPI web server that provides a WebSocket interface for chatting with the agent team. To run the server, execute the following command from the `project_management_system` directory:
+*   **CLI Application**: The main entry point for the command-line application is `backend/main.py`. It can be run using `python backend/main.py` from the root directory, after installing dependencies.
+*   **Web Server**: The project also includes a FastAPI web server that provides a WebSocket interface for chatting with the agent team. To run the server, execute the following command from the `backend` directory:
     ```bash
     uvicorn server:app --host 0.0.0.0 --port 8001
     ```
@@ -80,14 +80,14 @@ The system interacts with several APIs:
     *   **Usage**: Clients can send chat messages (as text) to the server over the WebSocket connection. The server will broadcast agent responses back to the client.
 
 ### Database schema (if applicable)
-The system defines data models for project management entities like `Project`, `Epic`, `UserStory`, and `Team` using Pydantic `BaseModel`s.  These models include fields with type annotations, descriptions, and validation rules.  The `project_management_system/models/data_model.yaml` file provides a YAML representation of this schema. 
+The system defines data models for project management entities like `Project`, `Epic`, `UserStory`, and `Team` using Pydantic `BaseModel`s.  These models include fields with type annotations, descriptions, and validation rules.  The `backend/models/data_model.yaml` file provides a YAML representation of this schema. 
 
 ## Testing Strategy
 ### Testing frameworks used
 The codebase uses `pytest` for testing, with `conftest.py` providing common fixtures and utilities. 
 
 ### Test file organization
-Test files are located in the `project_management_system/tests/` directory. 
+Test files are located in the `backend/tests/` directory. 
 
 ### How to run tests
 To run tests, `pytest` would typically be invoked from the command line in the project root. The `conftest.py` file sets up the Python path to include the project root. 
@@ -99,7 +99,7 @@ The `conftest.py` includes utilities for temporary directories, sample data, per
 Information regarding build processes, deployment configurations, environment-specific settings, and CI/CD pipelines is not explicitly available in the provided codebase context. <cite/>
 
 ## Git Workflow
-Information regarding branching strategy, commit message conventions, code review process, and release process is not explicitly available in the provided codebase context. <cite/> However, commit messages indicate a mix of feature additions, bug fixes, and updates by different authors. <cite repo="ogghst/Test_AutoGen2" path="project_management_system/main.py" start="1" end
+Information regarding branching strategy, commit message conventions, code review process, and release process is not explicitly available in the provided codebase context. <cite/> However, commit messages indicate a mix of feature additions, bug fixes, and updates by different authors. <cite repo="ogghst/Test_AutoGen2" path="backend/main.py" start="1" end
 
 # Development Partnership and How We Should Partner
 

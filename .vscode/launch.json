@@ -11,15 +11,17 @@
             "request": "launch",
             "program": "main.py",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/project_management_system"
+            "cwd": "${workspaceFolder}/backend"
         },
 
         {
-            "name": "Handoffs",
+            "name": "Server",
             "type": "debugpy",
             "request": "launch",
-            "program": "project_management_system/POC/handoffs/handoffs_pattern.py",
-            "console": "integratedTerminal"
-        }
+            "program": "server.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/backend"
+        },
+
     ]
 }
