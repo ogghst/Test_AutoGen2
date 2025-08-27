@@ -30,6 +30,11 @@ class UserSession:
         await self.agent_factory.register_all_agents()
         await self.agent_factory.add_all_subscriptions()
         self.runtime.start()
+        
+        await self.runtime.publish_message(
+        UserLogin(), 
+        topic_id=TopicId(USER_TOPIC_TYPE, source=self.session_id)
+    )
 
     async def close(self):
         await self.runtime.stop()

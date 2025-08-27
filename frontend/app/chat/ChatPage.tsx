@@ -14,6 +14,11 @@ interface Message {
   type: 'user' | 'system' | 'thinking' | 'log' | 'agent';
 }
 
+// Define a type for the session response
+interface SessionResponse {
+  session_id: string;
+}
+
 const getAvatarForType = (type: Message['type']) => {
   switch (type) {
     case 'user':
@@ -51,11 +56,42 @@ const getCardColorForType = (type: Message['type']) => {
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>('');
-  const [sessionId] = useState<string>(uuidv4());
+  const [sessionId, setSessionId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const ws = useRef<WebSocket | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Create a session upon component mount
+    const createSession = async () => {
+      try {
+        const response = await fetch('http://localhost:8001/api/session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to create session: ${response.status}`);
+        }
+        
+        const sessionData: SessionResponse = await response.json();
+        setSessionId(sessionData.session_id);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to create session:', error);
+        setIsLoading(false);
+      }
+    };
+
+    createSession();
+  }, []);
+
+  useEffect(() => {
+    // Only connect to WebSocket after session is created
+    if (!sessionId || isLoading) return;
+
     // Connect to the WebSocket server
     try {
       ws.current = new WebSocket(`ws://localhost:8001/ws/${sessionId}`);
@@ -91,7 +127,7 @@ const ChatPage: React.FC = () => {
         ws.current.close();
       }
     };
-  }, [sessionId]);
+  }, [sessionId, isLoading]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -103,7 +139,7 @@ const ChatPage: React.FC = () => {
   }, [messages]);
 
   const handleSend = () => {
-    if (input.trim() !== '' && ws.current && ws.current.readyState === WebSocket.OPEN) {
+    if (input.trim() !== '' && ws.current && ws.current.readyState === WebSocket.OPEN && !isLoading) {
       const newMessage: Message = {
         id: uuidv4(),
         text: input,
@@ -114,6 +150,15 @@ const ChatPage: React.FC = () => {
       setInput('');
     }
   };
+
+  // Show loading state while creating session
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full p-4 items-center justify-center">
+        <div className="text-lg">Creating session...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full p-4">
@@ -155,8 +200,9 @@ const ChatPage: React.FC = () => {
               handleSend();
             }
           }}
+          disabled={isLoading}
         />
-        <Button onClick={handleSend}>Send</Button>
+        <Button onClick={handleSend} disabled={isLoading}>Send</Button>
       </div>
     </div>
   );
