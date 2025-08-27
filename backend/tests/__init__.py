@@ -85,12 +85,7 @@ from .base_test import (
 # Import common fixtures
 from .conftest import (
     temp_dir,
-    knowledge_base,
-    knowledge_base_with_data,
-    document_store,
-    feature_rich_document_store,
-    sample_project_context,
-    sample_document,
+    sample_project,
     sample_entities,
     test_utils,
     performance_threshold
@@ -113,12 +108,7 @@ __all__ = [
     
     # Common fixtures
     'temp_dir',
-    'knowledge_base',
-    'knowledge_base_with_data',
-    'document_store',
-    'feature_rich_document_store',
-    'sample_project_context',
-    'sample_document',
+    'sample_project',
     'sample_entities',
     'test_utils',
     'performance_threshold'

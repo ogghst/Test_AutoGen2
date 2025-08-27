@@ -12,15 +12,53 @@ from agents.tools import USER_TOPIC_TYPE, TRIAGE_AGENT_TOPIC_TYPE
 from base.messaging import UserLogin, UserTask, AgentResponse
 from config.settings import get_config_manager
 from models.data_models import Project
-from autogen_core.models import UserMessage
+from autogen_core.models import UserMessage, ChatCompletionClient
 from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
 
 
+class UserSession:
+    def __init__(self, session_id: str, model_client: ChatCompletionClient, tracer_provider):
+        self.session_id = session_id
+        self.runtime = SingleThreadedAgentRuntime(tracer_provider=tracer_provider)
+        self.agent_factory = AgentFactory(self.runtime, model_client)
+        self.input_queue = self.agent_factory.input_queue
+        self.response_queue = self.agent_factory.response_queue
+
+    async def initialize(self):
+        await self.agent_factory.register_all_agents()
+        await self.agent_factory.add_all_subscriptions()
+        self.runtime.start()
+
+    async def close(self):
+        await self.runtime.stop()
+
+class UserSessionManager:
+    def __init__(self, model_client: ChatCompletionClient, tracer_provider):
+        self.sessions = {}
+        self.model_client = model_client
+        self.tracer_provider = tracer_provider
+
+    async def create_session(self) -> str:
+        session_id = str(uuid.uuid4())
+        session = UserSession(session_id, self.model_client, self.tracer_provider)
+        await session.initialize()
+        self.sessions[session_id] = session
+        return session_id
+
+    def get_session(self, session_id: str) -> UserSession:
+        return self.sessions.get(session_id)
+
+    async def close_session(self, session_id: str):
+        session = self.sessions.pop(session_id, None)
+        if session:
+            await session.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global runtime, model_client, logger, agent_factory
+    global model_client, logger, user_session_manager
     # Load configuration - get_config_manager handles all fallback cases
     config_manager = get_config_manager("../config/config.json")
 
@@ -36,8 +74,6 @@ async def lifespan(app: FastAPI):
     logger = get_logger(__name__)
     logger.info("Starting handoffs pattern system")
 
-    #logger.info(json.dumps(Project.model_json_schema(), indent=2))
-
     # Configure tracing based on configuration
     if config_manager.runtime.enable_tracing:
         tracing_endpoint = config_manager.runtime.tracing_endpoint
@@ -45,35 +81,16 @@ async def lifespan(app: FastAPI):
     else:
         tracer_provider = configure_oltp_tracing()
 
-    # Create the runtime
-    runtime = SingleThreadedAgentRuntime(tracer_provider=tracer_provider)
-
-
     # Create the model client with configuration
     logger.info(f"LLM Provider: {config_manager.llm_provider.value}")
-
-    # Pass configuration to model client creation
     model_client = create_model_client(config_manager=config_manager)
 
-    # Create agent factory and register all agents
-    logger.info("Creating agent factory and registering agents")
-    agent_factory = AgentFactory(runtime, model_client)
-    registered_agents = await agent_factory.register_all_agents()
+    # Create the user session manager
+    user_session_manager = UserSessionManager(model_client, tracer_provider)
 
-    # Add subscriptions for all agents
-    logger.info("Adding subscriptions for all agents")
-    await agent_factory.add_all_subscriptions()
-
-    # Start the runtime
-    logger.info("Starting runtime")
-    runtime.start()
-
-    #await runtime.stop_when_idle()  
     yield
     
     # Shutdown logic
-    if runtime:
-        await runtime.stop()
     if model_client:
         await model_client.close()
 
@@ -89,35 +106,27 @@ app.add_middleware(
 
 @app.post("/api/session")
 async def create_session():
-    session_id = str(uuid.uuid4())
+    session_id = await user_session_manager.create_session()
     logger.info(f"Created new session: {session_id}")
-    
-    # Start a new user session by sending a login message.
-    await runtime.publish_message(
-        UserLogin(), 
-        topic_id=TopicId(USER_TOPIC_TYPE, source=session_id)
-    ) 
-    
     return {"session_id": session_id}
-
-from agents.websocket_agent import WebSocketAgent
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
     logger.info(f"Client connected: {session_id}")
 
-    logger.info(f"Runtime: {runtime}")
+    session = user_session_manager.get_session(session_id)
+    if not session:
+        logger.error(f"Session not found: {session_id}")
+        await websocket.close(code=1011, reason="Session not found")
+        return
 
-    # Subscribe the agent to the user topic for this session
-    subscription_id = await runtime.add_subscription(
-        TypeSubscription(topic_type=USER_TOPIC_TYPE, agent_type=TRIAGE_AGENT_TOPIC_TYPE)
-    )
+    logger.info(f"Runtime for session {session_id}: {session.runtime}")
 
     # Task to send agent responses to the client
     async def send_responses():
         while True:
-            response = await agent_factory.response_queue.get()
+            response = await session.response_queue.get()
             if response is None:
                 break
             if response.context and len(response.context) > 0:
@@ -129,16 +138,16 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     try:
         while True:
             data = await websocket.receive_text()
-            await agent_factory.input_queue.put(data)
+            await session.input_queue.put(data)
             logger.info(f"Received message from {session_id}: {data}")
 
     except WebSocketDisconnect:
         logger.info(f"Client disconnected: {session_id}")
     finally:
         logger.info(f"Closing connection for {session_id}")
-        await agent_factory.response_queue.put(None)
+        await session.response_queue.put(None)
         send_task.cancel()
-        await runtime.unsubscribe(subscription_id)
+        await user_session_manager.close_session(session_id)
 
 
 if __name__ == "__main__":

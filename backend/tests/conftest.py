@@ -35,8 +35,8 @@ except ImportError:
     pytest = MockPytest()
 
 from models.data_models import (
-    ProjectContext, Methodology, DocumentType, Priority,
-    ProjectStatus, Document, ChangeEvent, ChangeType, generate_uuid
+    Project, Team, TeamMember, Scope, Epic, UserStory, Issue, Stakeholder, Risk, Milestone, Deliverable,
+    generate_uuid
 )
 
 # ============================================================================
@@ -61,38 +61,29 @@ def temp_file_path(temp_dir: Path) -> Path:
 # TEST DATA FIXTURES
 # ============================================================================
 
-def sample_project_context() -> ProjectContext:
-    """Provide a sample ProjectContext for testing."""
-    return ProjectContext(
-        project_id="test_project_001",
-        project_name="Test Project",
+def sample_project() -> Project:
+    """Provide a sample Project for testing."""
+    team_member = TeamMember(name="Dev 1", role="Developer", email="dev1@test.com", capacity=40)
+    team = Team(name="Test Team", members=[team_member], velocity=10, capacity=40)
+    issue = Issue(title="Test Issue", description="Test issue description", type="Task", status="To Do", assignee=team_member, estimate_hours=8, actual_hours=0, due_date=datetime.now().date())
+    user_story = UserStory(title="Test User Story", description="As a user...", acceptance_criteria=["Criteria 1"], story_points=5, issues=[issue], status="Backlog", priority=1)
+    epic = Epic(name="Test Epic", description="Test epic description", business_value=10, user_stories=[user_story], priority="High", status="Proposed")
+    scope = Scope(epics=[epic], inclusions=["Feature A"], exclusions=["Feature B"], assumptions=["Assumption 1"], constraints=["Constraint 1"], acceptance_criteria=["Criteria 1"])
+    stakeholder = Stakeholder(name="Test Stakeholder", role="Sponsor", influence="High", interest="High", communication_preferences="Email")
+    risk = Risk(description="Test Risk", category="Technical", probability="Medium", impact="High", mitigation_strategy="Test", contingency_plan="Test", status="Identified")
+    deliverable = Deliverable(name="Test Deliverable", description="Test deliverable", status="Not Started")
+    milestone = Milestone(name="Test Milestone", description="Test milestone", target_date=datetime.now().date(), deliverables=[deliverable], status="Planned")
+
+    return Project(
+        name="Test Project",
+        vision="A test project for unit testing",
         description="A test project for unit testing",
-        objectives=["Test objective 1", "Test objective 2"],
-        stakeholders=["Test Stakeholder 1", "Test Stakeholder 2"],
-        constraints=["Time constraint", "Budget constraint"],
-        assumptions=["Assumption 1", "Assumption 2"],
-        timeline="3 months",
-        budget="10000",
-        status=ProjectStatus.PLANNING,
-        priority=Priority.MEDIUM,
-        methodology=Methodology.AGILE,
-        domain="Software Development",
-        team_members=["Developer 1", "Developer 2"],
-        related_projects=["related_project_001"],
-        created_at=datetime.now(),
-        updated_at=datetime.now()
-    )
-
-
-def sample_document() -> Document:
-    """Provide a sample Document for testing."""
-    return Document(
-        id=generate_uuid(),
-        title="Test Document 1",
-        content="This is the content of the test document.",
-        type=DocumentType.TECHNICAL_SPEC,
-        author="test_runner",
-        project_id="proj_123",
+        team=team,
+        scope=scope,
+        stakeholders=[stakeholder],
+        risks=[risk],
+        milestones=[milestone],
+        status="Planning"
     )
 
 
@@ -217,8 +208,7 @@ def auto_cleanup():
 if PYTEST_AVAILABLE:
     # Convert functions to pytest fixtures
     temp_dir = pytest.fixture(temp_dir)
-    sample_project_context = pytest.fixture(sample_project_context)
-    sample_document = pytest.fixture(sample_document)
+    sample_project = pytest.fixture(sample_project)
     sample_entities = pytest.fixture(sample_entities)
     test_utils = pytest.fixture(test_utils)
     performance_threshold = pytest.fixture(performance_threshold)
