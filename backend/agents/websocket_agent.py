@@ -32,18 +32,18 @@ class WebSocketAgent(RoutedAgent):
     @message_handler
     async def handle_task_result(self, message: AgentResponse, ctx: MessageContext) -> None:
         logger = get_logger(__name__)
-        logger.info(f"Handling task result from {message.reply_to_topic_type}")
+        logger.info(f"Handling task result from {message.reply_to_topic_type}: {message.context}")
         
         await self._response_queue.put(message)
 
         user_input = await self._input_queue.get()
 
-        if user_input.strip().lower() == "exit":
-            logger.info(f"User session ended, session ID: {self.id.key}")
-            return
+        #if user_input.strip().lower() == "exit":
+        #    logger.info(f"User session ended, session ID: {self.id.key}")
+        #    return
             
         message.context.append(UserMessage(content=user_input, source="User"))
-        logger.info(f"Publishing user input to {message.reply_to_topic_type}")
+        logger.info(f"Publishing user input to {message.reply_to_topic_type}: {user_input}")
 
         await self.publish_message(
             UserTask(context=message.context), 

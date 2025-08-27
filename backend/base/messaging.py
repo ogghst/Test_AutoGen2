@@ -22,8 +22,6 @@ class UserLogin(BaseModel):
 class UserTask(BaseModel):
     """Message class for user task requests."""
     context: List[LLMMessage]
-
-
 class AgentResponse(BaseModel):
     """Message class for agent responses."""
     reply_to_topic_type: str

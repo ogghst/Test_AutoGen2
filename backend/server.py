@@ -135,7 +135,9 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             if response is None:
                 break
             if response.context and len(response.context) > 0:
-                agent_reply = response.context[-1].content
+                import json
+                agent_reply = json.dumps(response.context[-1].model_dump())
+                logger.info(f"Sending agent reply to client: {agent_reply}")
                 await websocket.send_text(agent_reply)
 
     send_task = asyncio.create_task(send_responses())

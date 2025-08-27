@@ -1,10 +1,8 @@
+
 from .messaging import AgentResponse, UserTask
-
-
 from autogen_core import FunctionCall, MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import AssistantMessage, ChatCompletionClient, FunctionExecutionResult, FunctionExecutionResultMessage, SystemMessage
 from autogen_core.tools import Tool
-
 
 import json
 from config.logging_config import get_logger
@@ -63,7 +61,7 @@ class AIAgent(RoutedAgent):
                 cancellation_token=ctx.cancellation_token,
             )
             logger.info(f"{self.id.type}: LLM response received - content: {llm_result.content}")
-            print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+            #print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
         except Exception as e:
             logger.error(f"Error in {self.id.type}: {e}", exc_info=True)
                         # Send error response to user instead of just returning
@@ -129,7 +127,7 @@ class AIAgent(RoutedAgent):
                 logger.info(f"{self.id.type}: Delegating to {len(delegate_targets)} agents")
                 for topic_type, task in delegate_targets:
                     topic_id = TopicId(topic_type, source=self.id.key)
-                    print(f"{'-'*80}\n{self.id.type}:\nDelegating to {topic_type}", flush=True)
+                    #print(f"{'-'*80}\n{self.id.type}:\nDelegating to {topic_type}", flush=True)
                     logger.info(f"{self.id.type}: Publishing to topic: {topic_type}")
                     await self.publish_message(task, topic_id=topic_id)
 

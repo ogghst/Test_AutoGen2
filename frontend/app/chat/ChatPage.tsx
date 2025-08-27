@@ -11,7 +11,7 @@ import { ScrollArea } from '../components/ui/scroll-area';
 interface Message {
   id: string;
   text: string;
-  type: 'user' | 'system' | 'thinking' | 'log' | 'agent';
+  type: 'user' | 'system' | 'thinking' | 'log' | 'triage_agent' | "project_management_agent";
 }
 
 // Define a type for the session response
@@ -23,10 +23,10 @@ const getAvatarForType = (type: Message['type']) => {
   switch (type) {
     case 'user':
       return 'U';
-    case 'agent':
+    case 'triage_agent':
       return 'A';
-    case 'system':
-      return 'S';
+    case 'project_management_agent':
+      return 'P';
     case 'thinking':
       return 'T';
     case 'log':
@@ -40,9 +40,9 @@ const getCardColorForType = (type: Message['type']) => {
   switch (type) {
     case 'user':
       return 'bg-primary text-primary-foreground';
-    case 'agent':
+    case 'triage_agent':
       return 'bg-secondary text-secondary-foreground';
-    case 'system':
+    case 'project_management_agent':
       return 'bg-muted text-muted-foreground';
     case 'thinking':
       return 'bg-accent text-accent-foreground';
@@ -102,10 +102,12 @@ const ChatPage: React.FC = () => {
       };
 
       ws.current.onmessage = (event) => {
+        console.log('WebSocket message received:', event.data);
+        const data = JSON.parse(event.data);
         const newMessage: Message = {
           id: uuidv4(),
-          text: event.data,
-          type: 'agent',
+          text: data.content,
+          type: data.source,
         };
         setMessages(prev => [...prev, newMessage]);
       };
