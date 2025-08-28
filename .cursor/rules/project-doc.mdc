@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 # project documentation
-- analyze 'project_general.md' to gather project informations
+- analyze 'GEMINI.md' to gather project informations
 
 # autogen libraries related code
 - when working with autogen_core, autogen_ext and autogen_agentchat library related code, always make sure it is compliant with API specs in https://microsoft.github.io/autogen/stable//reference/index.html 

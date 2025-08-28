@@ -98,7 +98,7 @@ const ChatPage: React.FC = () => {
 
       ws.current.onopen = () => {
         console.log('WebSocket connection established');
-        setMessages(prev => [...prev, { id: uuidv4(), text: "Hello! How can I help you with your project today?", type: 'agent' }]);
+        setMessages(prev => [...prev, { id: uuidv4(), text: "Hello! How can I help you with your project today?", type: 'triage_agent' }]);
       };
 
       ws.current.onmessage = (event) => {
