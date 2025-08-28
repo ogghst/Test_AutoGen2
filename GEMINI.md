@@ -1,170 +1,342 @@
 ## Project Overview
-The Multi-Agent Project Management System automates project management tasks using intelligent agent collaboration.  Its main goal is to guide users through PMI best practices and create comprehensive project management plans in markdown format.  The target audience includes users seeking assistance with project planning and adherence to Project Management Institute (PMI) standards. 
+
+The Multi-Agent Project Management System is an intelligent multi-agent framework designed to automate the creation and management of software project documentation. The agents collaborate to:
+
+-   **Automate the creation** of technical and organizational documentation.
+-   **Manage change management** with automatic updates.
+-   **Gather requirements** through intelligent interaction.
+-   **Generate project plans** based on best practices.
+-   **Maintain consistency** between documentation and code.
+
+The target audience includes users seeking assistance with project planning and adherence to Project Management Institute (PMI) standards.
 
 ## Architecture & Structure
-### High-level architecture overview
-The system employs a multi-agent architecture built on the AutoGen framework, utilizing an event-driven pattern with asynchronous message passing between specialized agents.  The core components include a `SingleThreadedAgentRuntime`, an `AgentFactory`, and a `ChatCompletionClient` for LLM integration. 
 
-### Key directories and their purposes
-*   `backend/agents/`: Contains the implementations of various agents like `TriageAgent`, `ProjectManagementAgent`, and `AgentFactory`. 
-*   `backend/config/`: Manages system configurations, including LLM provider settings, logging, and runtime parameters. 
-*   `backend/base/`: Provides base classes and utilities, such as the base agent class `AIAgent` and `configure_oltp_tracing` to add observability through OpenTelemetry. 
-*   `backend/models/`: Defines data models used across the system, such as `Project` and `UserStory`. 
-*   `backend/tests/`: Contains test files and fixtures for the system. 
-*   `frontend/`: Contains the React-based frontend application for interacting with the agent system.
+### High-level Architecture Overview
 
-### Main components and how they interact
-The `main()` function in `backend/main.py` orchestrates the system startup.  It initializes the `ConfigManager`, sets up logging, configures OpenTelemetry tracing, creates a `SingleThreadedAgentRuntime`, and initializes the `ChatCompletionClient`.  The `AgentFactory` then registers all agents and their subscriptions with the runtime.  Agents communicate via a message-based publish-subscribe pattern using `TopicId` instances. 
+The system employs a multi-agent architecture built on the AutoGen framework, utilizing an event-driven pattern with asynchronous message passing between specialized agents.
 
-### Data flow and system design
-The system's data flow begins with a `UserLogin` message published to the `USER_TOPIC_TYPE`.  The `TriageAgent` acts as the entry point, routing user requests to specialized agents based on the request's content.  Agents process messages using their `handle_task` method, which interacts with the LLM via `model_client.create()` and executes tools. 
+```
+┌─────────────────────────────────────────────────────┐
+│                 Knowledge Base                      │
+│                 (JSON-LD)                          │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
+│   │Methodologies│  │  Templates  │  │ Best        │ │
+│   │(Agile,      │  │(Project     │  │ Practices   │ │
+│   │Waterfall)   │  │Charter,PRD) │  │             │ │
+│   └─────────────┘  └─────────────┘  └─────────────┘ │
+└─────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────┐
+│              Multi-Agent System                     │
+│                                                     │
+│  ┌─────────────┐    ┌─────────────┐                │
+│  │ Project     │◄──►│Requirements │                │
+│  │ Manager     │    │ Analyst     │                │
+│  └─────────────┘    └─────────────┘                │
+│         │                   │                      │
+│         ▼                   ▼                      │
+│  ┌─────────────┐    ┌─────────────┐                │
+│  │ Change      │    │ Technical   │                │
+│  │ Detector    │    │ Writer      │                │
+│  └─────────────┘    └─────────────┘                │
+│                                                     │
+│         ▲                                           │
+│         │ Ollama API (Local LLM)                   │
+│         ▼                                           │
+└─────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────┐
+│               Document Store                        │
+│              (File System)                         │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
+│   │Project      │  │Requirements │  │Technical    │ │
+│   │Charter      │  │Documents    │  │Specs        │ │
+│   └─────────────┘  └─────────────┘  └─────────────┘ │
+└─────────────────────────────────────────────────────┘
+```
+
+### Architectural Patterns
+
+-   **Event-Driven Architecture**: Agents react to events and messages.
+-   **Microservices Pattern**: Each agent has specific responsibilities.
+-   **Repository Pattern**: Separation between business logic and data persistence.
+-   **Strategy Pattern**: Interchangeable methodologies (Agile, Waterfall).
+
+### Technologies Used
+
+#### Core Framework
+
+-   **AutoGen**: Microsoft framework for multi-agent systems.
+-   **Ollama and Deepseek**: Two usable Large Language Models.
+-   **Python 3.12+**: Main programming language.
+
+#### Data Models
+
+-   **JSON-LD**: Knowledge representation for entities and relationships.
+-   **Dataclasses**: Typed Python data structures.
+-   **Pydantic**: Data validation and serialization.
+
+#### Persistence
+
+-   **File System**: Storage for generated documents.
+-   **JSON**: Indexing and metadata.
+-   **Markdown**: Document output format.
+
+#### Communication
+
+-   **HTTP/REST**: Integration with Ollama API.
+-   **Message Passing**: Communication between agents.
+-   **Async/Await**: Management of asynchronous operations.
+
+### File Structure
+
+```
+backend/      # python code root folder
+│
+├── models/
+│   ├── __init__.py
+│   └── data_models.py          # Dataclasses and enums
+│
+├── knowledge/
+│   ├── __init__.py
+│   ├── knowledge_base.py       # JSON-LD knowledge base management
+│   └── knowledge_base.jsonld   # KB with methodologies and templates
+│
+├── storage/
+│   ├── __init__.py
+│   └── document_store.py       # Persistence of output documents
+│
+├── agents/
+│   ├── __init__.py            # Export agents and factory function
+│   ├── base_agent.py          # Base class for agents
+│   ├── project_manager.py     # Orchestrator agent
+│   ├── requirements_analyst.py # Requirements gathering agent
+│   ├── change_detector.py     # Change management agent
+│   └── technical_writer.py    # Technical documentation agent
+│
+├── output_documents/          # Directory of generated documents
+│   ├── document_index.json   # Document index
+│   └── [generated_docs].md   # Markdown documents
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_agents.py
+│   ├── test_knowledge_base.py
+│   └── test_document_store.py
+│
+├── config/
+│   ├── __init__.py
+│   └── settings.py           # System configurations
+│
+├── main.py                   # Demo and main runner
+├── requirements.txt          # Python dependencies
+└── README.md                # Project documentation
+```
 
 ## Development Setup
-### Prerequisites and dependencies
-The system relies on `autogen_core` and `autogen_ext` for its multi-agent framework and LLM integrations.  Specific LLM providers like DeepSeek and Ollama are supported. 
 
-### Installation steps
-While explicit installation steps are not provided, the `backend/mockups/test_functools.py` file suggests `pip install "autogen-agentchat>=0.3.0" "autogen-core>=0.4.0" "autogen-ext[openai]>=0.4.0"` as a starting point for dependencies. 
+### Prerequisites
 
-### Environment configuration
-Environment variables, such as `OPENAI_API_KEY`, are used for LLM authentication.  The system uses a `config.json` file for centralized configuration, which can be loaded via `get_config_manager()`.  If `config.json` is missing, a default configuration is created. 
+1.  **Python 3.12+** installed
+2.  **Ollama** installed and configured
+3.  **Git** for cloning the project
+4.  **Node.js and npm** for the frontend
 
-### How to run the project locally
-The project has two main entry points:
+### Step 1: Install Ollama
 
-*   **CLI Application**: The main entry point for the command-line application is `backend/main.py`. It can be run using `python backend/main.py` from the root directory, after installing dependencies.
-*   **Web Server**: The project also includes a FastAPI web server that provides a WebSocket interface for chatting with the agent team. To run the server, execute the following command from the `backend` directory:
-    ```bash
-    uvicorn server:app --host 0.0.0.0 --port 8001
-    ```
-*   **Frontend Application**: The project includes a React-based chat interface. To run it, navigate to the `frontend` directory and run the following commands:
-    ```bash
-    # Install dependencies
-    npm install
+```bash
+# macOS
+brew install ollama
 
-    # Run the development server
-    npm run dev
-    ```
-    The frontend will be available at `http://localhost:5173` by default and will connect to the backend server running on port 8001.
+# Linux
+curl -fsSL https://ollama.ai/install.sh | sh
 
-## Code Organization
-### Coding standards and conventions
-The code generally follows Python's PEP 8 guidelines, with clear docstrings for modules, classes, and functions.  Type hints are used extensively for improved readability and maintainability. 
+# Windows
+# Download installer from https://ollama.ai/download
 
-### File naming patterns
-Files are named descriptively, often indicating their purpose or the component they represent (e.g., `main.py`, `factory.py`, `triage_agent.py`). 
+# Start the service
+ollama serve
+```
 
-### Import/export patterns
-Imports are typically grouped by standard library, third-party, and local modules.  Modules export classes and functions that are intended for external use. 
+### Step 2: Download LLM Model
 
-### Component structure (if applicable)
-Agents are structured with a base class `AIAgent` providing common functionality, and specialized agents inheriting from it.  The `AgentFactory` centralizes the creation and registration of these agents. 
+```bash
+# Download recommended model (about 2GB)
+ollama pull llama3.2
 
-## Key Features & Implementation
-### Main features and how they're implemented
-The system's main feature is multi-agent project management.  This is implemented through specialized agents:
-*   **Triage Agent**: Routes user requests to appropriate agents.  It uses `transfer_to_*_agent` tools to delegate tasks. 
-*   **Project Management Agent**: Guides users through PMI best practices and creates project management plans.  It utilizes the `create_pmi_project_management_plan_tool` to generate markdown plans based on a `Project` data model. 
+# Verify available models
+ollama list
 
-### Important algorithms or business logic
-The core business logic resides within the agents' `handle_task` methods.  This involves sending messages to an LLM, processing its response, and executing tools based on the LLM's output.  Tool execution can involve direct actions or delegation to other agents. 
+# Test model
+ollama run llama3.2 "Hello, how are you?"
+```
 
-### API endpoints (if applicable)
-The system interacts with several APIs:
+### Step 3: Configure LLM Provider
 
-*   **LLM APIs**: The system connects to LLM providers like DeepSeek or Ollama through the `ChatCompletionClient`.
-*   **OpenTelemetry**: For observability, the system can send tracing data to an OTLP collector endpoint.
-*   **WebSocket API**: A FastAPI server provides a WebSocket endpoint for real-time chat with the agent team.
-    *   **Endpoint**: `/ws/{session_id}`
-    *   **Description**: Establishes a WebSocket connection for a user session. The `session_id` is a unique string that identifies the conversation.
-    *   **Usage**: Clients can send chat messages (as text) to the server over the WebSocket connection. The server will broadcast agent responses back to the client.
+The system can use two LLM providers: **DeepSeek** (cloud-based) or **Ollama** (local).
 
-### Database schema (if applicable)
-The system defines data models for project management entities like `Project`, `Epic`, `UserStory`, and `Team` using Pydantic `BaseModel`s.  These models include fields with type annotations, descriptions, and validation rules.  The `backend/models/data_model.yaml` file provides a YAML representation of this schema. 
+Create a `.env` file in the project root and set the following variables:
+
+```env
+# Choose the provider: "deepseek" or "ollama"
+LLM_PROVIDER=ollama
+
+# --- Configuration for DeepSeek (if LLM_PROVIDER="deepseek") ---
+# DEEPSEEK_API_KEY=your_deepseek_api_key
+
+# --- Configuration for Ollama (if LLM_PROVIDER="ollama") ---
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+```
+
+**Note:** Make sure you have installed and started Ollama if you select it as a provider.
+
+### Step 4: Setup Backend
+
+```bash
+# Clone the project
+git clone <repository_url>
+cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Step 5: Setup Frontend
+
+```bash
+# Navigate to the frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+```
+
+## How to Run the Project
+
+The project has two main parts: the **backend server** and the **frontend application**.
+
+### Backend Server
+
+The backend is a FastAPI server that provides a WebSocket interface for the agent team.
+
+To run the server, execute the following command from the `backend` directory:
+
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8001
+```
+
+### Frontend Application
+
+The frontend is a React-based chat interface.
+
+To run the frontend, navigate to the `frontend` directory and run the following command:
+
+```bash
+# Run the development server
+npm run dev
+```
+
+The frontend will be available at `http://localhost:5173` by default and will connect to the backend server running on port 8001.
+
+## Agent Implementation
+
+### Implemented Agents
+
+✅ **BaseProjectAgent**: Base class with common functionalities
+✅ **ProjectManagerAgent**: Workflow orchestration and project coordination
+✅ **RequirementsAnalystAgent**: Requirements gathering, analysis, and validation
+✅ **ChangeDetectorAgent**: Change monitoring and management
+✅ **TechnicalWriterAgent**: Generation and management of technical documentation
+
+### Implemented Features
+
+-   **OOP Pattern**: Each agent has specific and well-defined responsibilities.
+-   **Async/Await**: Asynchronous management for non-blocking operations.
+-   **DeepSeek Integration**: Use of LLM for intelligent content generation.
+-   **Error Handling**: Robust error handling with logging.
+-   **Message Processing**: Message routing system by command type.
+-   **Document Management**: Integration with storage and knowledge base.
+
+### Supported Commands
+
+#### Project Manager
+
+-   `init_project` - Initialize a new project
+-   `status` - Current project status
+-   `requirements` - Start requirements gathering
+-   `plan project` - Project planning
+
+#### Requirements Analyst
+
+-   `gather requirements` - Gather requirements from text
+-   `analyze requirements` - Analyze gathered requirements
+-   `document requirements` - Create formal documentation
+-   `interview questions` - Questions for stakeholder interviews
+-   `validate requirements` - Validate requirements quality
+
+#### Change Detector
+
+-   `monitor artifacts` - Configure monitoring
+-   `detect changes` - Detect changes
+-   `analyze impact` - Analyze the impact of changes
+-   `change history` - History of changes
+-   `approve changes` - Manage approval workflow
+-   `rollback changes` - Manage rollback
+
+#### Technical Writer
+
+-   `create document` - Create technical documents
+-   `format document` - Apply formatting
+-   `review document` - Review documents
+-   `template management` - Manage templates
+-   `export document` - Export in different formats
+-   `organize documents` - Organize documents
 
 ## Testing Strategy
+
 ### Testing frameworks used
-The codebase uses `pytest` for testing, with `conftest.py` providing common fixtures and utilities. 
+
+The codebase uses `pytest` for testing, with `conftest.py` providing common fixtures and utilities.
 
 ### Test file organization
-Test files are located in the `backend/tests/` directory. 
+
+Test files are located in the `backend/tests/` directory.
 
 ### How to run tests
-To run tests, `pytest` would typically be invoked from the command line in the project root. The `conftest.py` file sets up the Python path to include the project root. 
 
-### Testing best practices in this codebase
-The `conftest.py` includes utilities for temporary directories, sample data, performance assertion, and cleanup of test files.  It also defines an `auto_cleanup` fixture to ensure cleanup after each test. 
+To run tests, `pytest` would typically be invoked from the command line in the project root.
 
-## Build & Deployment
-Information regarding build processes, deployment configurations, environment-specific settings, and CI/CD pipelines is not explicitly available in the provided codebase context. <cite/>
+```bash
+# Run unit tests
+pytest tests/
 
-## Git Workflow
-Information regarding branching strategy, commit message conventions, code review process, and release process is not explicitly available in the provided codebase context. <cite/> However, commit messages indicate a mix of feature additions, bug fixes, and updates by different authors. <cite repo="ogghst/Test_AutoGen2" path="backend/main.py" start="1" end
+# Specific test
+pytest tests/test_agents.py -v
 
-# Development Partnership and How We Should Partner
+# Test with coverage
+pytest --cov=agents tests/
+```
 
-We build production code together. I handle implementation details while you guide architecture and catch complexity early.
+## Future Extensions
 
-## Core Workflow: Research → Plan → Implement → Validate
-
-**Start every feature with:** "Let me research the codebase and create a plan before implementing."
-
-1. **Research** - Understand existing patterns and architecture
-2. **Plan** - Propose approach and verify with you
-3. **Implement** - Build with tests and error handling
-4. **Validate** - ALWAYS run formatters, linters, and tests after implementation
-
-## Code Organization
-
-**Keep functions small and focused:**
-- If you need comments to explain sections, split into functions
-- Group related functionality into clear packages
-- Prefer many small files over few large ones
-
-## Architecture Principles
-
-**This is always a feature branch:**
-- Delete old code completely - no deprecation needed
-- No "removed code" or "added this line" comments - just do it
-
-**Prefer explicit over implicit:**
-- Clear function names over clever abstractions
-- Obvious data flow over hidden magic
-- Direct dependencies over service locators
-
-## Maximize Efficiency
-
-**Parallel operations:** Run multiple searches, reads, and greps in single messages
-**Multiple agents:** Split complex tasks - one for tests, one for implementation
-**Batch similar work:** Group related file edits together
-
-## Problem Solving
-
-**When stuck:** Stop. The simple solution is usually correct.
-
-**When uncertain:** "Let me ultrathink about this architecture."
-
-**When choosing:** "I see approach A (simple) vs B (flexible). Which do you prefer?"
-
-Your redirects prevent over-engineering. When uncertain about implementation, stop and ask for guidance.
-
-## Testing Strategy
-
-**Match testing approach to code complexity:**
-- Complex business logic: Write tests first (TDD)
-- Simple CRUD operations: Write code first, then tests
-- Hot paths: Add benchmarks after implementation
-
-**Always keep security in mind:** Validate all inputs, use crypto/rand for randomness, use prepared SQL statements.
-
-**Performance rule:** Measure before optimizing. No guessing.
-
-## Progress Tracking
-
-- **Use Todo lists** for task management
-- **Clear naming** in all code
-
-Focus on maintainable solutions over clever abstractions.
+-   **ZeroMQ**: Inter-process communication
+-   **Web Interface**: Monitoring dashboard
+-   **Database Integration**: PostgreSQL for persistence
+-   **CI/CD Integration**: Deployment automation
+-   **Metrics & Monitoring**: System observability
 
 ---
 Generated using [Sidekick Dev]({REPO_URL}), your coding agent sidekick.
