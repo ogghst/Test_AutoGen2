@@ -19,6 +19,9 @@ class TeamMember(BaseModel):
     email: Annotated[EmailStr, Field(description="Contact email")]
     capacity: Annotated[float, Field(description="Weekly availability in hours", ge=0, le=60)]
     is_active: Annotated[bool, Field(default=True, description="Whether the team member is currently active on the project")]
+    experience: Annotated[Optional[str], Field(default=None, description="User's experience on past similar projects", max_length=1000)]
+    skills: Annotated[Optional[List[str]], Field(default=None, description="User's skills")]
+    expectations: Annotated[Optional[str], Field(default=None, description="User's expectations for the project", max_length=1000)]
 
 class Deliverable(BaseModel):
     """Tangible or intangible product produced as part of project completion"""

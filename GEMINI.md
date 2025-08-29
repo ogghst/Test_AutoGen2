@@ -76,8 +76,7 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 #### Data Models
 
 -   **JSON-LD**: Knowledge representation for entities and relationships.
--   **Dataclasses**: Typed Python data structures.
--   **Pydantic**: Data validation and serialization.
+-   **Pydantic**: Data validation and serialization. The data models are defined in `backend/models/data_models.py` and a corresponding `backend/models/data_model.yaml` is kept for documentation purposes.
 
 #### Persistence
 
@@ -115,7 +114,8 @@ backend/      # python code root folder
 │   ├── project_manager.py     # Orchestrator agent
 │   ├── requirements_analyst.py # Requirements gathering agent
 │   ├── change_detector.py     # Change management agent
-│   └── technical_writer.py    # Technical documentation agent
+│   ├── technical_writer.py    # Technical documentation agent
+│   └── user_profiler_agent.py # User profiler agent
 │
 ├── output_documents/          # Directory of generated documents
 │   ├── document_index.json   # Document index
@@ -260,6 +260,7 @@ The frontend will be available at `http://localhost:5173` by default and will co
 ✅ **RequirementsAnalystAgent**: Requirements gathering, analysis, and validation
 ✅ **ChangeDetectorAgent**: Change monitoring and management
 ✅ **TechnicalWriterAgent**: Generation and management of technical documentation
+✅ **UserProfilerAgent**: Gathers user's profile information to better tune other agents' tone and questions.
 
 ### Implemented Features
 

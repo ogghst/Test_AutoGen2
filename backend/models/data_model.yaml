@@ -308,6 +308,22 @@ TeamMember:
       type: "bool"
       description: "Whether the team member is currently active on the project"
       default: true
+    experience:
+      type: "str"
+      description: "User's experience on past similar projects"
+      optional: true
+      validation:
+        max_length: 1000
+    skills:
+      type: "list[str]"
+      description: "User's skills"
+      optional: true
+    expectations:
+      type: "str"
+      description: "User's expectations for the project"
+      optional: true
+      validation:
+        max_length: 1000
 Stakeholder:
   description: "Project stakeholder following PMI stakeholder management"
   attributes:

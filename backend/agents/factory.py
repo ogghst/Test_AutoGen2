@@ -19,6 +19,7 @@ from .quality_agent import QualityAgent
 from .human_agent import HumanAgent
 from .project_management_agent import ProjectManagementAgent
 from .user_stories_agent import UserStoriesAgent
+from .user_profiler_agent import UserProfilerAgent
 from .user_agent import UserAgent
 from .tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
@@ -28,6 +29,7 @@ from .tools import (
     HUMAN_AGENT_TOPIC_TYPE,
     PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
     USER_STORIES_AGENT_TOPIC_TYPE,
+    USER_PROFILER_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
 )
 
@@ -78,6 +80,9 @@ class AgentFactory:
         
         # Register the user stories agent
         self.registered_agents[USER_STORIES_AGENT_TOPIC_TYPE] = await self._register_user_stories_agent()
+
+        # Register the user profiler agent
+        self.registered_agents[USER_PROFILER_AGENT_TOPIC_TYPE] = await self._register_user_profiler_agent()
         
         # Register the human agent
         self.registered_agents[HUMAN_AGENT_TOPIC_TYPE] = await self._register_human_agent()
@@ -142,6 +147,14 @@ class AgentFactory:
             self.runtime,
             type=USER_STORIES_AGENT_TOPIC_TYPE,
             factory=lambda: UserStoriesAgent(self.model_client),
+        )
+
+    async def _register_user_profiler_agent(self):
+        """Register the user profiler agent."""
+        return await AIAgent.register(
+            self.runtime,
+            type=USER_PROFILER_AGENT_TOPIC_TYPE,
+            factory=lambda: UserProfilerAgent(self.model_client),
         )
     
     async def _register_human_agent(self):

@@ -17,6 +17,7 @@ from .tools import (
     transfer_to_quality_tool,
     transfer_to_project_management_tool,
     transfer_to_user_stories_tool,
+    transfer_to_user_profiler_tool,
     escalate_to_human_tool,
 )
 
@@ -39,11 +40,13 @@ class TriageAgent(AIAgent):
         """
         system_message = SystemMessage(
             content="You are a project management triage agent. Your role is to:\n"
-            "1. Understand the user's request\n"
-            "2. Route them to the appropriate specialized agent\n"
-            "3. Use the transfer tools to delegate tasks\n\n"
+            "1. Greet the user and inform them that you will start by profiling them.\n"
+            "2. Route them to the User Profiler agent as the first step.\n"
+            "3. After the user profile is created, understand the user's request\n"
+            "4. Route them to the appropriate specialized agent\n"
+            "5. Use the transfer tools to delegate tasks\n\n"
             "Available specialized agents:\n"
-            #"- Planning Agent: For basic project planning and requirements gathering\n"
+            "- User Profiler Agent: To start, for gathering user's profile information.\n"
             "- Project Management Agent: For PMI-compliant project management plans and best practices\n"
             "- Execution Agent: For task execution and project management\n"
             "- Quality Agent: For quality assurance and project reviews\n"
@@ -53,7 +56,7 @@ class TriageAgent(AIAgent):
         )
         
         delegate_tools = [
-        #    transfer_to_planning_tool,
+            transfer_to_user_profiler_tool,
             transfer_to_execution_tool,
             transfer_to_quality_tool,
             transfer_to_project_management_tool,
