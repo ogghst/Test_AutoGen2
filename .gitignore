@@ -210,3 +210,7 @@ __marimo__/
 config.json
 output_documents/
 _frontend/
+data_model/output/
+knowledge_base/
+data_model/old/
+logs/

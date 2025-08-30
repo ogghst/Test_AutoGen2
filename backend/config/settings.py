@@ -120,6 +120,7 @@ class SystemConfig:
     logs_path: str = "../logs"
     temp_path: str = "../temp"
     config_path: str = "../config"
+    data_model_file: str = "../data_model/json/data_model.json"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -141,7 +142,7 @@ class ServerConfig:
 
 class ConfigManager:
     """Central configuration manager for the multi-agent system"""
-    
+
     llm_provider: ModelProvider = ModelProvider.OLLAMA
     llm_config: LLMConfig = LLMConfig( deepseek=DeepSeekConfig(), ollama=OllamaConfig())
     system: SystemConfig = SystemConfig()

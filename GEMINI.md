@@ -18,8 +18,8 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                 Knowledge Base                      │
-│                 (JSON-LD)                          │
+│                 Data Model                          │
+│                 (JSON)                              │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
 │   │Methodologies│  │  Templates  │  │ Best        │ │
 │   │(Agile,      │  │(Project     │  │ Practices   │ │
@@ -41,16 +41,16 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 │  │ Change      │    │ Technical   │                │
 │  │ Detector    │    │ Writer      │                │
 │  └─────────────┘    └─────────────┘                │
-│                                                     │
-│         ▲                                           │
-│         │ Ollama API (Local LLM)                   │
-│         ▼                                           │
-└─────────────────────────────────────────────────────┘
+│                                                    │
+│         ▲                                          │
+│         │ LLM                   │
+│         ▼                                          │
+└────────────────────────────────────────────────────┘
                            │
                            ▼
 ┌─────────────────────────────────────────────────────┐
 │               Document Store                        │
-│              (File System)                         │
+│              (File System)                          │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
 │   │Project      │  │Requirements │  │Technical    │ │
 │   │Charter      │  │Documents    │  │Specs        │ │
@@ -75,8 +75,7 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 
 #### Data Models
 
--   **JSON-LD**: Knowledge representation for entities and relationships.
--   **Dataclasses**: Typed Python data structures.
+-   **JSON**: Knowledge representation for entities and relationships.
 -   **Pydantic**: Data validation and serialization.
 
 #### Persistence
@@ -89,7 +88,7 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 
 -   **HTTP/REST**: Integration with Ollama API.
 -   **Message Passing**: Communication between agents.
--   **Async/Await**: Management of asynchronous operations.
+-   **Websockets**: Communication with Backend
 
 ### File Structure
 
@@ -118,14 +117,10 @@ backend/      # python code root folder
 │   └── technical_writer.py    # Technical documentation agent
 │
 ├── output_documents/          # Directory of generated documents
-│   ├── document_index.json   # Document index
 │   └── [generated_docs].md   # Markdown documents
 │
 ├── tests/
 │   ├── __init__.py
-│   ├── test_agents.py
-│   ├── test_knowledge_base.py
-│   └── test_document_store.py
 │
 ├── config/
 │   ├── __init__.py

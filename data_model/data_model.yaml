@@ -1,0 +1,1191 @@
+id: https://example.org/software_project_management
+name: software_project_management
+title: Enhanced Agile Project Management Data Model
+description: Comprehensive data model integrating PMI standards with Agile practices, supporting hybrid methodologies and full lifecycle documentation generation
+license: https://creativecommons.org/publicdomain/zero/1.0/
+default_range: string
+prefixes:
+  linkml: https://w3id.org/linkml/
+  schema: http://schema.org/
+  prov: http://www.w3.org/ns/prov#
+  pm: https://example.org/software_project_management/
+default_prefix: pm
+imports:
+  - linkml:types
+
+types:
+  uuid:
+    uri: xsd:string
+    base: str
+    description: UUIDv4 identifier
+    pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+  email:
+    uri: xsd:string
+    base: str
+    pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+    description: A valid email address
+  datetime:
+    uri: xsd:dateTime
+    base: str
+    description: A date with time information
+    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+  date:
+    uri: xsd:date
+    base: str
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+    description: Date in YYYY-MM-DD format
+  percentage:
+    uri: xsd:float
+    base: float
+    minimum_value: 0
+    maximum_value: 100
+    description: Percentage value between 0 and 100
+
+enums:
+  MethodologyEnum:
+    description: Software development methodologies and frameworks
+    permissible_values:
+      Scrum:
+        description: Framework with fixed-length sprints and defined roles
+      Kanban:
+        description: Flow-based method with continuous delivery
+      XP:
+        description: Extreme Programming with technical excellence focus
+      Hybrid:
+        description: Combination of predictive and adaptive approaches
+      Waterfall:
+        description: Sequential phase-based approach
+  SDLCPhaseEnum:
+    description: Software Development Life Cycle phases
+    permissible_values:
+      Concept:
+      Inception:
+      Iteration:
+      Release:
+      Maintenance:
+      Retirement:
+  ProjectStatusEnum:
+    description: Project lifecycle status values
+    permissible_values:
+      Initiation:
+      Planning:
+      Execution:
+      Monitoring:
+      Closing:
+  PriorityEnum:
+    description: Priority levels for work items and tasks
+    permissible_values:
+      Critical:
+      High:
+      Medium:
+      Low:
+  EpicStatusEnum:
+    description: Status values for epic work items
+    permissible_values:
+      Proposed:
+      Approved:
+      "In Progress":
+      Completed:
+      Deferred:
+  UserStoryStatusEnum:
+    description: Status values for user stories
+    permissible_values:
+      Backlog:
+      "To Do":
+      "In Progress":
+      Review:
+      Done:
+  IssueTypeEnum:
+    description: Types of issues that can be tracked
+    permissible_values:
+      Bug:
+      Task:
+      Improvement:
+      "Technical Debt":
+      Spike:
+  IssueStatusEnum:
+    description: Status values for issue tracking
+    permissible_values:
+      Backlog:
+      "To Do":
+      "In Progress":
+      Review:
+      Done:
+      Blocked:
+  SeverityEnum:
+    description: Severity levels for issues and risks
+    permissible_values:
+      Critical:
+      High:
+      Medium:
+      Low:
+  RoleEnum:
+    description: Team member roles in the project
+    permissible_values:
+      "Product Owner":
+      "Scrum Master":
+      Developer:
+      "QA Engineer":
+      "DevOps Engineer":
+      "UX Designer":
+      "Project Manager":
+      "Business Analyst":
+      "Sponsor":
+  InfluenceLevelEnum:
+    description: Levels of influence for stakeholders
+    permissible_values:
+      High:
+      Medium:
+      Low:
+  InterestLevelEnum:
+    description: Levels of interest for stakeholders
+    permissible_values:
+      High:
+      Medium:
+      Low:
+  RiskCategoryEnum:
+    description: Categories of project risks
+    permissible_values:
+      Technical:
+      Management:
+      Organizational:
+      External:
+      Requirements:
+  RiskStatusEnum:
+    description: Status values for risk management
+    permissible_values:
+      Identified:
+      Analyzed:
+      Planned:
+      Monitored:
+      Resolved:
+  MilestoneStatusEnum:
+    description: Status values for project milestones
+    permissible_values:
+      Planned:
+      "At Risk":
+      Achieved:
+      Missed:
+  DeliverableStatusEnum:
+    description: Status values for project deliverables
+    permissible_values:
+      "Not Started":
+      "In Progress":
+      Completed:
+      Accepted:
+      Rejected:
+  ChangeTypeEnum:
+    description: Types of change requests
+    permissible_values:
+      Corrective:
+      Preventive:
+      Defect:
+      Enhancement:
+      Emergency:
+  ApprovalStatusEnum:
+    description: Status values for approval workflows
+    permissible_values:
+      Proposed:
+      Under_Review:
+      Approved:
+      Rejected:
+      Deferred:
+  TestTypeEnum:
+    description: Types of software testing
+    permissible_values:
+      Unit:
+      Integration:
+      System:
+      Acceptance:
+      Regression:
+      Performance:
+  AgileArtifactStatusEnum:
+    description: Status values for Agile artifacts
+    permissible_values:
+      Draft:
+      Review:
+      Approved:
+      Archived:
+  DocumentationTypeEnum:
+    description: Types of project documentation
+    permissible_values:
+      Charter:
+      Requirements:
+      Design:
+      Technical:
+      User:
+      Process:
+      Report:
+  RepositoryTypeEnum:
+    description: Types of project repositories
+    permissible_values:
+      Code:
+      Documentation:
+      Design:
+      Requirements:
+      Test:
+  StoryPointsEnum:
+    description: Fibonacci sequence values used for story point estimation in Agile methodologies.
+    permissible_values:
+      1:
+      2:
+      3:
+      5:
+      8:
+      13:
+      21:
+
+slots:
+  id:
+    range: uuid
+    identifier: true
+    description: Unique identifier
+  name:
+    range: string
+    required: true
+    description: Name
+    minimum_value: 1
+    maximum_value: 100
+  title:
+    range: string
+    required: true
+    description: Short descriptive title
+    minimum_value: 1
+    maximum_value: 100
+  description:
+    range: string
+    description: Detailed description
+  vision:
+    range: string
+    description: Project vision statement
+    maximum_value: 500
+  methodology:
+    range: MethodologyEnum
+    description: Project methodology
+
+  sdlc_phase:
+    range: SDLCPhaseEnum
+    description: Current SDLC phase
+  release_plan:
+    range: string
+    description: High-level release plan
+    required: false
+    maximum_value: 1000
+  team:
+    range: Team
+    description: Assigned project team
+  scope:
+    range: Scope
+    description: Project scope definition
+  stakeholders:
+    range: Stakeholder
+    multivalued: true
+    description: Project stakeholders
+  risks:
+    range: Risk
+    multivalued: true
+    description: Project risks
+  milestones:
+    range: Milestone
+    multivalued: true
+    description: Project milestones
+  status:
+    range: string
+    description: Current status
+  created_date:
+    range: datetime
+    description: Creation timestamp
+  last_updated:
+    range: datetime
+    description: Last update timestamp
+  knowledge_transfer:
+    range: string
+    description: Knowledge transfer activities
+    required: false
+    maximum_value: 1000
+  epics:
+    range: Epic
+    multivalued: true
+    description: Collection of epics
+  inclusions:
+    range: string
+    multivalued: true
+    description: Included items in scope
+    maximum_value: 50
+  exclusions:
+    range: string
+    multivalued: true
+    description: Excluded items from scope
+    maximum_value: 50
+  assumptions:
+    range: string
+    multivalued: true
+    description: Scope assumptions
+  constraints:
+    range: string
+    multivalued: true
+    description: Scope constraints
+  acceptance_criteria:
+    range: string
+    multivalued: true
+    description: Acceptance criteria
+  business_value:
+    range: integer
+    description: Business value score (1-10)
+    minimum_value: 1
+    maximum_value: 10
+  user_stories:
+    range: UserStory
+    multivalued: true
+    description: User stories
+  priority:
+    range: PriorityEnum
+    description: Priority level
+  definition_of_done:
+    range: string
+    description: Definition of done criteria
+    required: false
+    maximum_value: 1000
+  story_points:
+    range: StoryPointsEnum # ✅ Reference the enum here
+    description: Relative complexity estimate using Fibonacci sequence.
+    required: true # Or true, depending on your requirements
+  issues:
+    range: Issue
+    multivalued: true
+    description: Associated issues
+  epic_id:
+    range: uuid
+    description: Parent epic reference
+  sprint_id:
+    range: uuid
+    description: Sprint assignment reference
+    required: false
+  type:
+    range: string
+    description: Type classification
+  severity:
+    range: SeverityEnum
+    description: Severity level
+    required: false
+  assignee:
+    range: Person
+    description: Assigned person
+  estimate_hours:
+    range: float
+    description: Time estimate in hours
+    minimum_value: 0
+  actual_hours:
+    range: float
+    description: Actual time spent in hours
+    minimum_value: 0
+  due_date:
+    range: date
+    description: Target completion date
+  members:
+    range: TeamMember
+    multivalued: true
+    description: Team members
+  velocity:
+    range: float
+    description: Team velocity
+    minimum_value: 0
+  capacity:
+    range: float
+    description: Weekly capacity in hours
+    minimum_value: 0
+  role:
+    range: RoleEnum
+    description: Primary role
+  email:
+    range: email
+    description: Contact email
+  is_active:
+    range: boolean
+    description: Active status
+    ifabsent: boolean(true)
+  influence:
+    range: InfluenceLevelEnum
+    description: Influence level
+  interest:
+    range: InterestLevelEnum
+    description: Interest level
+  communication_preferences:
+    range: string
+    description: Communication preferences
+  category:
+    range: RiskCategoryEnum
+    description: Risk category
+  probability:
+    range: InfluenceLevelEnum
+    description: Probability of occurrence
+  impact:
+    range: InfluenceLevelEnum
+    description: Impact level
+  mitigation_strategy:
+    range: string
+    description: Mitigation strategy
+  contingency_plan:
+    range: string
+    description: Contingency plan
+  target_date:
+    range: date
+    description: Planned completion date
+  actual_date:
+    range: date
+    description: Actual completion date
+    required: false
+  deliverables:
+    range: Deliverable
+    multivalued: true
+    description: Associated deliverables
+  goal:
+    range: string
+    description: Goal description
+    maximum_value: 200
+  start_date:
+    range: date
+    description: Start date
+  end_date:
+    range: date
+    description: End date
+  retrospective_notes:
+    range: string
+    description: Retrospective notes
+    required: false
+  daily_standup_notes:
+    range: string
+    description: Daily standup notes
+    required: false
+    maximum_value: 2000
+  review_notes:
+    range: string
+    description: Review notes
+    required: false
+    maximum_value: 2000
+  acceptance_date:
+    range: date
+    description: Acceptance date
+    required: false
+  person_name:
+    range: string
+    required: true
+    description: Person's name
+    minimum_value: 1
+    maximum_value: 100
+  business_case:
+    range: BusinessCase
+    description: Project business case
+  phases:
+    range: Phase
+    multivalued: true
+    description: Project phases
+  change_requests:
+    range: ChangeRequest
+    multivalued: true
+    description: Change requests
+  baselines:
+    range: Baseline
+    multivalued: true
+    description: Project baselines
+  repositories:
+    range: Repository
+    multivalued: true
+    description: Project repositories
+  ai_work_products:
+    range: AIWorkProduct
+    multivalued: true
+    description: AI-generated work products
+  problem_statement:
+    range: string
+    description: Problem statement
+  business_objectives:
+    range: string
+    multivalued: true
+    description: Business objectives
+  benefits:
+    range: string
+    multivalued: true
+    description: Expected benefits
+  costs:
+    range: string
+    description: Estimated costs
+  roi_analysis:
+    range: string
+    description: ROI analysis
+  alternatives_analysis:
+    range: string
+    description: Alternatives analysis
+  recommendation:
+    range: string
+    description: Recommendation
+  approval_status:
+    range: ApprovalStatusEnum
+    description: Approval status
+  approved_date:
+    range: date
+    description: Approval date
+  requirements:
+    range: Requirement
+    multivalued: true
+    description: Project requirements
+  target_release:
+    range: string
+    description: Target release version
+  tests:
+    range: TestCase
+    multivalued: true
+    description: Associated test cases
+  technical_notes:
+    range: string
+    description: Technical notes
+  items:
+    range: BacklogItem
+    multivalued: true
+    description: Backlog items
+  prioritization_method:
+    range: string
+    description: Prioritization method
+  last_prioritized_date:
+    range: date
+    description: Last prioritization date
+  estimate:
+    range: integer
+    description: Effort estimate
+  risk_level:
+    range: SeverityEnum
+    description: Risk level
+  dependencies:
+    range: string
+    multivalued: true
+    description: Dependencies
+  tags:
+    range: string
+    multivalued: true
+    description: Tags
+  committed_velocity:
+    range: float
+    description: Committed velocity
+  actual_velocity:
+    range: float
+    description: Actual velocity
+  root_cause:
+    range: string
+    description: Root cause analysis
+  resolution:
+    range: string
+    description: Resolution description
+  reproduction_steps:
+    range: string
+    description: Reproduction steps
+  detected_version:
+    range: string
+    description: Detected in version
+  resolved_version:
+    range: string
+    description: Resolved in version
+  focus_factor:
+    range: percentage
+    description: Team focus factor
+  process_maturity:
+    range: integer
+    description: Process maturity level (1-5)
+    minimum_value: 1
+    maximum_value: 5
+  collaboration_tools:
+    range: string
+    multivalued: true
+    description: Collaboration tools
+  skills:
+    range: string
+    multivalued: true
+    description: Skills
+  engagement_plan:
+    range: string
+    description: Engagement plan
+  concerns:
+    range: string
+    multivalued: true
+    description: Concerns
+  expectations:
+    range: string
+    multivalued: true
+    description: Expectations
+  triggers:
+    range: string
+    multivalued: true
+    description: Risk triggers
+  owner:
+    range: Person
+    description: Owner
+  quality_metrics:
+    range: string
+    description: Quality metrics
+  storage_location:
+    range: string
+    description: Storage location
+  version:
+    range: string
+    description: Version
+  rationale:
+    range: string
+    description: Rationale
+  impact_analysis:
+    range: string
+    description: Impact analysis
+  submitted_by:
+    range: Person
+    description: Submitted by
+  submitted_date:
+    range: date
+    description: Submission date
+  decision:
+    range: string
+    description: Decision
+  decision_date:
+    range: date
+    description: Decision date
+  decision_maker:
+    range: Person
+    description: Decision maker
+  elements:
+    range: string
+    multivalued: true
+    description: Baseline elements
+  test_steps:
+    range: string
+    multivalued: true
+    description: Test steps
+  expected_result:
+    range: string
+    description: Expected result
+  actual_result:
+    range: string
+    description: Actual result
+  associated_requirement:
+    range: uuid
+    description: Associated requirement
+  automated:
+    range: boolean
+    description: Automated test
+  last_tested:
+    range: date
+    description: Last tested date
+  entrance_criteria:
+    range: string
+    description: Entrance criteria
+  exit_criteria:
+    range: string
+    description: Exit criteria
+  lead:
+    range: Person
+    description: Work stream lead
+  content:
+    range: string
+    description: Content
+  audience:
+    range: string
+    description: Target audience
+  url:
+    range: string
+    description: URL
+  access_controls:
+    range: string
+    description: Access controls
+  last_sync_date:
+    range: date
+    description: Last sync date
+  value:
+    range: float
+    description: Metric value
+  target:
+    range: float
+    description: Target value
+  unit:
+    range: string
+    description: Measurement unit
+  measurement_date:
+    range: date
+    description: Measurement date
+  trend:
+    range: string
+    description: Trend
+  generated_by:
+    range: string
+    description: Generated by
+  generation_date:
+    range: date
+    description: Generation date
+  input_parameters:
+    range: string
+    description: Input parameters
+  confidence_score:
+    range: float
+    description: Confidence score
+    minimum_value: 0
+    maximum_value: 1
+  validation_status:
+    range: ApprovalStatusEnum
+    description: Validation status
+  project_id:
+    range: uuid
+    description: Reference to the project this belongs to
+  source:
+    range: string
+    description: Source of the requirement
+  backlog_items:
+    range: BacklogItem
+    multivalued: true
+    description: Items in the backlog
+  approved_by:
+    range: Person
+    description: Person who approved the baseline
+  purpose:
+    range: string
+    description: Purpose of the communication plan
+  message:
+    range: string
+    description: Message content for communication
+  frequency:
+    range: string
+    description: Frequency of communication
+  channel:
+    range: string
+    description: Communication channel
+  feedback_mechanism:
+    range: string
+    description: Feedback mechanism for communication
+
+classes:
+  Project:
+    description: Root entity representing the entire software project
+    slots:
+      - id
+      - name
+      - vision
+      - methodology
+      - description
+      - business_case
+      - sdlc_phase
+      - release_plan
+      - team
+      - scope
+      - stakeholders
+      - risks
+      - milestones
+      - phases
+      - status
+      - created_date
+      - last_updated
+      - knowledge_transfer
+      - change_requests
+      - baselines
+      - repositories
+      - ai_work_products
+    slot_usage:
+      status:
+        range: ProjectStatusEnum
+      methodology:
+        range: MethodologyEnum
+        required: true
+      sdlc_phase:
+        range: SDLCPhaseEnum
+        required: true
+
+  BusinessCase:
+    description: Justification for the project including financial and strategic considerations
+    slots:
+      - id
+      - project_id
+      - problem_statement
+      - business_objectives
+      - benefits
+      - costs
+      - roi_analysis
+      - alternatives_analysis
+      - recommendation
+      - approval_status
+      - approved_date
+
+  Scope:
+    description: Project scope definition with inclusions, exclusions, and constraints
+    slots:
+      - epics
+      - inclusions
+      - exclusions
+      - assumptions
+      - constraints
+      - acceptance_criteria
+      - requirements
+
+  Requirement:
+    description: Single discrete requirement with unique identifier and traceability
+    slots:
+      - id
+      - description
+      - category
+      - priority
+      - status
+      - source
+      - acceptance_criteria
+      - created_date
+      - last_updated
+
+  Epic:
+    description: Large work body capturing major capability with traceability to business objectives
+    slots:
+      - id
+      - name
+      - description
+      - business_value
+      - user_stories
+      - priority
+      - status
+      - created_date
+      - target_release
+    slot_usage:
+      status:
+        range: EpicStatusEnum
+      description:
+        maximum_value: 500
+
+  UserStory:
+    description: End-user perspective feature description with acceptance criteria
+    slots:
+      - id
+      - title
+      - description
+      - acceptance_criteria
+      - definition_of_done
+      - story_points
+      - issues
+      - epic_id
+      - sprint_id
+      - status
+      - priority
+      - tests
+      - technical_notes
+    slot_usage:
+      status:
+        range: UserStoryStatusEnum
+      description:
+        maximum_value: 1000
+      acceptance_criteria:
+        required: true
+        minimum_value: 1
+        maximum_value: 10
+
+  Backlog:
+    description: Ordered list of work items awaiting execution
+    slots:
+      - id
+      - name
+      - description
+      - items
+      - prioritization_method
+      - last_prioritized_date
+
+  BacklogItem:
+    description: Single item in a backlog with estimation and prioritization data
+    slots:
+      - id
+      - description
+      - estimate
+      - priority
+      - risk_level
+      - business_value
+      - dependencies
+      - tags
+
+  Sprint:
+    description: Time-boxed iteration typically 1-4 weeks in duration
+    slots:
+      - id
+      - name
+      - goal
+      - start_date
+      - end_date
+      - velocity
+      - retrospective_notes
+      - daily_standup_notes
+      - review_notes
+      - backlog_items
+      - committed_velocity
+      - actual_velocity
+    slot_usage:
+      name:
+        maximum_value: 50
+
+  Issue:
+    description: Technical task or problem resolution item
+    slots:
+      - id
+      - title
+      - description
+      - type
+      - status
+      - severity
+      - assignee
+      - estimate_hours
+      - actual_hours
+      - due_date
+      - created_date
+      - root_cause
+      - resolution
+      - reproduction_steps
+      - detected_version
+      - resolved_version
+    slot_usage:
+      type:
+        range: IssueTypeEnum
+      status:
+        range: IssueStatusEnum
+      description:
+        maximum_value: 500
+
+  Team:
+    description: Cross-functional team responsible for project delivery
+    slots:
+      - id
+      - name
+      - members
+      - velocity
+      - capacity
+      - focus_factor
+      - process_maturity
+      - collaboration_tools
+
+  TeamMember:
+    description: Individual team member with role responsibilities and capacity
+    is_a: Person
+    slots:
+      - role
+      - capacity
+      - is_active
+      - skills
+      - start_date
+      - end_date
+    slot_usage:
+      role:
+        range: RoleEnum
+        required: true
+
+  Stakeholder:
+    description: Project stakeholder with influence and interest assessment
+    is_a: Person
+    slots:
+      - role
+      - influence
+      - interest
+      - communication_preferences
+      - engagement_plan
+      - concerns
+      - expectations
+
+  Risk:
+    description: Project risk following PMI risk management framework
+    slots:
+      - id
+      - description
+      - category
+      - probability
+      - impact
+      - mitigation_strategy
+      - contingency_plan
+      - status
+      - triggers
+      - owner
+    slot_usage:
+      status:
+        range: RiskStatusEnum
+      description:
+        required: true
+        minimum_value: 1
+        maximum_value: 500
+
+  Milestone:
+    description: Significant point in project timeline with deliverable tracking
+    slots:
+      - id
+      - name
+      - description
+      - target_date
+      - actual_date
+      - deliverables
+      - status
+      - acceptance_criteria
+    slot_usage:
+      status:
+        range: MilestoneStatusEnum
+      description:
+        maximum_value: 500
+
+  Deliverable:
+    description: Tangible or intangible product produced as part of project completion
+    slots:
+      - id
+      - name
+      - description
+      - status
+      - acceptance_date
+      - quality_metrics
+      - storage_location
+      - version
+    slot_usage:
+      status:
+        range: DeliverableStatusEnum
+      description:
+        maximum_value: 500
+
+  ChangeRequest:
+    description: Formal request to modify project baselines
+    slots:
+      - id
+      - description
+      - rationale
+      - impact_analysis
+      - priority
+      - type
+      - status
+      - submitted_by
+      - submitted_date
+      - decision
+      - decision_date
+      - decision_maker
+    slot_usage:
+      type:
+        range: ChangeTypeEnum
+      status:
+        range: ApprovalStatusEnum
+
+  Baseline:
+    description: Approved version of scope, schedule, or cost used for comparison
+    slots:
+      - id
+      - name
+      - description
+      - version
+      - approved_date
+      - approved_by
+      - elements
+
+  TestCase:
+    description: Verifiable condition for requirement validation
+    slots:
+      - id
+      - name
+      - description
+      - test_steps
+      - expected_result
+      - actual_result
+      - status
+      - type
+      - priority
+      - associated_requirement
+      - automated
+      - last_tested
+    slot_usage:
+      type:
+        range: TestTypeEnum
+
+  Phase:
+    description: Distinct time period in predictive project lifecycles
+    slots:
+      - id
+      - name
+      - description
+      - start_date
+      - end_date
+      - deliverables
+      - entrance_criteria
+      - exit_criteria
+      - status
+
+  WorkStream:
+    description: Parallel work track focusing on specific project aspect
+    slots:
+      - id
+      - name
+      - description
+      - lead
+      - team
+      - deliverables
+      - dependencies
+
+  Documentation:
+    description: Project artifact serving various stakeholder needs
+    slots:
+      - id
+      - title
+      - content
+      - type
+      - status
+      - owner
+      - created_date
+      - last_updated
+      - version
+      - audience
+    slot_usage:
+      type:
+        range: DocumentationTypeEnum
+      status:
+        range: AgileArtifactStatusEnum
+
+  Repository:
+    description: Storage location for project artifacts and code
+    slots:
+      - id
+      - name
+      - type
+      - url
+      - access_controls
+      - last_sync_date
+    slot_usage:
+      type:
+        range: RepositoryTypeEnum
+
+  Metric:
+    description: Quantitative measure of project performance or quality
+    slots:
+      - id
+      - name
+      - description
+      - value
+      - target
+      - unit
+      - measurement_date
+      - trend
+
+  Person:
+    description: Human individual involved in the project environment
+    slots:
+      - id
+      - person_name
+      - email
+      - communication_preferences
+    class_uri: schema:Person
+
+  CommunicationPlan:
+    description: Structured approach to project information distribution
+    slots:
+      - id
+      - purpose
+      - audience
+      - message
+      - frequency
+      - channel
+      - owner
+      - feedback_mechanism
+
+  AIWorkProduct:
+    description: AI-generated artifacts and their provenance information
+    slots:
+      - id
+      - name
+      - description
+      - generated_by
+      - generation_date
+      - input_parameters
+      - confidence_score
+      - validation_status
+      - associated_requirement

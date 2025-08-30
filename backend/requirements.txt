@@ -19,3 +19,4 @@ opentelemetry-exporter-otlp-proto-grpc
 opentelemetry-instrumentation-openai
 fastapi
 uvicorn[standard]
+linkml
