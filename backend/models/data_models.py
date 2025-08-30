@@ -78,7 +78,7 @@ linkml_meta = LinkMLMeta({'default_prefix': 'pm',
                            'prefix_reference': 'http://www.w3.org/ns/prov#'},
                   'schema': {'prefix_prefix': 'schema',
                              'prefix_reference': 'http://schema.org/'}},
-     'source_file': 'data_model_linkml_enhanced.yaml',
+     'source_file': 'data_model/data_model.yaml',
      'title': 'Enhanced Agile Project Management Data Model',
      'types': {'date': {'base': 'str',
                         'description': 'Date in YYYY-MM-DD format',
@@ -239,6 +239,16 @@ class RoleEnum(str, Enum):
     Project_Manager = "Project Manager"
     Business_Analyst = "Business Analyst"
     Sponsor = "Sponsor"
+
+
+class ExperienceLevelEnum(str, Enum):
+    """
+    Levels of experience for users
+    """
+    Beginner = "Beginner"
+    Intermediate = "Intermediate"
+    Advanced = "Advanced"
+    Expert = "Expert"
 
 
 class InfluenceLevelEnum(str, Enum):
@@ -2034,10 +2044,10 @@ class TeamMember(Person):
                                  'range': 'RoleEnum',
                                  'required': True}}})
 
-    role: RoleEnum = Field(default=..., description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder']} })
+    role: RoleEnum = Field(default=..., description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder', 'UserProfiler']} })
     capacity: Optional[float] = Field(default=None, description="""Weekly capacity in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'capacity', 'domain_of': ['Team', 'TeamMember']} })
     is_active: Optional[bool] = Field(default=True, description="""Active status""", json_schema_extra = { "linkml_meta": {'alias': 'is_active', 'domain_of': ['TeamMember'], 'ifabsent': 'boolean(true)'} })
-    skills: Optional[list[str]] = Field(default=None, description="""Skills""", json_schema_extra = { "linkml_meta": {'alias': 'skills', 'domain_of': ['TeamMember']} })
+    skills: Optional[list[str]] = Field(default=None, description="""Skills""", json_schema_extra = { "linkml_meta": {'alias': 'skills', 'domain_of': ['TeamMember', 'UserProfiler']} })
     start_date: Optional[str] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     end_date: Optional[str] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
@@ -2076,13 +2086,13 @@ class Stakeholder(Person):
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
 
-    role: Optional[RoleEnum] = Field(default=None, description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder']} })
+    role: Optional[RoleEnum] = Field(default=None, description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder', 'UserProfiler']} })
     influence: Optional[InfluenceLevelEnum] = Field(default=None, description="""Influence level""", json_schema_extra = { "linkml_meta": {'alias': 'influence', 'domain_of': ['Stakeholder']} })
     interest: Optional[InterestLevelEnum] = Field(default=None, description="""Interest level""", json_schema_extra = { "linkml_meta": {'alias': 'interest', 'domain_of': ['Stakeholder']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
     engagement_plan: Optional[str] = Field(default=None, description="""Engagement plan""", json_schema_extra = { "linkml_meta": {'alias': 'engagement_plan', 'domain_of': ['Stakeholder']} })
     concerns: Optional[list[str]] = Field(default=None, description="""Concerns""", json_schema_extra = { "linkml_meta": {'alias': 'concerns', 'domain_of': ['Stakeholder']} })
-    expectations: Optional[list[str]] = Field(default=None, description="""Expectations""", json_schema_extra = { "linkml_meta": {'alias': 'expectations', 'domain_of': ['Stakeholder']} })
+    expectations: Optional[list[str]] = Field(default=None, description="""Expectations""", json_schema_extra = { "linkml_meta": {'alias': 'expectations', 'domain_of': ['Stakeholder', 'UserProfiler']} })
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
                        'BusinessCase',
@@ -2110,6 +2120,46 @@ class Stakeholder(Person):
                        'AIWorkProduct']} })
     person_name: str = Field(default=..., description="""Person's name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
     email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['Person']} })
+
+
+class UserProfiler(Person):
+    """
+    Represents a user's profile, including their skills, experience, and expectations.
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+
+    role: Optional[RoleEnum] = Field(default=None, description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder', 'UserProfiler']} })
+    experience: Optional[ExperienceLevelEnum] = Field(default=None, description="""User's experience level""", json_schema_extra = { "linkml_meta": {'alias': 'experience', 'domain_of': ['UserProfiler']} })
+    skills: Optional[list[str]] = Field(default=None, description="""Skills""", json_schema_extra = { "linkml_meta": {'alias': 'skills', 'domain_of': ['TeamMember', 'UserProfiler']} })
+    expectations: Optional[list[str]] = Field(default=None, description="""Expectations""", json_schema_extra = { "linkml_meta": {'alias': 'expectations', 'domain_of': ['Stakeholder', 'UserProfiler']} })
+    id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
+         'domain_of': ['Project',
+                       'BusinessCase',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Backlog',
+                       'BacklogItem',
+                       'Sprint',
+                       'Issue',
+                       'Team',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Documentation',
+                       'Repository',
+                       'Metric',
+                       'Person',
+                       'CommunicationPlan',
+                       'AIWorkProduct']} })
+    person_name: str = Field(default=..., description="""Person's name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
+    email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['Person']} })
+    communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
 
 
 class CommunicationPlan(ConfiguredBaseModel):
@@ -2251,6 +2301,7 @@ Metric.model_rebuild()
 Person.model_rebuild()
 TeamMember.model_rebuild()
 Stakeholder.model_rebuild()
+UserProfiler.model_rebuild()
 CommunicationPlan.model_rebuild()
 AIWorkProduct.model_rebuild()
 

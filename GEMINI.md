@@ -90,6 +90,19 @@ The system employs a multi-agent architecture built on the AutoGen framework, ut
 -   **Message Passing**: Communication between agents.
 -   **Websockets**: Communication with Backend
 
+#### Data Model Management
+
+The project's data model is defined in `data_model/data_model.yaml`. The pydantic models in `backend/models/data_models.py` are generated from this file using `linkml`.
+
+To update the data models, you need to:
+
+1.  Modify the `data_model/data_model.yaml` file.
+2.  Run the following command to regenerate the pydantic models:
+
+```bash
+linkml-generate-pydantic data_model/data_model.yaml > backend/models/data_models.py
+```
+
 ### File Structure
 
 ```
@@ -255,6 +268,7 @@ The frontend will be available at `http://localhost:5173` by default and will co
 ✅ **RequirementsAnalystAgent**: Requirements gathering, analysis, and validation
 ✅ **ChangeDetectorAgent**: Change monitoring and management
 ✅ **TechnicalWriterAgent**: Generation and management of technical documentation
+✅ **UserProfilerAgent**: User profiling and knowledge assessment
 
 ### Implemented Features
 
@@ -299,6 +313,11 @@ The frontend will be available at `http://localhost:5173` by default and will co
 -   `template management` - Manage templates
 -   `export document` - Export in different formats
 -   `organize documents` - Organize documents
+
+#### User Profiler
+
+-   `start profiling` - Start the user profiling process
+-   `save profile` - Save the user profile
 
 ## Testing Strategy
 
