@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from autogen_core import SingleThreadedAgentRuntime, TopicId, MessageContext, TypeSubscription
 import json
 from config.logging_config import setup_logging, get_logger
@@ -12,6 +12,7 @@ from agents.tools import USER_TOPIC_TYPE, TRIAGE_AGENT_TOPIC_TYPE
 from base.messaging import UserLogin, UserTask, AgentResponse
 from config.settings import get_config_manager
 from models.data_models import Project
+from knowledge.knowledge_service import KnowledgeService
 from autogen_core.models import UserMessage, ChatCompletionClient
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -25,12 +26,25 @@ class UserSession:
         self.agent_factory = AgentFactory(self.runtime, model_client)
         self.input_queue = self.agent_factory.input_queue
         self.response_queue = self.agent_factory.response_queue
+        self.knowledge_service = KnowledgeService()
+        self.project_id = None
 
     async def initialize(self):
         await self.agent_factory.register_all_agents()
         await self.agent_factory.add_all_subscriptions()
         self.runtime.start()
         
+        # Create a new project for the session
+        project_data = json.dumps({
+            "name": "New Project",
+            "description": "A new project",
+            "methodology": "Hybrid",
+            "sdlc_phase": "Concept"
+        })
+        project_id_json = self.knowledge_service.create_entity('Project', project_data)
+        project_id_data = json.loads(project_id_json)
+        self.project_id = project_id_data["entity_id"]
+
         await self.runtime.publish_message(
         UserLogin(), 
         topic_id=TopicId(USER_TOPIC_TYPE, source=self.session_id)
@@ -114,6 +128,17 @@ async def create_session():
     session_id = await user_session_manager.create_session()
     logger.info(f"Created new session: {session_id}")
     return {"session_id": session_id}
+
+
+@app.get("/api/session/{session_id}/project")
+async def get_project(session_id: str):
+    session = user_session_manager.get_session(session_id)
+    if not session:
+        return JSONResponse(status_code=404, content={"message": "Session not found"})
+
+    project_json = session.knowledge_service.get_full_project_context(session.project_id)
+    return JSONResponse(content=json.loads(project_json))
+
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):

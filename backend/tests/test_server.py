@@ -17,3 +17,10 @@ def test_websocket_connection(client):
     session_id = response.json()["session_id"]
     with client.websocket_connect(f"/ws/{session_id}") as websocket:
         websocket.close()
+
+def test_get_project(client):
+    response = client.post("/api/session")
+    session_id = response.json()["session_id"]
+    response = client.get(f"/api/session/{session_id}/project")
+    assert response.status_code == 200
+    assert response.json()["name"] == "New Project"
