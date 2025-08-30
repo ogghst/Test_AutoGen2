@@ -24,16 +24,6 @@ types:
     base: str
     pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     description: A valid email address
-  datetime:
-    uri: xsd:dateTime
-    base: str
-    description: A date with time information
-    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
-  date:
-    uri: xsd:date
-    base: str
-    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
-    description: Date in YYYY-MM-DD format
   percentage:
     uri: xsd:float
     base: float
@@ -251,21 +241,18 @@ slots:
     range: string
     required: true
     description: Name
-    minimum_value: 1
-    maximum_value: 100
+    pattern: "^.+$"  # At least one character, no numeric constraints
   title:
     range: string
     required: true
     description: Short descriptive title
-    minimum_value: 1
-    maximum_value: 100
+    pattern: "^.+$"  # At least one character, no numeric constraints
   description:
     range: string
     description: Detailed description
   vision:
     range: string
     description: Project vision statement
-    maximum_value: 500
   methodology:
     range: MethodologyEnum
     description: Project methodology
@@ -277,7 +264,6 @@ slots:
     range: string
     description: High-level release plan
     required: false
-    maximum_value: 1000
   team:
     range: Team
     description: Assigned project team
@@ -309,7 +295,6 @@ slots:
     range: string
     description: Knowledge transfer activities
     required: false
-    maximum_value: 1000
   epics:
     range: Epic
     multivalued: true
@@ -318,12 +303,10 @@ slots:
     range: string
     multivalued: true
     description: Included items in scope
-    maximum_value: 50
   exclusions:
     range: string
     multivalued: true
     description: Excluded items from scope
-    maximum_value: 50
   assumptions:
     range: string
     multivalued: true
@@ -352,7 +335,6 @@ slots:
     range: string
     description: Definition of done criteria
     required: false
-    maximum_value: 1000
   story_points:
     range: StoryPointsEnum # ✅ Reference the enum here
     description: Relative complexity estimate using Fibonacci sequence.
@@ -404,7 +386,7 @@ slots:
   role:
     range: RoleEnum
     description: Primary role
-  email:
+  contact_email:
     range: email
     description: Contact email
   is_active:
@@ -449,7 +431,6 @@ slots:
   goal:
     range: string
     description: Goal description
-    maximum_value: 200
   start_date:
     range: date
     description: Start date
@@ -464,12 +445,10 @@ slots:
     range: string
     description: Daily standup notes
     required: false
-    maximum_value: 2000
   review_notes:
     range: string
     description: Review notes
     required: false
-    maximum_value: 2000
   acceptance_date:
     range: date
     description: Acceptance date
@@ -478,8 +457,7 @@ slots:
     range: string
     required: true
     description: Person's name
-    minimum_value: 1
-    maximum_value: 100
+    pattern: "^.+$"  # At least one character, no numeric constraints
   business_case:
     range: BusinessCase
     description: Project business case
@@ -856,8 +834,6 @@ classes:
     slot_usage:
       status:
         range: EpicStatusEnum
-      description:
-        maximum_value: 500
 
   UserStory:
     description: End-user perspective feature description with acceptance criteria
@@ -878,13 +854,8 @@ classes:
     slot_usage:
       status:
         range: UserStoryStatusEnum
-      description:
-        maximum_value: 1000
       acceptance_criteria:
         required: true
-        minimum_value: 1
-        maximum_value: 10
-
   Backlog:
     description: Ordered list of work items awaiting execution
     slots:
@@ -923,8 +894,6 @@ classes:
       - committed_velocity
       - actual_velocity
     slot_usage:
-      name:
-        maximum_value: 50
 
   Issue:
     description: Technical task or problem resolution item
@@ -950,8 +919,6 @@ classes:
         range: IssueTypeEnum
       status:
         range: IssueStatusEnum
-      description:
-        maximum_value: 500
 
   Team:
     description: Cross-functional team responsible for project delivery
@@ -1019,8 +986,6 @@ classes:
         range: RiskStatusEnum
       description:
         required: true
-        minimum_value: 1
-        maximum_value: 500
 
   Milestone:
     description: Significant point in project timeline with deliverable tracking
@@ -1036,8 +1001,6 @@ classes:
     slot_usage:
       status:
         range: MilestoneStatusEnum
-      description:
-        maximum_value: 500
 
   Deliverable:
     description: Tangible or intangible product produced as part of project completion
@@ -1053,8 +1016,6 @@ classes:
     slot_usage:
       status:
         range: DeliverableStatusEnum
-      description:
-        maximum_value: 500
 
   ChangeRequest:
     description: Formal request to modify project baselines
@@ -1180,7 +1141,7 @@ classes:
     slots:
       - id
       - person_name
-      - email
+      - contact_email
       - communication_preferences
     class_uri: schema:Person
 

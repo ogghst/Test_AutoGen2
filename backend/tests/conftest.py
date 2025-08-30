@@ -35,8 +35,7 @@ except ImportError:
     pytest = MockPytest()
 
 from models.data_models import (
-    Project, Team, TeamMember, Scope, Epic, UserStory, Issue, Stakeholder, Risk, Milestone, Deliverable,
-    generate_uuid
+    Project, Team, TeamMember, Scope, Epic, UserStory, Issue, Stakeholder, Risk, Milestone, Deliverable
 )
 
 # ============================================================================
@@ -63,26 +62,103 @@ def temp_file_path(temp_dir: Path) -> Path:
 
 def sample_project() -> Project:
     """Provide a sample Project for testing."""
-    team_member = TeamMember(name="Dev 1", role="Developer", email="dev1@test.com", capacity=40)
-    team = Team(name="Test Team", members=[team_member], velocity=10, capacity=40)
-    issue = Issue(title="Test Issue", description="Test issue description", type="Task", status="To Do", assignee=team_member, estimate_hours=8, actual_hours=0, due_date=datetime.now().date())
-    user_story = UserStory(title="Test User Story", description="As a user...", acceptance_criteria=["Criteria 1"], story_points=5, issues=[issue], status="Backlog", priority=1)
-    epic = Epic(name="Test Epic", description="Test epic description", business_value=10, user_stories=[user_story], priority="High", status="Proposed")
-    scope = Scope(epics=[epic], inclusions=["Feature A"], exclusions=["Feature B"], assumptions=["Assumption 1"], constraints=["Constraint 1"], acceptance_criteria=["Criteria 1"])
-    stakeholder = Stakeholder(name="Test Stakeholder", role="Sponsor", influence="High", interest="High", communication_preferences="Email")
-    risk = Risk(description="Test Risk", category="Technical", probability="Medium", impact="High", mitigation_strategy="Test", contingency_plan="Test", status="Identified")
-    deliverable = Deliverable(name="Test Deliverable", description="Test deliverable", status="Not Started")
-    milestone = Milestone(name="Test Milestone", description="Test milestone", target_date=datetime.now().date(), deliverables=[deliverable], status="Planned")
+    team_member = TeamMember(
+        id="tm-test-001",
+        person_name="Dev 1", 
+        role="Developer", 
+        email="dev1@test.com", 
+        capacity=40.0
+    )
+    team = Team(
+        id="team-test-001",
+        name="Test Team", 
+        members=["tm-test-001"], 
+        velocity=10.0, 
+        capacity=40.0
+    )
+    issue = Issue(
+        id="issue-test-001",
+        title="Test Issue", 
+        description="Test issue description", 
+        type="Task", 
+        status="To Do", 
+        assignee="tm-test-001", 
+        estimate_hours=8.0, 
+        actual_hours=0.0, 
+        due_date="2024-02-01"
+    )
+    user_story = UserStory(
+        id="us-test-001",
+        title="Test User Story", 
+        description="As a user...", 
+        acceptance_criteria=["Criteria 1"], 
+        story_points="5", 
+        issues=["issue-test-001"], 
+        status="Backlog", 
+        priority="Medium"
+    )
+    epic = Epic(
+        id="epic-test-001",
+        name="Test Epic", 
+        description="Test epic description", 
+        business_value=10, 
+        user_stories=["us-test-001"], 
+        priority="High", 
+        status="Proposed"
+    )
+    scope = Scope(
+        epics=["epic-test-001"], 
+        inclusions=["Feature A"], 
+        exclusions=["Feature B"], 
+        assumptions=["Assumption 1"], 
+        constraints=["Constraint 1"], 
+        acceptance_criteria=["Criteria 1"]
+    )
+    stakeholder = Stakeholder(
+        id="stake-test-001",
+        person_name="Test Stakeholder", 
+        role="Sponsor", 
+        influence="High", 
+        interest="High", 
+        communication_preferences="Email"
+    )
+    risk = Risk(
+        id="risk-test-001",
+        description="Test Risk", 
+        category="Technical", 
+        probability="Medium", 
+        impact="High", 
+        mitigation_strategy="Test", 
+        contingency_plan="Test", 
+        status="Identified"
+    )
+    deliverable = Deliverable(
+        id="deliverable-test-001",
+        name="Test Deliverable", 
+        description="Test deliverable", 
+        status="Not Started"
+    )
+    milestone = Milestone(
+        id="milestone-test-001",
+        name="Test Milestone", 
+        description="Test milestone", 
+        target_date="2024-02-01", 
+        deliverables=["deliverable-test-001"], 
+        status="Planned"
+    )
 
     return Project(
+        id="project-test-001",
         name="Test Project",
         vision="A test project for unit testing",
         description="A test project for unit testing",
-        team=team,
-        scope=scope,
-        stakeholders=[stakeholder],
-        risks=[risk],
-        milestones=[milestone],
+        methodology="Hybrid",
+        sdlc_phase="Planning",
+        team="team-test-001",
+        scope="scope-test-001",
+        stakeholders=["stake-test-001"],
+        risks=["risk-test-001"],
+        milestones=["milestone-test-001"],
         status="Planning"
     )
 

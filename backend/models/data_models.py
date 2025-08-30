@@ -80,19 +80,7 @@ linkml_meta = LinkMLMeta({'default_prefix': 'pm',
                              'prefix_reference': 'http://schema.org/'}},
      'source_file': 'data_model/data_model.yaml',
      'title': 'Enhanced Agile Project Management Data Model',
-     'types': {'date': {'base': 'str',
-                        'description': 'Date in YYYY-MM-DD format',
-                        'from_schema': 'https://example.org/software_project_management',
-                        'name': 'date',
-                        'pattern': '^\\d{4}-\\d{2}-\\d{2}$',
-                        'uri': 'xsd:date'},
-               'datetime': {'base': 'str',
-                            'description': 'A date with time information',
-                            'from_schema': 'https://example.org/software_project_management',
-                            'name': 'datetime',
-                            'pattern': '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$',
-                            'uri': 'xsd:dateTime'},
-               'email': {'base': 'str',
+     'types': {'email': {'base': 'str',
                          'description': 'A valid email address',
                          'from_schema': 'https://example.org/software_project_management',
                          'name': 'email',
@@ -432,7 +420,7 @@ class Project(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -447,7 +435,7 @@ class Project(ConfiguredBaseModel):
                        'Repository',
                        'Metric',
                        'AIWorkProduct']} })
-    vision: Optional[str] = Field(default=None, description="""Project vision statement""", le=500, json_schema_extra = { "linkml_meta": {'alias': 'vision', 'domain_of': ['Project']} })
+    vision: Optional[str] = Field(default=None, description="""Project vision statement""", json_schema_extra = { "linkml_meta": {'alias': 'vision', 'domain_of': ['Project']} })
     methodology: MethodologyEnum = Field(default=..., description="""Project methodology""", json_schema_extra = { "linkml_meta": {'alias': 'methodology', 'domain_of': ['Project']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
@@ -469,7 +457,7 @@ class Project(ConfiguredBaseModel):
                        'AIWorkProduct']} })
     business_case: Optional[str] = Field(default=None, description="""Project business case""", json_schema_extra = { "linkml_meta": {'alias': 'business_case', 'domain_of': ['Project']} })
     sdlc_phase: SDLCPhaseEnum = Field(default=..., description="""Current SDLC phase""", json_schema_extra = { "linkml_meta": {'alias': 'sdlc_phase', 'domain_of': ['Project']} })
-    release_plan: Optional[str] = Field(default=None, description="""High-level release plan""", le=1000, json_schema_extra = { "linkml_meta": {'alias': 'release_plan', 'domain_of': ['Project']} })
+    release_plan: Optional[str] = Field(default=None, description="""High-level release plan""", json_schema_extra = { "linkml_meta": {'alias': 'release_plan', 'domain_of': ['Project']} })
     team: Optional[str] = Field(default=None, description="""Assigned project team""", json_schema_extra = { "linkml_meta": {'alias': 'team', 'domain_of': ['Project', 'WorkStream']} })
     scope: Optional[Scope] = Field(default=None, description="""Project scope definition""", json_schema_extra = { "linkml_meta": {'alias': 'scope', 'domain_of': ['Project']} })
     stakeholders: Optional[list[str]] = Field(default=None, description="""Project stakeholders""", json_schema_extra = { "linkml_meta": {'alias': 'stakeholders', 'domain_of': ['Project']} })
@@ -489,15 +477,28 @@ class Project(ConfiguredBaseModel):
                        'TestCase',
                        'Phase',
                        'Documentation']} })
-    created_date: Optional[str] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
          'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
-    last_updated: Optional[str] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+    last_updated: Optional[datetime ] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
          'domain_of': ['Project', 'Requirement', 'Documentation']} })
-    knowledge_transfer: Optional[str] = Field(default=None, description="""Knowledge transfer activities""", le=1000, json_schema_extra = { "linkml_meta": {'alias': 'knowledge_transfer', 'domain_of': ['Project']} })
+    knowledge_transfer: Optional[str] = Field(default=None, description="""Knowledge transfer activities""", json_schema_extra = { "linkml_meta": {'alias': 'knowledge_transfer', 'domain_of': ['Project']} })
     change_requests: Optional[list[str]] = Field(default=None, description="""Change requests""", json_schema_extra = { "linkml_meta": {'alias': 'change_requests', 'domain_of': ['Project']} })
     baselines: Optional[list[str]] = Field(default=None, description="""Project baselines""", json_schema_extra = { "linkml_meta": {'alias': 'baselines', 'domain_of': ['Project']} })
     repositories: Optional[list[str]] = Field(default=None, description="""Project repositories""", json_schema_extra = { "linkml_meta": {'alias': 'repositories', 'domain_of': ['Project']} })
     ai_work_products: Optional[list[str]] = Field(default=None, description="""AI-generated work products""", json_schema_extra = { "linkml_meta": {'alias': 'ai_work_products', 'domain_of': ['Project']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class BusinessCase(ConfiguredBaseModel):
@@ -540,7 +541,7 @@ class BusinessCase(ConfiguredBaseModel):
     alternatives_analysis: Optional[str] = Field(default=None, description="""Alternatives analysis""", json_schema_extra = { "linkml_meta": {'alias': 'alternatives_analysis', 'domain_of': ['BusinessCase']} })
     recommendation: Optional[str] = Field(default=None, description="""Recommendation""", json_schema_extra = { "linkml_meta": {'alias': 'recommendation', 'domain_of': ['BusinessCase']} })
     approval_status: Optional[ApprovalStatusEnum] = Field(default=None, description="""Approval status""", json_schema_extra = { "linkml_meta": {'alias': 'approval_status', 'domain_of': ['BusinessCase']} })
-    approved_date: Optional[str] = Field(default=None, description="""Approval date""", json_schema_extra = { "linkml_meta": {'alias': 'approved_date', 'domain_of': ['BusinessCase', 'Baseline']} })
+    approved_date: Optional[date] = Field(default=None, description="""Approval date""", json_schema_extra = { "linkml_meta": {'alias': 'approved_date', 'domain_of': ['BusinessCase', 'Baseline']} })
 
 
 class Scope(ConfiguredBaseModel):
@@ -550,8 +551,8 @@ class Scope(ConfiguredBaseModel):
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
 
     epics: Optional[list[str]] = Field(default=None, description="""Collection of epics""", json_schema_extra = { "linkml_meta": {'alias': 'epics', 'domain_of': ['Scope']} })
-    inclusions: Optional[list[str]] = Field(default=None, description="""Included items in scope""", le=50, json_schema_extra = { "linkml_meta": {'alias': 'inclusions', 'domain_of': ['Scope']} })
-    exclusions: Optional[list[str]] = Field(default=None, description="""Excluded items from scope""", le=50, json_schema_extra = { "linkml_meta": {'alias': 'exclusions', 'domain_of': ['Scope']} })
+    inclusions: Optional[list[str]] = Field(default=None, description="""Included items in scope""", json_schema_extra = { "linkml_meta": {'alias': 'inclusions', 'domain_of': ['Scope']} })
+    exclusions: Optional[list[str]] = Field(default=None, description="""Excluded items from scope""", json_schema_extra = { "linkml_meta": {'alias': 'exclusions', 'domain_of': ['Scope']} })
     assumptions: Optional[list[str]] = Field(default=None, description="""Scope assumptions""", json_schema_extra = { "linkml_meta": {'alias': 'assumptions', 'domain_of': ['Scope']} })
     constraints: Optional[list[str]] = Field(default=None, description="""Scope constraints""", json_schema_extra = { "linkml_meta": {'alias': 'constraints', 'domain_of': ['Scope']} })
     acceptance_criteria: Optional[list[str]] = Field(default=None, description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
@@ -632,9 +633,9 @@ class Requirement(ConfiguredBaseModel):
     source: Optional[str] = Field(default=None, description="""Source of the requirement""", json_schema_extra = { "linkml_meta": {'alias': 'source', 'domain_of': ['Requirement']} })
     acceptance_criteria: Optional[list[str]] = Field(default=None, description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
          'domain_of': ['Scope', 'Requirement', 'UserStory', 'Milestone']} })
-    created_date: Optional[str] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
          'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
-    last_updated: Optional[str] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+    last_updated: Optional[datetime ] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
          'domain_of': ['Project', 'Requirement', 'Documentation']} })
 
 
@@ -643,8 +644,7 @@ class Epic(ConfiguredBaseModel):
     Large work body capturing major capability with traceability to business objectives
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'description': {'maximum_value': 500, 'name': 'description'},
-                        'status': {'name': 'status', 'range': 'EpicStatusEnum'}}})
+         'slot_usage': {'status': {'name': 'status', 'range': 'EpicStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -671,7 +671,7 @@ class Epic(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -686,7 +686,7 @@ class Epic(ConfiguredBaseModel):
                        'Repository',
                        'Metric',
                        'AIWorkProduct']} })
-    description: Optional[str] = Field(default=None, description="""Detailed description""", le=500, json_schema_extra = { "linkml_meta": {'alias': 'description',
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
                        'Epic',
@@ -726,9 +726,22 @@ class Epic(ConfiguredBaseModel):
                        'TestCase',
                        'Phase',
                        'Documentation']} })
-    created_date: Optional[str] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
          'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
     target_release: Optional[str] = Field(default=None, description="""Target release version""", json_schema_extra = { "linkml_meta": {'alias': 'target_release', 'domain_of': ['Epic']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class UserStory(ConfiguredBaseModel):
@@ -736,11 +749,8 @@ class UserStory(ConfiguredBaseModel):
     End-user perspective feature description with acceptance criteria
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'acceptance_criteria': {'maximum_value': 10,
-                                                'minimum_value': 1,
-                                                'name': 'acceptance_criteria',
+         'slot_usage': {'acceptance_criteria': {'name': 'acceptance_criteria',
                                                 'required': True},
-                        'description': {'maximum_value': 1000, 'name': 'description'},
                         'status': {'name': 'status', 'range': 'UserStoryStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
@@ -768,8 +778,8 @@ class UserStory(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    title: str = Field(default=..., description="""Short descriptive title""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
-    description: Optional[str] = Field(default=None, description="""Detailed description""", le=1000, json_schema_extra = { "linkml_meta": {'alias': 'description',
+    title: str = Field(default=..., description="""Short descriptive title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
                        'Epic',
@@ -787,9 +797,9 @@ class UserStory(ConfiguredBaseModel):
                        'WorkStream',
                        'Metric',
                        'AIWorkProduct']} })
-    acceptance_criteria: list[str] = Field(default=..., description="""Acceptance criteria""", ge=1, le=10, json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
+    acceptance_criteria: list[str] = Field(default=..., description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
          'domain_of': ['Scope', 'Requirement', 'UserStory', 'Milestone']} })
-    definition_of_done: Optional[str] = Field(default=None, description="""Definition of done criteria""", le=1000, json_schema_extra = { "linkml_meta": {'alias': 'definition_of_done', 'domain_of': ['UserStory']} })
+    definition_of_done: Optional[str] = Field(default=None, description="""Definition of done criteria""", json_schema_extra = { "linkml_meta": {'alias': 'definition_of_done', 'domain_of': ['UserStory']} })
     story_points: StoryPointsEnum = Field(default=..., description="""Relative complexity estimate using Fibonacci sequence.""", json_schema_extra = { "linkml_meta": {'alias': 'story_points', 'domain_of': ['UserStory']} })
     issues: Optional[list[str]] = Field(default=None, description="""Associated issues""", json_schema_extra = { "linkml_meta": {'alias': 'issues', 'domain_of': ['UserStory']} })
     epic_id: Optional[str] = Field(default=None, description="""Parent epic reference""", json_schema_extra = { "linkml_meta": {'alias': 'epic_id', 'domain_of': ['UserStory']} })
@@ -816,6 +826,19 @@ class UserStory(ConfiguredBaseModel):
                        'TestCase']} })
     tests: Optional[list[str]] = Field(default=None, description="""Associated test cases""", json_schema_extra = { "linkml_meta": {'alias': 'tests', 'domain_of': ['UserStory']} })
     technical_notes: Optional[str] = Field(default=None, description="""Technical notes""", json_schema_extra = { "linkml_meta": {'alias': 'technical_notes', 'domain_of': ['UserStory']} })
+
+    @field_validator('title')
+    def pattern_title(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid title format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid title format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Backlog(ConfiguredBaseModel):
@@ -849,7 +872,7 @@ class Backlog(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -884,7 +907,20 @@ class Backlog(ConfiguredBaseModel):
                        'AIWorkProduct']} })
     items: Optional[list[str]] = Field(default=None, description="""Backlog items""", json_schema_extra = { "linkml_meta": {'alias': 'items', 'domain_of': ['Backlog']} })
     prioritization_method: Optional[str] = Field(default=None, description="""Prioritization method""", json_schema_extra = { "linkml_meta": {'alias': 'prioritization_method', 'domain_of': ['Backlog']} })
-    last_prioritized_date: Optional[str] = Field(default=None, description="""Last prioritization date""", json_schema_extra = { "linkml_meta": {'alias': 'last_prioritized_date', 'domain_of': ['Backlog']} })
+    last_prioritized_date: Optional[date] = Field(default=None, description="""Last prioritization date""", json_schema_extra = { "linkml_meta": {'alias': 'last_prioritized_date', 'domain_of': ['Backlog']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class BacklogItem(ConfiguredBaseModel):
@@ -954,8 +990,7 @@ class Sprint(ConfiguredBaseModel):
     """
     Time-boxed iteration typically 1-4 weeks in duration
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'name': {'maximum_value': 50, 'name': 'name'}}})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -982,7 +1017,7 @@ class Sprint(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=50, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -997,16 +1032,29 @@ class Sprint(ConfiguredBaseModel):
                        'Repository',
                        'Metric',
                        'AIWorkProduct']} })
-    goal: Optional[str] = Field(default=None, description="""Goal description""", le=200, json_schema_extra = { "linkml_meta": {'alias': 'goal', 'domain_of': ['Sprint']} })
-    start_date: Optional[str] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
-    end_date: Optional[str] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
+    goal: Optional[str] = Field(default=None, description="""Goal description""", json_schema_extra = { "linkml_meta": {'alias': 'goal', 'domain_of': ['Sprint']} })
+    start_date: Optional[date] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
+    end_date: Optional[date] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     velocity: Optional[float] = Field(default=None, description="""Team velocity""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'velocity', 'domain_of': ['Sprint', 'Team']} })
     retrospective_notes: Optional[str] = Field(default=None, description="""Retrospective notes""", json_schema_extra = { "linkml_meta": {'alias': 'retrospective_notes', 'domain_of': ['Sprint']} })
-    daily_standup_notes: Optional[str] = Field(default=None, description="""Daily standup notes""", le=2000, json_schema_extra = { "linkml_meta": {'alias': 'daily_standup_notes', 'domain_of': ['Sprint']} })
-    review_notes: Optional[str] = Field(default=None, description="""Review notes""", le=2000, json_schema_extra = { "linkml_meta": {'alias': 'review_notes', 'domain_of': ['Sprint']} })
+    daily_standup_notes: Optional[str] = Field(default=None, description="""Daily standup notes""", json_schema_extra = { "linkml_meta": {'alias': 'daily_standup_notes', 'domain_of': ['Sprint']} })
+    review_notes: Optional[str] = Field(default=None, description="""Review notes""", json_schema_extra = { "linkml_meta": {'alias': 'review_notes', 'domain_of': ['Sprint']} })
     backlog_items: Optional[list[str]] = Field(default=None, description="""Items in the backlog""", json_schema_extra = { "linkml_meta": {'alias': 'backlog_items', 'domain_of': ['Sprint']} })
     committed_velocity: Optional[float] = Field(default=None, description="""Committed velocity""", json_schema_extra = { "linkml_meta": {'alias': 'committed_velocity', 'domain_of': ['Sprint']} })
     actual_velocity: Optional[float] = Field(default=None, description="""Actual velocity""", json_schema_extra = { "linkml_meta": {'alias': 'actual_velocity', 'domain_of': ['Sprint']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Issue(ConfiguredBaseModel):
@@ -1014,8 +1062,7 @@ class Issue(ConfiguredBaseModel):
     Technical task or problem resolution item
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'description': {'maximum_value': 500, 'name': 'description'},
-                        'status': {'name': 'status', 'range': 'IssueStatusEnum'},
+         'slot_usage': {'status': {'name': 'status', 'range': 'IssueStatusEnum'},
                         'type': {'name': 'type', 'range': 'IssueTypeEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
@@ -1043,8 +1090,8 @@ class Issue(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    title: str = Field(default=..., description="""Short descriptive title""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
-    description: Optional[str] = Field(default=None, description="""Detailed description""", le=500, json_schema_extra = { "linkml_meta": {'alias': 'description',
+    title: str = Field(default=..., description="""Short descriptive title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
                        'Epic',
@@ -1085,14 +1132,27 @@ class Issue(ConfiguredBaseModel):
     assignee: Optional[str] = Field(default=None, description="""Assigned person""", json_schema_extra = { "linkml_meta": {'alias': 'assignee', 'domain_of': ['Issue']} })
     estimate_hours: Optional[float] = Field(default=None, description="""Time estimate in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'estimate_hours', 'domain_of': ['Issue']} })
     actual_hours: Optional[float] = Field(default=None, description="""Actual time spent in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'actual_hours', 'domain_of': ['Issue']} })
-    due_date: Optional[str] = Field(default=None, description="""Target completion date""", json_schema_extra = { "linkml_meta": {'alias': 'due_date', 'domain_of': ['Issue']} })
-    created_date: Optional[str] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+    due_date: Optional[date] = Field(default=None, description="""Target completion date""", json_schema_extra = { "linkml_meta": {'alias': 'due_date', 'domain_of': ['Issue']} })
+    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
          'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
     root_cause: Optional[str] = Field(default=None, description="""Root cause analysis""", json_schema_extra = { "linkml_meta": {'alias': 'root_cause', 'domain_of': ['Issue']} })
     resolution: Optional[str] = Field(default=None, description="""Resolution description""", json_schema_extra = { "linkml_meta": {'alias': 'resolution', 'domain_of': ['Issue']} })
     reproduction_steps: Optional[str] = Field(default=None, description="""Reproduction steps""", json_schema_extra = { "linkml_meta": {'alias': 'reproduction_steps', 'domain_of': ['Issue']} })
     detected_version: Optional[str] = Field(default=None, description="""Detected in version""", json_schema_extra = { "linkml_meta": {'alias': 'detected_version', 'domain_of': ['Issue']} })
     resolved_version: Optional[str] = Field(default=None, description="""Resolved in version""", json_schema_extra = { "linkml_meta": {'alias': 'resolved_version', 'domain_of': ['Issue']} })
+
+    @field_validator('title')
+    def pattern_title(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid title format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid title format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Team(ConfiguredBaseModel):
@@ -1126,7 +1186,7 @@ class Team(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1148,16 +1208,26 @@ class Team(ConfiguredBaseModel):
     process_maturity: Optional[int] = Field(default=None, description="""Process maturity level (1-5)""", ge=1, le=5, json_schema_extra = { "linkml_meta": {'alias': 'process_maturity', 'domain_of': ['Team']} })
     collaboration_tools: Optional[list[str]] = Field(default=None, description="""Collaboration tools""", json_schema_extra = { "linkml_meta": {'alias': 'collaboration_tools', 'domain_of': ['Team']} })
 
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
+
 
 class Risk(ConfiguredBaseModel):
     """
     Project risk following PMI risk management framework
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'description': {'maximum_value': 500,
-                                        'minimum_value': 1,
-                                        'name': 'description',
-                                        'required': True},
+         'slot_usage': {'description': {'name': 'description', 'required': True},
                         'status': {'name': 'status', 'range': 'RiskStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
@@ -1185,7 +1255,7 @@ class Risk(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    description: str = Field(default=..., description="""Detailed description""", ge=1, le=500, json_schema_extra = { "linkml_meta": {'alias': 'description',
+    description: str = Field(default=..., description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
                        'Epic',
@@ -1230,8 +1300,7 @@ class Milestone(ConfiguredBaseModel):
     Significant point in project timeline with deliverable tracking
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'description': {'maximum_value': 500, 'name': 'description'},
-                        'status': {'name': 'status', 'range': 'MilestoneStatusEnum'}}})
+         'slot_usage': {'status': {'name': 'status', 'range': 'MilestoneStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1258,7 +1327,7 @@ class Milestone(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1273,7 +1342,7 @@ class Milestone(ConfiguredBaseModel):
                        'Repository',
                        'Metric',
                        'AIWorkProduct']} })
-    description: Optional[str] = Field(default=None, description="""Detailed description""", le=500, json_schema_extra = { "linkml_meta": {'alias': 'description',
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
                        'Epic',
@@ -1291,8 +1360,8 @@ class Milestone(ConfiguredBaseModel):
                        'WorkStream',
                        'Metric',
                        'AIWorkProduct']} })
-    target_date: Optional[str] = Field(default=None, description="""Planned completion date""", json_schema_extra = { "linkml_meta": {'alias': 'target_date', 'domain_of': ['Milestone']} })
-    actual_date: Optional[str] = Field(default=None, description="""Actual completion date""", json_schema_extra = { "linkml_meta": {'alias': 'actual_date', 'domain_of': ['Milestone']} })
+    target_date: Optional[date] = Field(default=None, description="""Planned completion date""", json_schema_extra = { "linkml_meta": {'alias': 'target_date', 'domain_of': ['Milestone']} })
+    actual_date: Optional[date] = Field(default=None, description="""Actual completion date""", json_schema_extra = { "linkml_meta": {'alias': 'actual_date', 'domain_of': ['Milestone']} })
     deliverables: Optional[list[str]] = Field(default=None, description="""Associated deliverables""", json_schema_extra = { "linkml_meta": {'alias': 'deliverables', 'domain_of': ['Milestone', 'Phase', 'WorkStream']} })
     status: Optional[MilestoneStatusEnum] = Field(default=None, description="""Current status""", json_schema_extra = { "linkml_meta": {'alias': 'status',
          'domain_of': ['Project',
@@ -1310,14 +1379,26 @@ class Milestone(ConfiguredBaseModel):
     acceptance_criteria: Optional[list[str]] = Field(default=None, description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
          'domain_of': ['Scope', 'Requirement', 'UserStory', 'Milestone']} })
 
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
+
 
 class Deliverable(ConfiguredBaseModel):
     """
     Tangible or intangible product produced as part of project completion
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'description': {'maximum_value': 500, 'name': 'description'},
-                        'status': {'name': 'status', 'range': 'DeliverableStatusEnum'}}})
+         'slot_usage': {'status': {'name': 'status', 'range': 'DeliverableStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1344,7 +1425,7 @@ class Deliverable(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1359,7 +1440,7 @@ class Deliverable(ConfiguredBaseModel):
                        'Repository',
                        'Metric',
                        'AIWorkProduct']} })
-    description: Optional[str] = Field(default=None, description="""Detailed description""", le=500, json_schema_extra = { "linkml_meta": {'alias': 'description',
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
                        'Epic',
@@ -1390,10 +1471,23 @@ class Deliverable(ConfiguredBaseModel):
                        'TestCase',
                        'Phase',
                        'Documentation']} })
-    acceptance_date: Optional[str] = Field(default=None, description="""Acceptance date""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_date', 'domain_of': ['Deliverable']} })
+    acceptance_date: Optional[date] = Field(default=None, description="""Acceptance date""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_date', 'domain_of': ['Deliverable']} })
     quality_metrics: Optional[str] = Field(default=None, description="""Quality metrics""", json_schema_extra = { "linkml_meta": {'alias': 'quality_metrics', 'domain_of': ['Deliverable']} })
     storage_location: Optional[str] = Field(default=None, description="""Storage location""", json_schema_extra = { "linkml_meta": {'alias': 'storage_location', 'domain_of': ['Deliverable']} })
     version: Optional[str] = Field(default=None, description="""Version""", json_schema_extra = { "linkml_meta": {'alias': 'version', 'domain_of': ['Deliverable', 'Baseline', 'Documentation']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class ChangeRequest(ConfiguredBaseModel):
@@ -1476,9 +1570,9 @@ class ChangeRequest(ConfiguredBaseModel):
                        'Phase',
                        'Documentation']} })
     submitted_by: Optional[str] = Field(default=None, description="""Submitted by""", json_schema_extra = { "linkml_meta": {'alias': 'submitted_by', 'domain_of': ['ChangeRequest']} })
-    submitted_date: Optional[str] = Field(default=None, description="""Submission date""", json_schema_extra = { "linkml_meta": {'alias': 'submitted_date', 'domain_of': ['ChangeRequest']} })
+    submitted_date: Optional[date] = Field(default=None, description="""Submission date""", json_schema_extra = { "linkml_meta": {'alias': 'submitted_date', 'domain_of': ['ChangeRequest']} })
     decision: Optional[str] = Field(default=None, description="""Decision""", json_schema_extra = { "linkml_meta": {'alias': 'decision', 'domain_of': ['ChangeRequest']} })
-    decision_date: Optional[str] = Field(default=None, description="""Decision date""", json_schema_extra = { "linkml_meta": {'alias': 'decision_date', 'domain_of': ['ChangeRequest']} })
+    decision_date: Optional[date] = Field(default=None, description="""Decision date""", json_schema_extra = { "linkml_meta": {'alias': 'decision_date', 'domain_of': ['ChangeRequest']} })
     decision_maker: Optional[str] = Field(default=None, description="""Decision maker""", json_schema_extra = { "linkml_meta": {'alias': 'decision_maker', 'domain_of': ['ChangeRequest']} })
 
 
@@ -1513,7 +1607,7 @@ class Baseline(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1547,9 +1641,22 @@ class Baseline(ConfiguredBaseModel):
                        'Metric',
                        'AIWorkProduct']} })
     version: Optional[str] = Field(default=None, description="""Version""", json_schema_extra = { "linkml_meta": {'alias': 'version', 'domain_of': ['Deliverable', 'Baseline', 'Documentation']} })
-    approved_date: Optional[str] = Field(default=None, description="""Approval date""", json_schema_extra = { "linkml_meta": {'alias': 'approved_date', 'domain_of': ['BusinessCase', 'Baseline']} })
+    approved_date: Optional[date] = Field(default=None, description="""Approval date""", json_schema_extra = { "linkml_meta": {'alias': 'approved_date', 'domain_of': ['BusinessCase', 'Baseline']} })
     approved_by: Optional[str] = Field(default=None, description="""Person who approved the baseline""", json_schema_extra = { "linkml_meta": {'alias': 'approved_by', 'domain_of': ['Baseline']} })
     elements: Optional[list[str]] = Field(default=None, description="""Baseline elements""", json_schema_extra = { "linkml_meta": {'alias': 'elements', 'domain_of': ['Baseline']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class TestCase(ConfiguredBaseModel):
@@ -1584,7 +1691,7 @@ class TestCase(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1648,7 +1755,20 @@ class TestCase(ConfiguredBaseModel):
                        'TestCase']} })
     associated_requirement: Optional[str] = Field(default=None, description="""Associated requirement""", json_schema_extra = { "linkml_meta": {'alias': 'associated_requirement', 'domain_of': ['TestCase', 'AIWorkProduct']} })
     automated: Optional[bool] = Field(default=None, description="""Automated test""", json_schema_extra = { "linkml_meta": {'alias': 'automated', 'domain_of': ['TestCase']} })
-    last_tested: Optional[str] = Field(default=None, description="""Last tested date""", json_schema_extra = { "linkml_meta": {'alias': 'last_tested', 'domain_of': ['TestCase']} })
+    last_tested: Optional[date] = Field(default=None, description="""Last tested date""", json_schema_extra = { "linkml_meta": {'alias': 'last_tested', 'domain_of': ['TestCase']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Phase(ConfiguredBaseModel):
@@ -1682,7 +1802,7 @@ class Phase(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1715,8 +1835,8 @@ class Phase(ConfiguredBaseModel):
                        'WorkStream',
                        'Metric',
                        'AIWorkProduct']} })
-    start_date: Optional[str] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
-    end_date: Optional[str] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
+    start_date: Optional[date] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
+    end_date: Optional[date] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     deliverables: Optional[list[str]] = Field(default=None, description="""Associated deliverables""", json_schema_extra = { "linkml_meta": {'alias': 'deliverables', 'domain_of': ['Milestone', 'Phase', 'WorkStream']} })
     entrance_criteria: Optional[str] = Field(default=None, description="""Entrance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'entrance_criteria', 'domain_of': ['Phase']} })
     exit_criteria: Optional[str] = Field(default=None, description="""Exit criteria""", json_schema_extra = { "linkml_meta": {'alias': 'exit_criteria', 'domain_of': ['Phase']} })
@@ -1733,6 +1853,19 @@ class Phase(ConfiguredBaseModel):
                        'TestCase',
                        'Phase',
                        'Documentation']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class WorkStream(ConfiguredBaseModel):
@@ -1766,7 +1899,7 @@ class WorkStream(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1804,6 +1937,19 @@ class WorkStream(ConfiguredBaseModel):
     deliverables: Optional[list[str]] = Field(default=None, description="""Associated deliverables""", json_schema_extra = { "linkml_meta": {'alias': 'deliverables', 'domain_of': ['Milestone', 'Phase', 'WorkStream']} })
     dependencies: Optional[list[str]] = Field(default=None, description="""Dependencies""", json_schema_extra = { "linkml_meta": {'alias': 'dependencies', 'domain_of': ['BacklogItem', 'WorkStream']} })
 
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
+
 
 class Documentation(ConfiguredBaseModel):
     """
@@ -1839,7 +1985,7 @@ class Documentation(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    title: str = Field(default=..., description="""Short descriptive title""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
+    title: str = Field(default=..., description="""Short descriptive title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
     content: Optional[str] = Field(default=None, description="""Content""", json_schema_extra = { "linkml_meta": {'alias': 'content', 'domain_of': ['Documentation']} })
     type: Optional[DocumentationTypeEnum] = Field(default=None, description="""Type classification""", json_schema_extra = { "linkml_meta": {'alias': 'type',
          'domain_of': ['Issue',
@@ -1861,12 +2007,25 @@ class Documentation(ConfiguredBaseModel):
                        'Phase',
                        'Documentation']} })
     owner: Optional[str] = Field(default=None, description="""Owner""", json_schema_extra = { "linkml_meta": {'alias': 'owner', 'domain_of': ['Risk', 'Documentation', 'CommunicationPlan']} })
-    created_date: Optional[str] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
          'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
-    last_updated: Optional[str] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+    last_updated: Optional[datetime ] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
          'domain_of': ['Project', 'Requirement', 'Documentation']} })
     version: Optional[str] = Field(default=None, description="""Version""", json_schema_extra = { "linkml_meta": {'alias': 'version', 'domain_of': ['Deliverable', 'Baseline', 'Documentation']} })
     audience: Optional[str] = Field(default=None, description="""Target audience""", json_schema_extra = { "linkml_meta": {'alias': 'audience', 'domain_of': ['Documentation', 'CommunicationPlan']} })
+
+    @field_validator('title')
+    def pattern_title(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid title format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid title format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Repository(ConfiguredBaseModel):
@@ -1901,7 +2060,7 @@ class Repository(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1924,7 +2083,20 @@ class Repository(ConfiguredBaseModel):
                        'Repository']} })
     url: Optional[str] = Field(default=None, description="""URL""", json_schema_extra = { "linkml_meta": {'alias': 'url', 'domain_of': ['Repository']} })
     access_controls: Optional[str] = Field(default=None, description="""Access controls""", json_schema_extra = { "linkml_meta": {'alias': 'access_controls', 'domain_of': ['Repository']} })
-    last_sync_date: Optional[str] = Field(default=None, description="""Last sync date""", json_schema_extra = { "linkml_meta": {'alias': 'last_sync_date', 'domain_of': ['Repository']} })
+    last_sync_date: Optional[date] = Field(default=None, description="""Last sync date""", json_schema_extra = { "linkml_meta": {'alias': 'last_sync_date', 'domain_of': ['Repository']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Metric(ConfiguredBaseModel):
@@ -1958,7 +2130,7 @@ class Metric(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -1994,8 +2166,21 @@ class Metric(ConfiguredBaseModel):
     value: Optional[float] = Field(default=None, description="""Metric value""", json_schema_extra = { "linkml_meta": {'alias': 'value', 'domain_of': ['Metric']} })
     target: Optional[float] = Field(default=None, description="""Target value""", json_schema_extra = { "linkml_meta": {'alias': 'target', 'domain_of': ['Metric']} })
     unit: Optional[str] = Field(default=None, description="""Measurement unit""", json_schema_extra = { "linkml_meta": {'alias': 'unit', 'domain_of': ['Metric']} })
-    measurement_date: Optional[str] = Field(default=None, description="""Measurement date""", json_schema_extra = { "linkml_meta": {'alias': 'measurement_date', 'domain_of': ['Metric']} })
+    measurement_date: Optional[date] = Field(default=None, description="""Measurement date""", json_schema_extra = { "linkml_meta": {'alias': 'measurement_date', 'domain_of': ['Metric']} })
     trend: Optional[str] = Field(default=None, description="""Trend""", json_schema_extra = { "linkml_meta": {'alias': 'trend', 'domain_of': ['Metric']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Person(ConfiguredBaseModel):
@@ -2030,9 +2215,22 @@ class Person(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    person_name: str = Field(default=..., description="""Person's name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
-    email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['Person']} })
+    person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
+    contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
+
+    @field_validator('person_name')
+    def pattern_person_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid person_name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid person_name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class TeamMember(Person):
@@ -2048,8 +2246,8 @@ class TeamMember(Person):
     capacity: Optional[float] = Field(default=None, description="""Weekly capacity in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'capacity', 'domain_of': ['Team', 'TeamMember']} })
     is_active: Optional[bool] = Field(default=True, description="""Active status""", json_schema_extra = { "linkml_meta": {'alias': 'is_active', 'domain_of': ['TeamMember'], 'ifabsent': 'boolean(true)'} })
     skills: Optional[list[str]] = Field(default=None, description="""Skills""", json_schema_extra = { "linkml_meta": {'alias': 'skills', 'domain_of': ['TeamMember', 'UserProfiler']} })
-    start_date: Optional[str] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
-    end_date: Optional[str] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
+    start_date: Optional[date] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
+    end_date: Optional[date] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
                        'BusinessCase',
@@ -2075,9 +2273,22 @@ class TeamMember(Person):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    person_name: str = Field(default=..., description="""Person's name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
-    email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['Person']} })
+    person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
+    contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
+
+    @field_validator('person_name')
+    def pattern_person_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid person_name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid person_name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Stakeholder(Person):
@@ -2118,8 +2329,21 @@ class Stakeholder(Person):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    person_name: str = Field(default=..., description="""Person's name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
-    email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['Person']} })
+    person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
+    contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
+
+    @field_validator('person_name')
+    def pattern_person_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid person_name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid person_name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class UserProfiler(Person):
@@ -2157,9 +2381,22 @@ class UserProfiler(Person):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    person_name: str = Field(default=..., description="""Person's name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
-    email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['Person']} })
+    person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
+    contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
+
+    @field_validator('person_name')
+    def pattern_person_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid person_name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid person_name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class CommunicationPlan(ConfiguredBaseModel):
@@ -2233,7 +2470,7 @@ class AIWorkProduct(ConfiguredBaseModel):
                        'Person',
                        'CommunicationPlan',
                        'AIWorkProduct']} })
-    name: str = Field(default=..., description="""Name""", ge=1, le=100, json_schema_extra = { "linkml_meta": {'alias': 'name',
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
                        'Backlog',
@@ -2267,11 +2504,24 @@ class AIWorkProduct(ConfiguredBaseModel):
                        'Metric',
                        'AIWorkProduct']} })
     generated_by: Optional[str] = Field(default=None, description="""Generated by""", json_schema_extra = { "linkml_meta": {'alias': 'generated_by', 'domain_of': ['AIWorkProduct']} })
-    generation_date: Optional[str] = Field(default=None, description="""Generation date""", json_schema_extra = { "linkml_meta": {'alias': 'generation_date', 'domain_of': ['AIWorkProduct']} })
+    generation_date: Optional[date] = Field(default=None, description="""Generation date""", json_schema_extra = { "linkml_meta": {'alias': 'generation_date', 'domain_of': ['AIWorkProduct']} })
     input_parameters: Optional[str] = Field(default=None, description="""Input parameters""", json_schema_extra = { "linkml_meta": {'alias': 'input_parameters', 'domain_of': ['AIWorkProduct']} })
     confidence_score: Optional[float] = Field(default=None, description="""Confidence score""", ge=0, le=1, json_schema_extra = { "linkml_meta": {'alias': 'confidence_score', 'domain_of': ['AIWorkProduct']} })
     validation_status: Optional[ApprovalStatusEnum] = Field(default=None, description="""Validation status""", json_schema_extra = { "linkml_meta": {'alias': 'validation_status', 'domain_of': ['AIWorkProduct']} })
     associated_requirement: Optional[str] = Field(default=None, description="""Associated requirement""", json_schema_extra = { "linkml_meta": {'alias': 'associated_requirement', 'domain_of': ['TestCase', 'AIWorkProduct']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 # Model rebuild

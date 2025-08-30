@@ -23,6 +23,16 @@ from .tools import (
     UUIDEncoder,
 )
 
+from .knowledge_tools import (
+    get_full_project_context_tool,
+    get_entity_by_id_tool,
+    get_entity_with_relationships_tool,
+    create_entity_tool,
+    update_entity_tool,
+    delete_entity_tool,
+    query_entities_tool
+)
+
 class ProjectManagementAgent(AIAgent):
     """
     Project management agent responsible for PMI best practices and comprehensive project planning.
@@ -77,7 +87,17 @@ class ProjectManagementAgent(AIAgent):
 
         
         
-        project_management_tools = [retrieve_project_data_tool, save_project_data_tool]
+        project_management_tools = [
+            retrieve_project_data_tool, 
+            save_project_data_tool,
+            get_full_project_context_tool,
+            get_entity_by_id_tool,
+            get_entity_with_relationships_tool,
+            create_entity_tool,
+            update_entity_tool,
+            delete_entity_tool,
+            query_entities_tool
+        ]
         delegate_tools = [transfer_back_to_triage_tool]
         
         super().__init__(
