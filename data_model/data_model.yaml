@@ -131,6 +131,13 @@ enums:
       "Project Manager":
       "Business Analyst":
       "Sponsor":
+  ExperienceLevelEnum:
+    description: Levels of experience for users
+    permissible_values:
+      Beginner:
+      Intermediate:
+      Advanced:
+      Expert:
   InfluenceLevelEnum:
     description: Levels of influence for stakeholders
     permissible_values:
@@ -611,6 +618,9 @@ slots:
     range: string
     multivalued: true
     description: Expectations
+  experience:
+    range: ExperienceLevelEnum
+    description: "User's experience level"
   triggers:
     range: string
     multivalued: true
@@ -980,6 +990,15 @@ classes:
       - communication_preferences
       - engagement_plan
       - concerns
+      - expectations
+
+  UserProfiler:
+    is_a: Person
+    description: "Represents a user's profile, including their skills, experience, and expectations."
+    slots:
+      - role
+      - experience
+      - skills
       - expectations
 
   Risk:
