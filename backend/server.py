@@ -17,62 +17,7 @@ from autogen_core.models import UserMessage, ChatCompletionClient
 from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
-
-
-class UserSession:
-    def __init__(self, session_id: str, model_client: ChatCompletionClient, tracer_provider):
-        self.session_id = session_id
-        self.runtime = SingleThreadedAgentRuntime(tracer_provider=tracer_provider)
-        self.agent_factory = AgentFactory(self.runtime, model_client)
-        self.input_queue = self.agent_factory.input_queue
-        self.response_queue = self.agent_factory.response_queue
-        self.knowledge_service = KnowledgeService()
-        self.project_id = None
-
-    async def initialize(self):
-        await self.agent_factory.register_all_agents()
-        await self.agent_factory.add_all_subscriptions()
-        self.runtime.start()
-        
-        # Create a new project for the session
-        project_data = json.dumps({
-            "name": "New Project",
-            "description": "A new project",
-            "methodology": "Hybrid",
-            "sdlc_phase": "Concept"
-        })
-        project_id_json = self.knowledge_service.create_entity('Project', project_data)
-        project_id_data = json.loads(project_id_json)
-        self.project_id = project_id_data["entity_id"]
-
-        await self.runtime.publish_message(
-        UserLogin(), 
-        topic_id=TopicId(USER_TOPIC_TYPE, source=self.session_id)
-    )
-
-    async def close(self):
-        await self.runtime.stop()
-
-class UserSessionManager:
-    def __init__(self, model_client: ChatCompletionClient, tracer_provider):
-        self.sessions = {}
-        self.model_client = model_client
-        self.tracer_provider = tracer_provider
-
-    async def create_session(self) -> str:
-        session_id = str(uuid.uuid4())
-        session = UserSession(session_id, self.model_client, self.tracer_provider)
-        await session.initialize()
-        self.sessions[session_id] = session
-        return session_id
-
-    def get_session(self, session_id: str) -> UserSession:
-        return self.sessions.get(session_id)
-
-    async def close_session(self, session_id: str):
-        session = self.sessions.pop(session_id, None)
-        if session:
-            await session.close()
+from backend.session import UserSessionManager
 
 
 @asynccontextmanager

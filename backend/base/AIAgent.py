@@ -21,6 +21,7 @@ class AIAgent(RoutedAgent):
 
     def __init__(
         self,
+        user_session,
         description: str,
         system_message: SystemMessage,
         model_client: ChatCompletionClient,
@@ -30,6 +31,7 @@ class AIAgent(RoutedAgent):
         user_topic_type: str,
     ) -> None:
         super().__init__(description)
+        self.user_session = user_session
         self._system_message = system_message
         self._model_client = model_client
         self._tools = dict([(tool.name, tool) for tool in tools])

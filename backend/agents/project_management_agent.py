@@ -1,10 +1,3 @@
-"""
-Project Management Agent for the handoffs pattern.
-
-This agent is responsible for guiding users through PMI best practices and creating
-comprehensive project management plans in markdown format.
-"""
-
 import json
 
 from autogen_core.models import SystemMessage
@@ -23,16 +16,6 @@ from .tools import (
     UUIDEncoder,
 )
 
-from .knowledge_tools import (
-    get_full_project_context_tool,
-    get_entity_by_id_tool,
-    get_entity_with_relationships_tool,
-    create_entity_tool,
-    update_entity_tool,
-    delete_entity_tool,
-    query_entities_tool
-)
-
 class ProjectManagementAgent(AIAgent):
     """
     Project management agent responsible for PMI best practices and comprehensive project planning.
@@ -43,12 +26,12 @@ class ProjectManagementAgent(AIAgent):
     - Creating an initial project management plan
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session, tools: list[Tool] = None):
         """
         Initialize the ProjectManagementAgent.
         
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard project management tools
         """
         system_message = SystemMessage(
@@ -90,20 +73,14 @@ class ProjectManagementAgent(AIAgent):
         project_management_tools = [
             retrieve_project_data_tool, 
             save_project_data_tool,
-            get_full_project_context_tool,
-            get_entity_by_id_tool,
-            get_entity_with_relationships_tool,
-            create_entity_tool,
-            update_entity_tool,
-            delete_entity_tool,
-            query_entities_tool
         ]
         delegate_tools = [transfer_back_to_triage_tool]
         
         super().__init__(
+            user_session=user_session,
             description="A certified PMP agent responsible for PMI best practices and comprehensive project management planning.",
             system_message=system_message,
-            model_client=model_client,
+            model_client=user_session.model_client,
             tools=project_management_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,

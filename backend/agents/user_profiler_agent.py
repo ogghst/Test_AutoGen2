@@ -1,10 +1,3 @@
-"""
-User Profiler Agent for the handoffs pattern.
-
-This agent is responsible for understanding the user's capabilities and knowledge
-to better tune other agents' tone and questions based on its profile.
-"""
-
 import json
 
 from autogen_core.models import SystemMessage
@@ -32,12 +25,12 @@ class UserProfilerAgent(AIAgent):
     - Saving the user profile to the project's storage
     """
 
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session, tools: list[Tool] = None):
         """
         Initialize the UserProfilerAgent.
 
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard user profiler tools
         """
         system_message = SystemMessage(
@@ -65,10 +58,11 @@ class UserProfilerAgent(AIAgent):
         delegate_tools = [transfer_back_to_triage_tool]
 
         super().__init__(
+            user_session=user_session,
             description="A user profiler agent responsible for understanding the user's capabilities and knowledge.",
             system_message=system_message,
-            model_client=model_client,
-            tools=user_profiler_tools + (tools or []),
+            model_client=user_session.model_client,
+            tools=tools or [],
             delegate_tools=delegate_tools,
             agent_topic_type=USER_PROFILER_AGENT_TOPIC_TYPE,
             user_topic_type=USER_TOPIC_TYPE,

@@ -1,10 +1,3 @@
-"""
-Triage Agent for the handoffs pattern.
-
-This agent is responsible for understanding user requests and routing them to
-appropriate specialized agents.
-"""
-
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
@@ -30,12 +23,12 @@ class TriageAgent(AIAgent):
     specialized agent should handle the request based on the content and context.
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session, tools: list[Tool] = None):
         """
         Initialize the TriageAgent.
         
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard delegation tools
         """
         system_message = SystemMessage(
@@ -65,9 +58,10 @@ class TriageAgent(AIAgent):
         ]
         
         super().__init__(
+            user_session=user_session,
             description="A triage agent responsible for understanding user requests and routing to appropriate agents.",
             system_message=system_message,
-            model_client=model_client,
+            model_client=user_session.model_client,
             tools=tools or [],
             delegate_tools=delegate_tools,
             agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,
