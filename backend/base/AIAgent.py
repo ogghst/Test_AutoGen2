@@ -6,7 +6,11 @@ from autogen_core.tools import Tool
 
 import json
 from config.logging_config import get_logger
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
+
+# Add forward reference to avoid circular import
+if TYPE_CHECKING:
+    from session import UserSession
 
 
 class AIAgent(RoutedAgent):
@@ -28,6 +32,7 @@ class AIAgent(RoutedAgent):
         delegate_tools: List[Tool],
         agent_topic_type: str,
         user_topic_type: str,
+        user_session: "UserSession",  # Use string literal for forward reference
     ) -> None:
         super().__init__(description)
         self._system_message = system_message
@@ -38,7 +43,8 @@ class AIAgent(RoutedAgent):
         self._delegate_tool_schema = [tool.schema for tool in delegate_tools]
         self._agent_topic_type = agent_topic_type
         self._user_topic_type = user_topic_type
-
+        self._user_session = user_session
+        
     @message_handler
     async def handle_task(self, message: UserTask, ctx: MessageContext) -> None:
         """

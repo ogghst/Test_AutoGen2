@@ -9,7 +9,7 @@ import json
 
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
-
+from typing import TYPE_CHECKING
 
 from models.data_models import Project
 
@@ -23,15 +23,11 @@ from .tools import (
     UUIDEncoder,
 )
 
-from .knowledge_tools import (
-    get_full_project_context_tool,
-    get_entity_by_id_tool,
-    get_entity_with_relationships_tool,
-    create_entity_tool,
-    update_entity_tool,
-    delete_entity_tool,
-    query_entities_tool
-)
+from .knowledge_tools import get_tools
+
+# Add forward reference to avoid circular import
+if TYPE_CHECKING:
+    from session import UserSession
 
 class ProjectManagementAgent(AIAgent):
     """
@@ -43,7 +39,7 @@ class ProjectManagementAgent(AIAgent):
     - Creating an initial project management plan
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session: "UserSession", tools: list[Tool] = None):  # Use string literal for forward reference
         """
         Initialize the ProjectManagementAgent.
         
@@ -56,56 +52,38 @@ class ProjectManagementAgent(AIAgent):
             "1. Guide users through PMI project management standards and best practices\n"
             "2. Help create comprehensive, PMI-compliant project management plans\n"
             "3. Educate users on the PMBOK Guide framework and its application\n"
-            "4. Use the retrieve_project_data_tool and save project data tool to initiate and revise project data\n"
-            "5. Provide expert advice on project management methodologies and processes\n"
-            "6. Transfer back to triage if the request is outside your scope or when the user is satisfied with the project data\n\n"
+            "4. Provide expert advice on project management methodologies and processes\n"
+            "5. Transfer back to triage if the request is outside your scope or when the user is satisfied with the project data\n\n"
             "## RULES\n"
             "1. Always follow PMI standards and best practices. Be thorough, professional, and educational. "
             "2. When creating project management plans, ensure they include all essential PMI components "
             "such as scope, schedule, cost, quality, risk, communication, and stakeholder management. "
             "3. Project data schema is defined as follows: '" + json.dumps(Project.model_json_schema(), cls=UUIDEncoder) + "'. "
+            "3.0 Start by getting the actual project data using the get_actual_project_context tool. "
             "3.1 You shall manage only Project, Team, Person, Stakeholder, and Issue entities. "
             "3.2 You can suggest to the user to create a new entity if it is not in the schema. \n"
             "3.3 You can suggest to the user to create a new relationship if it is not in the schema. \n"
             "3.4 You can suggest to the user to modify other entities if the change you are describing has impact on other entities. \n"
             "4. Provide clear explanations of PMI concepts and how they apply to the user's project."
-            "5. If the user asks for project data, use the retrieve_project_data_tool to retrieve the data."
-            "6. If the user asks to save project data, use the save_project_data_tool to save the data."
+            "5. If the user asks for project data, use the get_full_project_context to retrieve the data."
+            "6. If the user asks to save project data, use the create_entity or update_entity to save the data."
             "7. When the project data is complete, ask the user if they would like to save the data."
-            "8. If the user would like to save the data, use the save_project_data_tool to save the data."
-            "9. If the user would not like to save the data, use the transfer_back_to_triage_tool to transfer back to the triage agent."
-            "## UUID Management \n\n"
-            "When generating the JSON with entities and relationships:\n"
-            "1. First identify all unique entities in the content.\n"
-            "2. Create a consistent mapping of entity names to UUIDs before generating relationships.\n"
-            "3. To generate UUIDs, use UUID4 format for all entities.\n" 
-            "4. Generate a random UUID for each entity.\n" 
-            "5. Make sure to use the same UUID for the same entity across the project.\n"
-            "6. After assigning all UUIDs, create relationships using these exact UUID values.\n"
-            "7. Before finalizing, verify that all relationship references match the assigned entity UUIDs.\n"
         )
 
         
         
         project_management_tools = [
-            retrieve_project_data_tool, 
-            save_project_data_tool,
-            get_full_project_context_tool,
-            get_entity_by_id_tool,
-            get_entity_with_relationships_tool,
-            create_entity_tool,
-            update_entity_tool,
-            delete_entity_tool,
-            query_entities_tool
+            get_tools(user_session)
         ]
         delegate_tools = [transfer_back_to_triage_tool]
         
         super().__init__(
             description="A certified PMP agent responsible for PMI best practices and comprehensive project management planning.",
             system_message=system_message,
-            model_client=model_client,
+            model_client=user_session.model_client,
             tools=project_management_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
             user_topic_type=USER_TOPIC_TYPE,
-        )
+            user_session=user_session,
+            )

@@ -9,6 +9,7 @@ import asyncio
 
 from autogen_core import SingleThreadedAgentRuntime, TypeSubscription
 from autogen_core.models import ChatCompletionClient
+from typing import TYPE_CHECKING
 
 from base.AIAgent import AIAgent
 from .websocket_agent import WebSocketAgent
@@ -33,6 +34,9 @@ from .tools import (
     USER_TOPIC_TYPE,
 )
 
+# Add forward reference to avoid circular import
+if TYPE_CHECKING:
+    from session import UserSession
 
 class AgentFactory:
     """
@@ -42,16 +46,15 @@ class AgentFactory:
     making the system more maintainable and configurable.
     """
     
-    def __init__(self, runtime: SingleThreadedAgentRuntime, model_client: ChatCompletionClient):
+    def __init__(self, user_session: "UserSession"):  # Use string literal for forward reference
         """
         Initialize the AgentFactory.
         
         Args:
             runtime: The agent runtime for registration
-            model_client: The LLM client for AI agents
+            user_session: The user session for the agent
         """
-        self.runtime = runtime
-        self.model_client = model_client
+        self.user_session = user_session
         self.registered_agents = {}
         self.input_queue = asyncio.Queue()
         self.response_queue = asyncio.Queue()
@@ -97,70 +100,70 @@ class AgentFactory:
     async def add_all_subscriptions(self):
         """Add subscriptions for all registered agents."""
         for topic_type, agent_type in self.registered_agents.items():
-            await self.runtime.add_subscription(
+            await self.user_session.runtime.add_subscription(
                 TypeSubscription(topic_type=topic_type, agent_type=agent_type.type)
             )
     
     async def _register_triage_agent(self):
         """Register the triage agent."""
         return await AIAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=TRIAGE_AGENT_TOPIC_TYPE,
-            factory=lambda: TriageAgent(self.model_client),
+            factory=lambda: TriageAgent(self.user_session.model_client),
         )
     
     #async def _register_planning_agent(self):
     #    """Register the planning agent."""
     #    return await AIAgent.register(
-    #        self.runtime,
+    #        self.user_session.runtime,
     #        type=PLANNING_AGENT_TOPIC_TYPE,
-    #        factory=lambda: PlanningAgent(self.model_client),
+    #        factory=lambda: PlanningAgent(self.user_session.model_client),
     #    )
     
     async def _register_execution_agent(self):
         """Register the execution agent."""
         return await AIAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=EXECUTION_AGENT_TOPIC_TYPE,
-            factory=lambda: ExecutionAgent(self.model_client),
+            factory=lambda: ExecutionAgent(self.user_session.model_client),
         )
     
     async def _register_quality_agent(self):
         """Register the quality agent."""
         return await AIAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=QUALITY_AGENT_TOPIC_TYPE,
-            factory=lambda: QualityAgent(self.model_client),
+            factory=lambda: QualityAgent(self.user_session.model_client),
         )
     
     async def _register_project_management_agent(self):
         """Register the project management agent."""
         return await AIAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
-            factory=lambda: ProjectManagementAgent(self.model_client),
+            factory=lambda: ProjectManagementAgent(self.user_session.model_client),
         )
     
     async def _register_user_stories_agent(self):
         """Register the user stories agent."""
         return await AIAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=USER_STORIES_AGENT_TOPIC_TYPE,
-            factory=lambda: UserStoriesAgent(self.model_client),
+            factory=lambda: UserStoriesAgent(self.user_session.model_client),
         )
 
     async def _register_user_profiler_agent(self):
         """Register the user profiler agent."""
         return await AIAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=USER_PROFILER_AGENT_TOPIC_TYPE,
-            factory=lambda: UserProfilerAgent(self.model_client),
+            factory=lambda: UserProfilerAgent(self.user_session.model_client),
         )
     
     async def _register_human_agent(self):
         """Register the human agent."""
         return await HumanAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=HUMAN_AGENT_TOPIC_TYPE,
             factory=lambda: HumanAgent(
                 agent_topic_type=HUMAN_AGENT_TOPIC_TYPE,
@@ -171,7 +174,7 @@ class AgentFactory:
     async def _register_user_agent(self):
         """Register the user agent."""
         return await UserAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=USER_TOPIC_TYPE,
             factory=lambda: UserAgent(
                 user_topic_type=USER_TOPIC_TYPE,
@@ -182,7 +185,7 @@ class AgentFactory:
     async def _register_websocket_agent(self):
         # Create a websocket agent for this session
         return await WebSocketAgent.register(
-            self.runtime,
+            self.user_session.runtime,
             type=USER_TOPIC_TYPE,
             factory=lambda: WebSocketAgent(
                 input_queue=self.input_queue,
