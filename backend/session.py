@@ -49,18 +49,22 @@ class UserSessionManager:
         self.sessions = {}
         self.model_client = model_client
         self.tracer_provider = tracer_provider
+        self._lock = asyncio.Lock()
 
     async def create_session(self) -> str:
-        session_id = str(uuid.uuid4())
-        session = UserSession(session_id, self.model_client, self.tracer_provider)
-        await session.initialize()
-        self.sessions[session_id] = session
-        return session_id
+        async with self._lock:
+            session_id = str(uuid.uuid4())
+            session = UserSession(session_id, self.model_client, self.tracer_provider)
+            await session.initialize()
+            self.sessions[session_id] = session
+            return session_id
 
-    def get_session(self, session_id: str) -> UserSession:
-        return self.sessions.get(session_id)
+    async def get_session(self, session_id: str) -> UserSession:
+        async with self._lock:
+            return self.sessions.get(session_id)
 
     async def close_session(self, session_id: str):
-        session = self.sessions.pop(session_id, None)
+        async with self._lock:
+            session = self.sessions.pop(session_id, None)
         if session:
             await session.close()

@@ -77,7 +77,7 @@ async def create_session():
 
 @app.get("/api/session/{session_id}/project")
 async def get_project(session_id: str):
-    session = user_session_manager.get_session(session_id)
+    session = await user_session_manager.get_session(session_id)
     if not session:
         return JSONResponse(status_code=404, content={"message": "Session not found"})
 
@@ -90,7 +90,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     await websocket.accept()
     logger.info(f"Client connected: {session_id}")
 
-    session = user_session_manager.get_session(session_id)
+    session = await user_session_manager.get_session(session_id)
     if not session:
         logger.error(f"Session not found: {session_id}")
         await websocket.close(code=1011, reason="Session not found")
