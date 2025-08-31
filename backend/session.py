@@ -3,9 +3,9 @@ import uuid
 import json
 from autogen_core import SingleThreadedAgentRuntime, TopicId
 from autogen_core.models import ChatCompletionClient
-from backend.base.messaging import UserLogin
-from backend.knowledge.knowledge_service import KnowledgeService
-from backend.agents.tools import USER_TOPIC_TYPE
+from base.messaging import UserLogin
+from knowledge.knowledge_service import KnowledgeService
+from tools.tools import USER_TOPIC_TYPE
 
 class UserSession:
     def __init__(self, session_id: str, model_client: ChatCompletionClient, tracer_provider):
@@ -19,7 +19,7 @@ class UserSession:
         self.project_id = None
 
     async def initialize(self):
-        from backend.agents.factory import AgentFactory
+        from agents.factory import AgentFactory
         self.agent_factory = AgentFactory(self)
         await self.agent_factory.register_all_agents()
         await self.agent_factory.add_all_subscriptions()

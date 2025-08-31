@@ -3,11 +3,12 @@ import json
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
 
 from models.data_models import UserProfiler
 
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     USER_PROFILER_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
     retrieve_project_data_tool,
@@ -25,7 +26,7 @@ class UserProfilerAgent(AIAgent):
     - Saving the user profile to the project's storage
     """
 
-    def __init__(self, user_session, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the UserProfilerAgent.
 
@@ -61,7 +62,6 @@ class UserProfilerAgent(AIAgent):
             user_session=user_session,
             description="A user profiler agent responsible for understanding the user's capabilities and knowledge.",
             system_message=system_message,
-            model_client=user_session.model_client,
             tools=tools or [],
             delegate_tools=delegate_tools,
             agent_topic_type=USER_PROFILER_AGENT_TOPIC_TYPE,

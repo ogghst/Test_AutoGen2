@@ -13,7 +13,7 @@ from models.data_models import (
     Scope
 )
 
-from agents.tools import UUIDEncoder
+from tools.tools import UUIDEncoder
 
 class KnowledgeService:
     """Knowledge management service for LLM agents to access project context"""

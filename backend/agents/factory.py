@@ -21,8 +21,10 @@ from .project_management_agent import ProjectManagementAgent
 from .user_stories_agent import UserStoriesAgent
 from .user_profiler_agent import UserProfilerAgent
 from .user_agent import UserAgent
+from session import UserSession
+
 from knowledge.knowledge_service import KnowledgeService
-from .tools import (
+from tools.tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
     PLANNING_AGENT_TOPIC_TYPE,
     EXECUTION_AGENT_TOPIC_TYPE,
@@ -33,7 +35,7 @@ from .tools import (
     USER_PROFILER_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
 )
-from .knowledge_tools import create_knowledge_tools
+from tools.knowledge_tools import create_knowledge_tools
 
 
 class AgentFactory:
@@ -44,7 +46,7 @@ class AgentFactory:
     making the system more maintainable and configurable.
     """
     
-    def __init__(self, user_session):
+    def __init__(self, user_session: UserSession):
         """
         Initialize the AgentFactory.
         
@@ -197,8 +199,7 @@ class AgentFactory:
             self.runtime,
             type=USER_TOPIC_TYPE,
             factory=lambda: WebSocketAgent(
-                input_queue=self.input_queue,
-                response_queue=self.response_queue,
+                user_session=self.user_session,
                 user_topic_type=USER_TOPIC_TYPE,
                 agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,
             )

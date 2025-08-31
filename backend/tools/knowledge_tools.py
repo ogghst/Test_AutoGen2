@@ -1,12 +1,19 @@
 from typing import Dict, List, Any, Optional
 from autogen_core.tools import FunctionTool
 from knowledge.knowledge_service import KnowledgeService
+from session import UserSession
 
 # Tool factory functions
-def create_knowledge_tools(user_session) -> List[FunctionTool]:
+def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
     """
     Factory function to create knowledge tools with a specific knowledge service instance.
     """
+    
+    async def get_current_session_id() -> str:
+        return user_session.session_id
+    
+    async def get_session_project_context() -> str:
+        return user_session.knowledge_service.get_full_project_context(user_session.project_id)
 
     async def get_full_project_context(project_id: str) -> str:
         return user_session.knowledge_service.get_full_project_context(project_id)
@@ -33,6 +40,16 @@ def create_knowledge_tools(user_session) -> List[FunctionTool]:
         return user_session.knowledge_service.get_entity_types()
 
     # Tool instances
+    get_current_session_id_tool = FunctionTool(
+        get_current_session_id,
+        description="Get the ID of the current session. Returns string."
+    )
+    
+    get_session_project_context_tool = FunctionTool(
+        get_session_project_context,
+        description="Get the full context of the project for the current session. Returns JSON string."
+    )
+    
     get_full_project_context_tool = FunctionTool(
         get_full_project_context,
         description="Get the full context of a project including all related entities (epics, team, risks, milestones, etc.). Returns JSON string."
@@ -73,7 +90,9 @@ def create_knowledge_tools(user_session) -> List[FunctionTool]:
         description="Get the list of entity types. Returns JSON string representation of the entity types."
     )
 
-    return [
+    return [        
+        get_current_session_id_tool,
+        get_session_project_context_tool,
         get_full_project_context_tool,
         get_entity_by_id_tool,
         get_entity_with_relationships_tool,

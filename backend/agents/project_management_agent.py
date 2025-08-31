@@ -3,15 +3,14 @@ import json
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
 
 from models.data_models import Project
 
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
-    retrieve_project_data_tool,
-    save_project_data_tool,
     transfer_back_to_triage_tool,
     UUIDEncoder,
 )
@@ -26,7 +25,7 @@ class ProjectManagementAgent(AIAgent):
     - Creating an initial project management plan
     """
     
-    def __init__(self, user_session, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the ProjectManagementAgent.
         
@@ -35,25 +34,26 @@ class ProjectManagementAgent(AIAgent):
             tools: Additional tools beyond the standard project management tools
         """
         system_message = SystemMessage(
-            content="You are a certified Project Management Professional (PMP) agent specializing in PMI best practices. Your role is to:\n\n"
+            content="You are a certified Project Management Professional (PMP) agent specializing in PMI best practices. "  
+            "Your role is to:\n\n"
             "1. Guide users through PMI project management standards and best practices\n"
-            "2. Help create comprehensive, PMI-compliant project management plans\n"
+            "2. Help create comprehensive, PMI-compliant project description\n"
             "3. Educate users on the PMBOK Guide framework and its application\n"
-            "4. Use the retrieve_project_data_tool and save project data tool to initiate and revise project data\n"
-            "5. Provide expert advice on project management methodologies and processes\n"
-            "6. Transfer back to triage if the request is outside your scope or when the user is satisfied with the project data\n\n"
+            "4. Provide expert advice on project management methodologies and processes\n"
+            "5. Educate users on project context and project data\n"
+            "5. Transfer back to triage if the request is outside your scope, if you have obtained the project data or when the user is satisfied with the project data\n\n"
+            "## CONTEXT AND PROJECT DATA\n"
+            "1. Project data model is defined as follows: '" + json.dumps(Project.model_dump_json(), cls=UUIDEncoder) + "'. "
+            "2. Session of this project is: '" + user_session.session_id + "'. "
+            "3. Project data is: '" + user_session.knowledge_service.get_full_project_context(user_session.project_id) + "'. "
             "## RULES\n"
             "1. Always follow PMI standards and best practices. Be thorough, professional, and educational. "
-            "2. When creating project management plans, ensure they include all essential PMI components "
-            "such as scope, schedule, cost, quality, risk, communication, and stakeholder management. "
-            "3. Project data schema is defined as follows: '" + json.dumps(Project.model_json_schema(), cls=UUIDEncoder) + "'. "
-            "3.1 You shall manage only Project, Team, Person, Stakeholder, and Issue entities. "
+            "2. When creating project management plans, ensure they include all essential PMI components."
+            "3.1 You shall ask and define **only** about the entities: Project, Team. "
             "3.2 You can suggest to the user to create a new entity if it is not in the schema. \n"
             "3.3 You can suggest to the user to create a new relationship if it is not in the schema. \n"
             "3.4 You can suggest to the user to modify other entities if the change you are describing has impact on other entities. \n"
             "4. Provide clear explanations of PMI concepts and how they apply to the user's project."
-            "5. If the user asks for project data, use the retrieve_project_data_tool to retrieve the data."
-            "6. If the user asks to save project data, use the save_project_data_tool to save the data."
             "7. When the project data is complete, ask the user if they would like to save the data."
             "8. If the user would like to save the data, use the save_project_data_tool to save the data."
             "9. If the user would not like to save the data, use the transfer_back_to_triage_tool to transfer back to the triage agent."
@@ -71,8 +71,6 @@ class ProjectManagementAgent(AIAgent):
         
         
         project_management_tools = [
-            retrieve_project_data_tool, 
-            save_project_data_tool,
         ]
         delegate_tools = [transfer_back_to_triage_tool]
         
@@ -80,7 +78,6 @@ class ProjectManagementAgent(AIAgent):
             user_session=user_session,
             description="A certified PMP agent responsible for PMI best practices and comprehensive project management planning.",
             system_message=system_message,
-            model_client=user_session.model_client,
             tools=project_management_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,

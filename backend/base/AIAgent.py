@@ -24,7 +24,6 @@ class AIAgent(RoutedAgent):
         user_session,
         description: str,
         system_message: SystemMessage,
-        model_client: ChatCompletionClient,
         tools: List[Tool],
         delegate_tools: List[Tool],
         agent_topic_type: str,
@@ -33,7 +32,7 @@ class AIAgent(RoutedAgent):
         super().__init__(description)
         self.user_session = user_session
         self._system_message = system_message
-        self._model_client = model_client
+        self._model_client = user_session.model_client
         self._tools = dict([(tool.name, tool) for tool in tools])
         self._tool_schema = [tool.schema for tool in tools]
         self._delegate_tools = dict([(tool.name, tool) for tool in delegate_tools])

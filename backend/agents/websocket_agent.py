@@ -1,16 +1,17 @@
 
-import asyncio
 from autogen_core import MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import UserMessage
 from base.messaging import UserLogin, UserTask, AgentResponse
-from .tools import USER_TOPIC_TYPE, TRIAGE_AGENT_TOPIC_TYPE
+from tools.tools import USER_TOPIC_TYPE, TRIAGE_AGENT_TOPIC_TYPE
 from config.logging_config import get_logger
+from session import UserSession
 
 class WebSocketAgent(RoutedAgent):
-    def __init__(self, input_queue: asyncio.Queue, response_queue: asyncio.Queue, user_topic_type: str, agent_topic_type: str):
+    
+    def __init__(self, user_session: UserSession, user_topic_type: str, agent_topic_type: str):
         super().__init__("A websocket agent for managing user sessions.")
-        self._input_queue = input_queue
-        self._response_queue = response_queue
+        self._input_queue = user_session.input_queue
+        self._response_queue = user_session.response_queue
         self._user_topic_type = user_topic_type
         self._agent_topic_type = agent_topic_type
 

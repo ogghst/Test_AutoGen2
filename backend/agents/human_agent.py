@@ -9,7 +9,7 @@ from autogen_core import MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import AssistantMessage
 
 from base.messaging import UserTask, AgentResponse
-from .tools import HUMAN_AGENT_TOPIC_TYPE, USER_TOPIC_TYPE
+from tools.tools import HUMAN_AGENT_TOPIC_TYPE, USER_TOPIC_TYPE
 
 
 class HumanAgent(RoutedAgent):

@@ -8,7 +8,7 @@ from config.logging_config import setup_logging, get_logger
 from base.utils import configure_oltp_tracing
 from base.model_client import create_model_client
 from agents.factory import AgentFactory
-from agents.tools import USER_TOPIC_TYPE, TRIAGE_AGENT_TOPIC_TYPE
+from tools.tools import USER_TOPIC_TYPE, TRIAGE_AGENT_TOPIC_TYPE
 from base.messaging import UserLogin, UserTask, AgentResponse
 from config.settings import get_config_manager
 from models.data_models import Project
@@ -17,7 +17,7 @@ from autogen_core.models import UserMessage, ChatCompletionClient
 from fastapi.middleware.cors import CORSMiddleware
 
 from contextlib import asynccontextmanager
-from backend.session import UserSessionManager
+from session import UserSessionManager
 
 
 @asynccontextmanager

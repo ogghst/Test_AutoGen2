@@ -17,7 +17,7 @@ import pytest
 
 # Import the real KnowledgeService and data models
 from knowledge.knowledge_service import KnowledgeService
-from agents.tools import UUIDEncoder
+from backend.tools.tools import UUIDEncoder
 from models.data_models import (
     Project, Epic, UserStory, Issue, Risk, Milestone, Deliverable,
     Team, Person, Stakeholder, Requirement, Backlog, Sprint,

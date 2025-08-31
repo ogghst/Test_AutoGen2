@@ -1,8 +1,10 @@
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
+
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
     #transfer_to_planning_tool,
@@ -23,7 +25,7 @@ class TriageAgent(AIAgent):
     specialized agent should handle the request based on the content and context.
     """
     
-    def __init__(self, user_session, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the TriageAgent.
         
@@ -61,7 +63,6 @@ class TriageAgent(AIAgent):
             user_session=user_session,
             description="A triage agent responsible for understanding user requests and routing to appropriate agents.",
             system_message=system_message,
-            model_client=user_session.model_client,
             tools=tools or [],
             delegate_tools=delegate_tools,
             agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,

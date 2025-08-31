@@ -1,8 +1,10 @@
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
+
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     QUALITY_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
     review_project_quality_tool,
@@ -20,7 +22,7 @@ class QualityAgent(AIAgent):
     - Quality assurance processes
     """
     
-    def __init__(self, user_session, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the QualityAgent.
         
@@ -44,7 +46,6 @@ class QualityAgent(AIAgent):
             user_session=user_session,
             description="A project quality agent responsible for quality assurance and project reviews.",
             system_message=system_message,
-            model_client=user_session.model_client,
             tools=quality_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=QUALITY_AGENT_TOPIC_TYPE,
