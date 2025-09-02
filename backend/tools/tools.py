@@ -445,7 +445,7 @@ transfer_to_quality_tool = FunctionTool(
 
 transfer_to_project_management_tool = FunctionTool(
     transfer_to_project_management_agent,
-    description="Only call this if explicitly asked to create a PMI-compliant project management plan or follow PMI best practices.",
+    description="Only call this if explicitly asked to create or modify a project.",
 )
 
 transfer_back_to_triage_tool = FunctionTool(

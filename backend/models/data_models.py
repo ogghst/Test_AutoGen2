@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations 
 
 import re
 import sys
@@ -62,7 +62,6 @@ class LinkMLMeta(RootModel):
 
 
 linkml_meta = LinkMLMeta({'default_prefix': 'pm',
-     'default_range': 'string',
      'description': 'Comprehensive data model integrating PMI standards with Agile '
                     'practices, supporting hybrid methodologies and full lifecycle '
                     'documentation generation',
@@ -78,7 +77,7 @@ linkml_meta = LinkMLMeta({'default_prefix': 'pm',
                            'prefix_reference': 'http://www.w3.org/ns/prov#'},
                   'schema': {'prefix_prefix': 'schema',
                              'prefix_reference': 'http://schema.org/'}},
-     'source_file': 'data_model/data_model.yaml',
+     'source_file': 'data_model.yaml',
      'title': 'Enhanced Agile Project Management Data Model',
      'types': {'email': {'base': 'str',
                          'description': 'A valid email address',
@@ -387,13 +386,51 @@ class Project(ConfiguredBaseModel):
     Root entity representing the entire software project
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'methodology': {'name': 'methodology',
+         'slot_usage': {'ai_work_products': {'multivalued': True,
+                                             'name': 'ai_work_products',
+                                             'range': 'AIWorkProduct'},
+                        'baselines': {'multivalued': True,
+                                      'name': 'baselines',
+                                      'range': 'Baseline'},
+                        'business_case': {'name': 'business_case',
+                                          'range': 'BusinessCase'},
+                        'change_requests': {'multivalued': True,
+                                            'name': 'change_requests',
+                                            'range': 'ChangeRequest'},
+                        'created_date': {'name': 'created_date', 'range': 'date'},
+                        'description': {'name': 'description', 'range': 'string'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'knowledge_transfer': {'name': 'knowledge_transfer',
+                                               'range': 'KnowledgeTransfer'},
+                        'last_updated': {'name': 'last_updated', 'range': 'date'},
+                        'methodology': {'name': 'methodology',
                                         'range': 'MethodologyEnum',
                                         'required': True},
+                        'milestones': {'multivalued': True,
+                                       'name': 'milestones',
+                                       'range': 'Milestone'},
+                        'name': {'name': 'name', 'range': 'string', 'required': True},
+                        'phases': {'multivalued': True,
+                                   'name': 'phases',
+                                   'range': 'Phase'},
+                        'release_plan': {'name': 'release_plan',
+                                         'range': 'ReleasePlan'},
+                        'repositories': {'multivalued': True,
+                                         'name': 'repositories',
+                                         'range': 'Repository'},
+                        'risks': {'multivalued': True,
+                                  'name': 'risks',
+                                  'range': 'Risk'},
+                        'scope': {'name': 'scope', 'range': 'Scope'},
                         'sdlc_phase': {'name': 'sdlc_phase',
                                        'range': 'SDLCPhaseEnum',
                                        'required': True},
-                        'status': {'name': 'status', 'range': 'ProjectStatusEnum'}}})
+                        'stakeholders': {'multivalued': True,
+                                         'name': 'stakeholders',
+                                         'range': 'Stakeholder'},
+                        'status': {'name': 'status', 'range': 'ProjectStatusEnum'},
+                        'team': {'name': 'team', 'range': 'Team'},
+                        'vision': {'name': 'vision', 'range': 'string'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -419,7 +456,10 @@ class Project(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -434,9 +474,10 @@ class Project(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     vision: Optional[str] = Field(default=None, description="""Project vision statement""", json_schema_extra = { "linkml_meta": {'alias': 'vision', 'domain_of': ['Project']} })
-    methodology: MethodologyEnum = Field(default=..., description="""Project methodology""", json_schema_extra = { "linkml_meta": {'alias': 'methodology', 'domain_of': ['Project']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -454,16 +495,11 @@ class Project(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
-    business_case: Optional[str] = Field(default=None, description="""Project business case""", json_schema_extra = { "linkml_meta": {'alias': 'business_case', 'domain_of': ['Project']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
+    methodology: MethodologyEnum = Field(default=..., description="""Project methodology""", json_schema_extra = { "linkml_meta": {'alias': 'methodology', 'domain_of': ['Project']} })
     sdlc_phase: SDLCPhaseEnum = Field(default=..., description="""Current SDLC phase""", json_schema_extra = { "linkml_meta": {'alias': 'sdlc_phase', 'domain_of': ['Project']} })
-    release_plan: Optional[str] = Field(default=None, description="""High-level release plan""", json_schema_extra = { "linkml_meta": {'alias': 'release_plan', 'domain_of': ['Project']} })
-    team: Optional[str] = Field(default=None, description="""Assigned project team""", json_schema_extra = { "linkml_meta": {'alias': 'team', 'domain_of': ['Project', 'WorkStream']} })
-    scope: Optional[Scope] = Field(default=None, description="""Project scope definition""", json_schema_extra = { "linkml_meta": {'alias': 'scope', 'domain_of': ['Project']} })
-    stakeholders: Optional[list[str]] = Field(default=None, description="""Project stakeholders""", json_schema_extra = { "linkml_meta": {'alias': 'stakeholders', 'domain_of': ['Project']} })
-    risks: Optional[list[str]] = Field(default=None, description="""Project risks""", json_schema_extra = { "linkml_meta": {'alias': 'risks', 'domain_of': ['Project']} })
-    milestones: Optional[list[str]] = Field(default=None, description="""Project milestones""", json_schema_extra = { "linkml_meta": {'alias': 'milestones', 'domain_of': ['Project']} })
-    phases: Optional[list[str]] = Field(default=None, description="""Project phases""", json_schema_extra = { "linkml_meta": {'alias': 'phases', 'domain_of': ['Project']} })
     status: Optional[ProjectStatusEnum] = Field(default=None, description="""Current status""", json_schema_extra = { "linkml_meta": {'alias': 'status',
          'domain_of': ['Project',
                        'Requirement',
@@ -476,11 +512,25 @@ class Project(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
-    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
-         'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
-    last_updated: Optional[datetime ] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
-         'domain_of': ['Project', 'Requirement', 'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
+    created_date: Optional[date] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'Issue',
+                       'Documentation',
+                       'ReleasePlan']} })
+    last_updated: Optional[date] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+         'domain_of': ['Project', 'Requirement', 'Documentation', 'ReleasePlan']} })
+    business_case: Optional[str] = Field(default=None, description="""Project business case""", json_schema_extra = { "linkml_meta": {'alias': 'business_case', 'domain_of': ['Project']} })
+    release_plan: Optional[str] = Field(default=None, description="""High-level release plan""", json_schema_extra = { "linkml_meta": {'alias': 'release_plan', 'domain_of': ['Project']} })
+    team: Optional[str] = Field(default=None, description="""Assigned project team""", json_schema_extra = { "linkml_meta": {'alias': 'team', 'domain_of': ['Project', 'WorkStream']} })
+    scope: Optional[Scope] = Field(default=None, description="""Project scope definition""", json_schema_extra = { "linkml_meta": {'alias': 'scope', 'domain_of': ['Project']} })
+    stakeholders: Optional[list[str]] = Field(default=None, description="""Project stakeholders""", json_schema_extra = { "linkml_meta": {'alias': 'stakeholders', 'domain_of': ['Project']} })
+    risks: Optional[list[str]] = Field(default=None, description="""Project risks""", json_schema_extra = { "linkml_meta": {'alias': 'risks', 'domain_of': ['Project']} })
+    milestones: Optional[list[str]] = Field(default=None, description="""Project milestones""", json_schema_extra = { "linkml_meta": {'alias': 'milestones', 'domain_of': ['Project']} })
+    phases: Optional[list[str]] = Field(default=None, description="""Project phases""", json_schema_extra = { "linkml_meta": {'alias': 'phases', 'domain_of': ['Project']} })
     knowledge_transfer: Optional[str] = Field(default=None, description="""Knowledge transfer activities""", json_schema_extra = { "linkml_meta": {'alias': 'knowledge_transfer', 'domain_of': ['Project']} })
     change_requests: Optional[list[str]] = Field(default=None, description="""Change requests""", json_schema_extra = { "linkml_meta": {'alias': 'change_requests', 'domain_of': ['Project']} })
     baselines: Optional[list[str]] = Field(default=None, description="""Project baselines""", json_schema_extra = { "linkml_meta": {'alias': 'baselines', 'domain_of': ['Project']} })
@@ -531,7 +581,10 @@ class BusinessCase(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     project_id: Optional[str] = Field(default=None, description="""Reference to the project this belongs to""", json_schema_extra = { "linkml_meta": {'alias': 'project_id', 'domain_of': ['BusinessCase']} })
     problem_statement: Optional[str] = Field(default=None, description="""Problem statement""", json_schema_extra = { "linkml_meta": {'alias': 'problem_statement', 'domain_of': ['BusinessCase']} })
     business_objectives: Optional[list[str]] = Field(default=None, description="""Business objectives""", json_schema_extra = { "linkml_meta": {'alias': 'business_objectives', 'domain_of': ['BusinessCase']} })
@@ -548,7 +601,13 @@ class Scope(ConfiguredBaseModel):
     """
     Project scope definition with inclusions, exclusions, and constraints
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'epics': {'multivalued': True,
+                                  'name': 'epics',
+                                  'range': 'Epic'},
+                        'requirements': {'multivalued': True,
+                                         'name': 'requirements',
+                                         'range': 'Requirement'}}})
 
     epics: Optional[list[str]] = Field(default=None, description="""Collection of epics""", json_schema_extra = { "linkml_meta": {'alias': 'epics', 'domain_of': ['Scope']} })
     inclusions: Optional[list[str]] = Field(default=None, description="""Included items in scope""", json_schema_extra = { "linkml_meta": {'alias': 'inclusions', 'domain_of': ['Scope']} })
@@ -564,7 +623,17 @@ class Requirement(ConfiguredBaseModel):
     """
     Single discrete requirement with unique identifier and traceability
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'acceptance_criteria': {'multivalued': True,
+                                                'name': 'acceptance_criteria',
+                                                'range': 'string'},
+                        'category': {'name': 'category', 'range': 'string'},
+                        'created_date': {'name': 'created_date', 'range': 'date'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'last_updated': {'name': 'last_updated', 'range': 'date'},
+                        'priority': {'name': 'priority', 'range': 'PriorityEnum'},
+                        'source': {'name': 'source', 'range': 'string'},
+                        'status': {'name': 'status', 'range': 'string'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -590,7 +659,10 @@ class Requirement(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -608,8 +680,10 @@ class Requirement(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
-    category: Optional[RiskCategoryEnum] = Field(default=None, description="""Risk category""", json_schema_extra = { "linkml_meta": {'alias': 'category', 'domain_of': ['Requirement', 'Risk']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
+    category: Optional[str] = Field(default=None, description="""Risk category""", json_schema_extra = { "linkml_meta": {'alias': 'category', 'domain_of': ['Requirement', 'Risk']} })
     priority: Optional[PriorityEnum] = Field(default=None, description="""Priority level""", json_schema_extra = { "linkml_meta": {'alias': 'priority',
          'domain_of': ['Requirement',
                        'Epic',
@@ -629,14 +703,20 @@ class Requirement(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     source: Optional[str] = Field(default=None, description="""Source of the requirement""", json_schema_extra = { "linkml_meta": {'alias': 'source', 'domain_of': ['Requirement']} })
     acceptance_criteria: Optional[list[str]] = Field(default=None, description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
          'domain_of': ['Scope', 'Requirement', 'UserStory', 'Milestone']} })
-    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
-         'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
-    last_updated: Optional[datetime ] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
-         'domain_of': ['Project', 'Requirement', 'Documentation']} })
+    created_date: Optional[date] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'Issue',
+                       'Documentation',
+                       'ReleasePlan']} })
+    last_updated: Optional[date] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+         'domain_of': ['Project', 'Requirement', 'Documentation', 'ReleasePlan']} })
 
 
 class Epic(ConfiguredBaseModel):
@@ -644,7 +724,12 @@ class Epic(ConfiguredBaseModel):
     Large work body capturing major capability with traceability to business objectives
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'status': {'name': 'status', 'range': 'EpicStatusEnum'}}})
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'name': {'name': 'name', 'range': 'string', 'required': True},
+                        'status': {'name': 'status', 'range': 'EpicStatusEnum'},
+                        'user_stories': {'multivalued': True,
+                                         'name': 'user_stories',
+                                         'range': 'UserStory'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -670,7 +755,10 @@ class Epic(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -685,7 +773,9 @@ class Epic(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -703,7 +793,9 @@ class Epic(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     business_value: Optional[int] = Field(default=None, description="""Business value score (1-10)""", ge=1, le=10, json_schema_extra = { "linkml_meta": {'alias': 'business_value', 'domain_of': ['Epic', 'BacklogItem']} })
     user_stories: Optional[list[str]] = Field(default=None, description="""User stories""", json_schema_extra = { "linkml_meta": {'alias': 'user_stories', 'domain_of': ['Epic']} })
     priority: Optional[PriorityEnum] = Field(default=None, description="""Priority level""", json_schema_extra = { "linkml_meta": {'alias': 'priority',
@@ -725,9 +817,15 @@ class Epic(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
-    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
-         'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
+    created_date: Optional[date] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'Issue',
+                       'Documentation',
+                       'ReleasePlan']} })
     target_release: Optional[str] = Field(default=None, description="""Target release version""", json_schema_extra = { "linkml_meta": {'alias': 'target_release', 'domain_of': ['Epic']} })
 
     @field_validator('name')
@@ -751,7 +849,17 @@ class UserStory(ConfiguredBaseModel):
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
          'slot_usage': {'acceptance_criteria': {'name': 'acceptance_criteria',
                                                 'required': True},
-                        'status': {'name': 'status', 'range': 'UserStoryStatusEnum'}}})
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'issues': {'multivalued': True,
+                                   'name': 'issues',
+                                   'range': 'Issue'},
+                        'status': {'name': 'status', 'range': 'UserStoryStatusEnum'},
+                        'tests': {'multivalued': True,
+                                  'name': 'tests',
+                                  'range': 'TestCase'},
+                        'title': {'name': 'title',
+                                  'range': 'string',
+                                  'required': True}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -777,7 +885,10 @@ class UserStory(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     title: str = Field(default=..., description="""Short descriptive title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
@@ -796,7 +907,9 @@ class UserStory(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     acceptance_criteria: list[str] = Field(default=..., description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
          'domain_of': ['Scope', 'Requirement', 'UserStory', 'Milestone']} })
     definition_of_done: Optional[str] = Field(default=None, description="""Definition of done criteria""", json_schema_extra = { "linkml_meta": {'alias': 'definition_of_done', 'domain_of': ['UserStory']} })
@@ -816,7 +929,8 @@ class UserStory(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     priority: Optional[PriorityEnum] = Field(default=None, description="""Priority level""", json_schema_extra = { "linkml_meta": {'alias': 'priority',
          'domain_of': ['Requirement',
                        'Epic',
@@ -845,7 +959,11 @@ class Backlog(ConfiguredBaseModel):
     """
     Ordered list of work items awaiting execution
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'items': {'multivalued': True,
+                                  'name': 'items',
+                                  'range': 'BacklogItem'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -871,7 +989,10 @@ class Backlog(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -886,7 +1007,9 @@ class Backlog(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -904,7 +1027,9 @@ class Backlog(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     items: Optional[list[str]] = Field(default=None, description="""Backlog items""", json_schema_extra = { "linkml_meta": {'alias': 'items', 'domain_of': ['Backlog']} })
     prioritization_method: Optional[str] = Field(default=None, description="""Prioritization method""", json_schema_extra = { "linkml_meta": {'alias': 'prioritization_method', 'domain_of': ['Backlog']} })
     last_prioritized_date: Optional[date] = Field(default=None, description="""Last prioritization date""", json_schema_extra = { "linkml_meta": {'alias': 'last_prioritized_date', 'domain_of': ['Backlog']} })
@@ -927,7 +1052,16 @@ class BacklogItem(ConfiguredBaseModel):
     """
     Single item in a backlog with estimation and prioritization data
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'dependencies': {'multivalued': True,
+                                         'name': 'dependencies',
+                                         'range': 'string'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'priority': {'name': 'priority', 'range': 'PriorityEnum'},
+                        'risk_level': {'name': 'risk_level', 'range': 'SeverityEnum'},
+                        'tags': {'multivalued': True,
+                                 'name': 'tags',
+                                 'range': 'string'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -953,7 +1087,10 @@ class BacklogItem(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -971,7 +1108,9 @@ class BacklogItem(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     estimate: Optional[int] = Field(default=None, description="""Effort estimate""", json_schema_extra = { "linkml_meta": {'alias': 'estimate', 'domain_of': ['BacklogItem']} })
     priority: Optional[PriorityEnum] = Field(default=None, description="""Priority level""", json_schema_extra = { "linkml_meta": {'alias': 'priority',
          'domain_of': ['Requirement',
@@ -990,7 +1129,11 @@ class Sprint(ConfiguredBaseModel):
     """
     Time-boxed iteration typically 1-4 weeks in duration
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'backlog_items': {'multivalued': True,
+                                          'name': 'backlog_items',
+                                          'range': 'BacklogItem'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1016,7 +1159,10 @@ class Sprint(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1031,7 +1177,9 @@ class Sprint(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     goal: Optional[str] = Field(default=None, description="""Goal description""", json_schema_extra = { "linkml_meta": {'alias': 'goal', 'domain_of': ['Sprint']} })
     start_date: Optional[date] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     end_date: Optional[date] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
@@ -1089,7 +1237,10 @@ class Issue(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     title: str = Field(default=..., description="""Short descriptive title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
@@ -1108,7 +1259,9 @@ class Issue(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     type: Optional[IssueTypeEnum] = Field(default=None, description="""Type classification""", json_schema_extra = { "linkml_meta": {'alias': 'type',
          'domain_of': ['Issue',
                        'ChangeRequest',
@@ -1127,14 +1280,20 @@ class Issue(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     severity: Optional[SeverityEnum] = Field(default=None, description="""Severity level""", json_schema_extra = { "linkml_meta": {'alias': 'severity', 'domain_of': ['Issue']} })
     assignee: Optional[str] = Field(default=None, description="""Assigned person""", json_schema_extra = { "linkml_meta": {'alias': 'assignee', 'domain_of': ['Issue']} })
     estimate_hours: Optional[float] = Field(default=None, description="""Time estimate in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'estimate_hours', 'domain_of': ['Issue']} })
     actual_hours: Optional[float] = Field(default=None, description="""Actual time spent in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'actual_hours', 'domain_of': ['Issue']} })
     due_date: Optional[date] = Field(default=None, description="""Target completion date""", json_schema_extra = { "linkml_meta": {'alias': 'due_date', 'domain_of': ['Issue']} })
-    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
-         'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
+    created_date: Optional[date] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'Issue',
+                       'Documentation',
+                       'ReleasePlan']} })
     root_cause: Optional[str] = Field(default=None, description="""Root cause analysis""", json_schema_extra = { "linkml_meta": {'alias': 'root_cause', 'domain_of': ['Issue']} })
     resolution: Optional[str] = Field(default=None, description="""Resolution description""", json_schema_extra = { "linkml_meta": {'alias': 'resolution', 'domain_of': ['Issue']} })
     reproduction_steps: Optional[str] = Field(default=None, description="""Reproduction steps""", json_schema_extra = { "linkml_meta": {'alias': 'reproduction_steps', 'domain_of': ['Issue']} })
@@ -1159,7 +1318,14 @@ class Team(ConfiguredBaseModel):
     """
     Cross-functional team responsible for project delivery
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'collaboration_tools': {'multivalued': True,
+                                                'name': 'collaboration_tools',
+                                                'range': 'string'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'members': {'multivalued': True,
+                                    'name': 'members',
+                                    'range': 'TeamMember'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1185,7 +1351,10 @@ class Team(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1200,7 +1369,9 @@ class Team(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     members: Optional[list[str]] = Field(default=None, description="""Team members""", json_schema_extra = { "linkml_meta": {'alias': 'members', 'domain_of': ['Team']} })
     velocity: Optional[float] = Field(default=None, description="""Team velocity""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'velocity', 'domain_of': ['Sprint', 'Team']} })
     capacity: Optional[float] = Field(default=None, description="""Weekly capacity in hours""", ge=0, json_schema_extra = { "linkml_meta": {'alias': 'capacity', 'domain_of': ['Team', 'TeamMember']} })
@@ -1254,7 +1425,10 @@ class Risk(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     description: str = Field(default=..., description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1272,7 +1446,9 @@ class Risk(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     category: Optional[RiskCategoryEnum] = Field(default=None, description="""Risk category""", json_schema_extra = { "linkml_meta": {'alias': 'category', 'domain_of': ['Requirement', 'Risk']} })
     probability: Optional[InfluenceLevelEnum] = Field(default=None, description="""Probability of occurrence""", json_schema_extra = { "linkml_meta": {'alias': 'probability', 'domain_of': ['Risk']} })
     impact: Optional[InfluenceLevelEnum] = Field(default=None, description="""Impact level""", json_schema_extra = { "linkml_meta": {'alias': 'impact', 'domain_of': ['Risk']} })
@@ -1290,7 +1466,8 @@ class Risk(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     triggers: Optional[list[str]] = Field(default=None, description="""Risk triggers""", json_schema_extra = { "linkml_meta": {'alias': 'triggers', 'domain_of': ['Risk']} })
     owner: Optional[str] = Field(default=None, description="""Owner""", json_schema_extra = { "linkml_meta": {'alias': 'owner', 'domain_of': ['Risk', 'Documentation', 'CommunicationPlan']} })
 
@@ -1300,7 +1477,14 @@ class Milestone(ConfiguredBaseModel):
     Significant point in project timeline with deliverable tracking
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'status': {'name': 'status', 'range': 'MilestoneStatusEnum'}}})
+         'slot_usage': {'acceptance_criteria': {'multivalued': True,
+                                                'name': 'acceptance_criteria',
+                                                'range': 'string'},
+                        'deliverables': {'multivalued': True,
+                                         'name': 'deliverables',
+                                         'range': 'Deliverable'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'status': {'name': 'status', 'range': 'MilestoneStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1326,7 +1510,10 @@ class Milestone(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1341,7 +1528,9 @@ class Milestone(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1359,7 +1548,9 @@ class Milestone(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     target_date: Optional[date] = Field(default=None, description="""Planned completion date""", json_schema_extra = { "linkml_meta": {'alias': 'target_date', 'domain_of': ['Milestone']} })
     actual_date: Optional[date] = Field(default=None, description="""Actual completion date""", json_schema_extra = { "linkml_meta": {'alias': 'actual_date', 'domain_of': ['Milestone']} })
     deliverables: Optional[list[str]] = Field(default=None, description="""Associated deliverables""", json_schema_extra = { "linkml_meta": {'alias': 'deliverables', 'domain_of': ['Milestone', 'Phase', 'WorkStream']} })
@@ -1375,7 +1566,8 @@ class Milestone(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     acceptance_criteria: Optional[list[str]] = Field(default=None, description="""Acceptance criteria""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_criteria',
          'domain_of': ['Scope', 'Requirement', 'UserStory', 'Milestone']} })
 
@@ -1398,7 +1590,8 @@ class Deliverable(ConfiguredBaseModel):
     Tangible or intangible product produced as part of project completion
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'status': {'name': 'status', 'range': 'DeliverableStatusEnum'}}})
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'status': {'name': 'status', 'range': 'DeliverableStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1424,7 +1617,10 @@ class Deliverable(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1439,7 +1635,9 @@ class Deliverable(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1457,7 +1655,9 @@ class Deliverable(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     status: Optional[DeliverableStatusEnum] = Field(default=None, description="""Current status""", json_schema_extra = { "linkml_meta": {'alias': 'status',
          'domain_of': ['Project',
                        'Requirement',
@@ -1470,7 +1670,8 @@ class Deliverable(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     acceptance_date: Optional[date] = Field(default=None, description="""Acceptance date""", json_schema_extra = { "linkml_meta": {'alias': 'acceptance_date', 'domain_of': ['Deliverable']} })
     quality_metrics: Optional[str] = Field(default=None, description="""Quality metrics""", json_schema_extra = { "linkml_meta": {'alias': 'quality_metrics', 'domain_of': ['Deliverable']} })
     storage_location: Optional[str] = Field(default=None, description="""Storage location""", json_schema_extra = { "linkml_meta": {'alias': 'storage_location', 'domain_of': ['Deliverable']} })
@@ -1522,7 +1723,10 @@ class ChangeRequest(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1540,7 +1744,9 @@ class ChangeRequest(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     rationale: Optional[str] = Field(default=None, description="""Rationale""", json_schema_extra = { "linkml_meta": {'alias': 'rationale', 'domain_of': ['ChangeRequest']} })
     impact_analysis: Optional[str] = Field(default=None, description="""Impact analysis""", json_schema_extra = { "linkml_meta": {'alias': 'impact_analysis', 'domain_of': ['ChangeRequest']} })
     priority: Optional[PriorityEnum] = Field(default=None, description="""Priority level""", json_schema_extra = { "linkml_meta": {'alias': 'priority',
@@ -1568,7 +1774,8 @@ class ChangeRequest(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     submitted_by: Optional[str] = Field(default=None, description="""Submitted by""", json_schema_extra = { "linkml_meta": {'alias': 'submitted_by', 'domain_of': ['ChangeRequest']} })
     submitted_date: Optional[date] = Field(default=None, description="""Submission date""", json_schema_extra = { "linkml_meta": {'alias': 'submitted_date', 'domain_of': ['ChangeRequest']} })
     decision: Optional[str] = Field(default=None, description="""Decision""", json_schema_extra = { "linkml_meta": {'alias': 'decision', 'domain_of': ['ChangeRequest']} })
@@ -1580,7 +1787,11 @@ class Baseline(ConfiguredBaseModel):
     """
     Approved version of scope, schedule, or cost used for comparison
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'elements': {'multivalued': True,
+                                     'name': 'elements',
+                                     'range': 'string'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1606,7 +1817,10 @@ class Baseline(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1621,7 +1835,9 @@ class Baseline(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1639,7 +1855,9 @@ class Baseline(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     version: Optional[str] = Field(default=None, description="""Version""", json_schema_extra = { "linkml_meta": {'alias': 'version', 'domain_of': ['Deliverable', 'Baseline', 'Documentation']} })
     approved_date: Optional[date] = Field(default=None, description="""Approval date""", json_schema_extra = { "linkml_meta": {'alias': 'approved_date', 'domain_of': ['BusinessCase', 'Baseline']} })
     approved_by: Optional[str] = Field(default=None, description="""Person who approved the baseline""", json_schema_extra = { "linkml_meta": {'alias': 'approved_by', 'domain_of': ['Baseline']} })
@@ -1664,7 +1882,12 @@ class TestCase(ConfiguredBaseModel):
     Verifiable condition for requirement validation
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'type': {'name': 'type', 'range': 'TestTypeEnum'}}})
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'priority': {'name': 'priority', 'range': 'PriorityEnum'},
+                        'test_steps': {'multivalued': True,
+                                       'name': 'test_steps',
+                                       'range': 'string'},
+                        'type': {'name': 'type', 'range': 'TestTypeEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1690,7 +1913,10 @@ class TestCase(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1705,7 +1931,9 @@ class TestCase(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1723,7 +1951,9 @@ class TestCase(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     test_steps: Optional[list[str]] = Field(default=None, description="""Test steps""", json_schema_extra = { "linkml_meta": {'alias': 'test_steps', 'domain_of': ['TestCase']} })
     expected_result: Optional[str] = Field(default=None, description="""Expected result""", json_schema_extra = { "linkml_meta": {'alias': 'expected_result', 'domain_of': ['TestCase']} })
     actual_result: Optional[str] = Field(default=None, description="""Actual result""", json_schema_extra = { "linkml_meta": {'alias': 'actual_result', 'domain_of': ['TestCase']} })
@@ -1739,7 +1969,8 @@ class TestCase(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     type: Optional[TestTypeEnum] = Field(default=None, description="""Type classification""", json_schema_extra = { "linkml_meta": {'alias': 'type',
          'domain_of': ['Issue',
                        'ChangeRequest',
@@ -1775,7 +2006,11 @@ class Phase(ConfiguredBaseModel):
     """
     Distinct time period in predictive project lifecycles
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'deliverables': {'multivalued': True,
+                                         'name': 'deliverables',
+                                         'range': 'Deliverable'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1801,7 +2036,10 @@ class Phase(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1816,7 +2054,9 @@ class Phase(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1834,7 +2074,9 @@ class Phase(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     start_date: Optional[date] = Field(default=None, description="""Start date""", json_schema_extra = { "linkml_meta": {'alias': 'start_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     end_date: Optional[date] = Field(default=None, description="""End date""", json_schema_extra = { "linkml_meta": {'alias': 'end_date', 'domain_of': ['Sprint', 'TeamMember', 'Phase']} })
     deliverables: Optional[list[str]] = Field(default=None, description="""Associated deliverables""", json_schema_extra = { "linkml_meta": {'alias': 'deliverables', 'domain_of': ['Milestone', 'Phase', 'WorkStream']} })
@@ -1852,7 +2094,8 @@ class Phase(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
 
     @field_validator('name')
     def pattern_name(cls, v):
@@ -1872,7 +2115,16 @@ class WorkStream(ConfiguredBaseModel):
     """
     Parallel work track focusing on specific project aspect
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'deliverables': {'multivalued': True,
+                                         'name': 'deliverables',
+                                         'range': 'Deliverable'},
+                        'dependencies': {'multivalued': True,
+                                         'name': 'dependencies',
+                                         'range': 'string'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'lead': {'name': 'lead', 'range': 'Person'},
+                        'team': {'name': 'team', 'range': 'Team'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -1898,7 +2150,10 @@ class WorkStream(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -1913,7 +2168,9 @@ class WorkStream(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -1931,7 +2188,9 @@ class WorkStream(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     lead: Optional[str] = Field(default=None, description="""Work stream lead""", json_schema_extra = { "linkml_meta": {'alias': 'lead', 'domain_of': ['WorkStream']} })
     team: Optional[str] = Field(default=None, description="""Assigned project team""", json_schema_extra = { "linkml_meta": {'alias': 'team', 'domain_of': ['Project', 'WorkStream']} })
     deliverables: Optional[list[str]] = Field(default=None, description="""Associated deliverables""", json_schema_extra = { "linkml_meta": {'alias': 'deliverables', 'domain_of': ['Milestone', 'Phase', 'WorkStream']} })
@@ -1956,7 +2215,9 @@ class Documentation(ConfiguredBaseModel):
     Project artifact serving various stakeholder needs
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'status': {'name': 'status',
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'owner': {'name': 'owner', 'range': 'Person'},
+                        'status': {'name': 'status',
                                    'range': 'AgileArtifactStatusEnum'},
                         'type': {'name': 'type', 'range': 'DocumentationTypeEnum'}}})
 
@@ -1984,7 +2245,10 @@ class Documentation(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     title: str = Field(default=..., description="""Short descriptive title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['UserStory', 'Issue', 'Documentation']} })
     content: Optional[str] = Field(default=None, description="""Content""", json_schema_extra = { "linkml_meta": {'alias': 'content', 'domain_of': ['Documentation']} })
     type: Optional[DocumentationTypeEnum] = Field(default=None, description="""Type classification""", json_schema_extra = { "linkml_meta": {'alias': 'type',
@@ -2005,12 +2269,18 @@ class Documentation(ConfiguredBaseModel):
                        'ChangeRequest',
                        'TestCase',
                        'Phase',
-                       'Documentation']} })
+                       'Documentation',
+                       'KnowledgeTransfer']} })
     owner: Optional[str] = Field(default=None, description="""Owner""", json_schema_extra = { "linkml_meta": {'alias': 'owner', 'domain_of': ['Risk', 'Documentation', 'CommunicationPlan']} })
-    created_date: Optional[datetime ] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
-         'domain_of': ['Project', 'Requirement', 'Epic', 'Issue', 'Documentation']} })
-    last_updated: Optional[datetime ] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
-         'domain_of': ['Project', 'Requirement', 'Documentation']} })
+    created_date: Optional[date] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'Issue',
+                       'Documentation',
+                       'ReleasePlan']} })
+    last_updated: Optional[date] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+         'domain_of': ['Project', 'Requirement', 'Documentation', 'ReleasePlan']} })
     version: Optional[str] = Field(default=None, description="""Version""", json_schema_extra = { "linkml_meta": {'alias': 'version', 'domain_of': ['Deliverable', 'Baseline', 'Documentation']} })
     audience: Optional[str] = Field(default=None, description="""Target audience""", json_schema_extra = { "linkml_meta": {'alias': 'audience', 'domain_of': ['Documentation', 'CommunicationPlan']} })
 
@@ -2033,7 +2303,8 @@ class Repository(ConfiguredBaseModel):
     Storage location for project artifacts and code
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
-         'slot_usage': {'type': {'name': 'type', 'range': 'RepositoryTypeEnum'}}})
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'type': {'name': 'type', 'range': 'RepositoryTypeEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -2059,7 +2330,10 @@ class Repository(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -2074,7 +2348,9 @@ class Repository(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     type: Optional[RepositoryTypeEnum] = Field(default=None, description="""Type classification""", json_schema_extra = { "linkml_meta": {'alias': 'type',
          'domain_of': ['Issue',
                        'ChangeRequest',
@@ -2103,7 +2379,8 @@ class Metric(ConfiguredBaseModel):
     """
     Quantitative measure of project performance or quality
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -2129,7 +2406,10 @@ class Metric(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -2144,7 +2424,9 @@ class Metric(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -2162,7 +2444,9 @@ class Metric(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     value: Optional[float] = Field(default=None, description="""Metric value""", json_schema_extra = { "linkml_meta": {'alias': 'value', 'domain_of': ['Metric']} })
     target: Optional[float] = Field(default=None, description="""Target value""", json_schema_extra = { "linkml_meta": {'alias': 'target', 'domain_of': ['Metric']} })
     unit: Optional[str] = Field(default=None, description="""Measurement unit""", json_schema_extra = { "linkml_meta": {'alias': 'unit', 'domain_of': ['Metric']} })
@@ -2188,7 +2472,12 @@ class Person(ConfiguredBaseModel):
     Human individual involved in the project environment
     """
     linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'class_uri': 'schema:Person',
-         'from_schema': 'https://example.org/software_project_management'})
+         'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'contact_email': {'name': 'contact_email', 'range': 'email'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'person_name': {'name': 'person_name',
+                                        'range': 'string',
+                                        'required': True}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -2214,7 +2503,10 @@ class Person(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
     contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
@@ -2272,7 +2564,10 @@ class TeamMember(Person):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
     contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
@@ -2295,7 +2590,17 @@ class Stakeholder(Person):
     """
     Project stakeholder with influence and interest assessment
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'concerns': {'multivalued': True,
+                                     'name': 'concerns',
+                                     'range': 'string'},
+                        'expectations': {'multivalued': True,
+                                         'name': 'expectations',
+                                         'range': 'string'},
+                        'influence': {'name': 'influence',
+                                      'range': 'InfluenceLevelEnum'},
+                        'interest': {'name': 'interest', 'range': 'InterestLevelEnum'},
+                        'role': {'name': 'role', 'range': 'RoleEnum'}}})
 
     role: Optional[RoleEnum] = Field(default=None, description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder', 'UserProfiler']} })
     influence: Optional[InfluenceLevelEnum] = Field(default=None, description="""Influence level""", json_schema_extra = { "linkml_meta": {'alias': 'influence', 'domain_of': ['Stakeholder']} })
@@ -2328,7 +2633,10 @@ class Stakeholder(Person):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
     contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
 
@@ -2350,7 +2658,16 @@ class UserProfiler(Person):
     """
     Represents a user's profile, including their skills, experience, and expectations.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'expectations': {'multivalued': True,
+                                         'name': 'expectations',
+                                         'range': 'string'},
+                        'experience': {'name': 'experience',
+                                       'range': 'ExperienceLevelEnum'},
+                        'role': {'name': 'role', 'range': 'RoleEnum'},
+                        'skills': {'multivalued': True,
+                                   'name': 'skills',
+                                   'range': 'string'}}})
 
     role: Optional[RoleEnum] = Field(default=None, description="""Primary role""", json_schema_extra = { "linkml_meta": {'alias': 'role', 'domain_of': ['TeamMember', 'Stakeholder', 'UserProfiler']} })
     experience: Optional[ExperienceLevelEnum] = Field(default=None, description="""User's experience level""", json_schema_extra = { "linkml_meta": {'alias': 'experience', 'domain_of': ['UserProfiler']} })
@@ -2380,7 +2697,10 @@ class UserProfiler(Person):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     person_name: str = Field(default=..., description="""Person's name""", json_schema_extra = { "linkml_meta": {'alias': 'person_name', 'domain_of': ['Person']} })
     contact_email: Optional[str] = Field(default=None, description="""Contact email""", json_schema_extra = { "linkml_meta": {'alias': 'contact_email', 'domain_of': ['Person']} })
     communication_preferences: Optional[str] = Field(default=None, description="""Communication preferences""", json_schema_extra = { "linkml_meta": {'alias': 'communication_preferences', 'domain_of': ['Stakeholder', 'Person']} })
@@ -2403,7 +2723,9 @@ class CommunicationPlan(ConfiguredBaseModel):
     """
     Structured approach to project information distribution
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'owner': {'name': 'owner', 'range': 'Person'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -2429,7 +2751,10 @@ class CommunicationPlan(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     purpose: Optional[str] = Field(default=None, description="""Purpose of the communication plan""", json_schema_extra = { "linkml_meta": {'alias': 'purpose', 'domain_of': ['CommunicationPlan']} })
     audience: Optional[str] = Field(default=None, description="""Target audience""", json_schema_extra = { "linkml_meta": {'alias': 'audience', 'domain_of': ['Documentation', 'CommunicationPlan']} })
     message: Optional[str] = Field(default=None, description="""Message content for communication""", json_schema_extra = { "linkml_meta": {'alias': 'message', 'domain_of': ['CommunicationPlan']} })
@@ -2443,7 +2768,12 @@ class AIWorkProduct(ConfiguredBaseModel):
     """
     AI-generated artifacts and their provenance information
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'associated_requirement': {'name': 'associated_requirement',
+                                                   'range': 'uuid'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'validation_status': {'name': 'validation_status',
+                                              'range': 'ApprovalStatusEnum'}}})
 
     id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
          'domain_of': ['Project',
@@ -2469,7 +2799,10 @@ class AIWorkProduct(ConfiguredBaseModel):
                        'Metric',
                        'Person',
                        'CommunicationPlan',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
     name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
          'domain_of': ['Project',
                        'Epic',
@@ -2484,7 +2817,9 @@ class AIWorkProduct(ConfiguredBaseModel):
                        'WorkStream',
                        'Repository',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
          'domain_of': ['Project',
                        'Requirement',
@@ -2502,7 +2837,9 @@ class AIWorkProduct(ConfiguredBaseModel):
                        'Phase',
                        'WorkStream',
                        'Metric',
-                       'AIWorkProduct']} })
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
     generated_by: Optional[str] = Field(default=None, description="""Generated by""", json_schema_extra = { "linkml_meta": {'alias': 'generated_by', 'domain_of': ['AIWorkProduct']} })
     generation_date: Optional[date] = Field(default=None, description="""Generation date""", json_schema_extra = { "linkml_meta": {'alias': 'generation_date', 'domain_of': ['AIWorkProduct']} })
     input_parameters: Optional[str] = Field(default=None, description="""Input parameters""", json_schema_extra = { "linkml_meta": {'alias': 'input_parameters', 'domain_of': ['AIWorkProduct']} })
@@ -2520,6 +2857,285 @@ class AIWorkProduct(ConfiguredBaseModel):
                     raise ValueError(err_msg)
         elif isinstance(v, str) and not pattern.match(v):
             err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+
+class ReleasePlan(ConfiguredBaseModel):
+    """
+    High-level plan for project releases
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'created_date': {'name': 'created_date', 'range': 'date'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'last_updated': {'name': 'last_updated', 'range': 'date'},
+                        'target_releases': {'multivalued': True,
+                                            'name': 'target_releases',
+                                            'range': 'string'}}})
+
+    id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
+         'domain_of': ['Project',
+                       'BusinessCase',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Backlog',
+                       'BacklogItem',
+                       'Sprint',
+                       'Issue',
+                       'Team',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Documentation',
+                       'Repository',
+                       'Metric',
+                       'Person',
+                       'CommunicationPlan',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
+         'domain_of': ['Project',
+                       'Epic',
+                       'Backlog',
+                       'Sprint',
+                       'Team',
+                       'Milestone',
+                       'Deliverable',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Repository',
+                       'Metric',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Backlog',
+                       'BacklogItem',
+                       'Issue',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Metric',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
+    target_releases: Optional[list[str]] = Field(default=None, description="""Target release versions""", json_schema_extra = { "linkml_meta": {'alias': 'target_releases', 'domain_of': ['ReleasePlan']} })
+    created_date: Optional[date] = Field(default=None, description="""Creation timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'created_date',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'Issue',
+                       'Documentation',
+                       'ReleasePlan']} })
+    last_updated: Optional[date] = Field(default=None, description="""Last update timestamp""", json_schema_extra = { "linkml_meta": {'alias': 'last_updated',
+         'domain_of': ['Project', 'Requirement', 'Documentation', 'ReleasePlan']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+
+class KnowledgeTransfer(ConfiguredBaseModel):
+    """
+    Knowledge transfer activities and documentation
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management',
+         'slot_usage': {'activities': {'multivalued': True,
+                                       'name': 'activities',
+                                       'range': 'string'},
+                        'date': {'name': 'date', 'range': 'date'},
+                        'id': {'name': 'id', 'range': 'uuid', 'required': True},
+                        'participants': {'multivalued': True,
+                                         'name': 'participants',
+                                         'range': 'Person'},
+                        'status': {'name': 'status', 'range': 'string'}}})
+
+    id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
+         'domain_of': ['Project',
+                       'BusinessCase',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Backlog',
+                       'BacklogItem',
+                       'Sprint',
+                       'Issue',
+                       'Team',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Documentation',
+                       'Repository',
+                       'Metric',
+                       'Person',
+                       'CommunicationPlan',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
+    name: str = Field(default=..., description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
+         'domain_of': ['Project',
+                       'Epic',
+                       'Backlog',
+                       'Sprint',
+                       'Team',
+                       'Milestone',
+                       'Deliverable',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Repository',
+                       'Metric',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
+    description: Optional[str] = Field(default=None, description="""Detailed description""", json_schema_extra = { "linkml_meta": {'alias': 'description',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Backlog',
+                       'BacklogItem',
+                       'Issue',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Metric',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer']} })
+    activities: Optional[list[str]] = Field(default=None, description="""Knowledge transfer activities""", json_schema_extra = { "linkml_meta": {'alias': 'activities', 'domain_of': ['KnowledgeTransfer']} })
+    participants: Optional[list[str]] = Field(default=None, description="""Participants in knowledge transfer""", json_schema_extra = { "linkml_meta": {'alias': 'participants', 'domain_of': ['KnowledgeTransfer']} })
+    date: Optional[date] = Field(default=None, description="""Date of the activity""", json_schema_extra = { "linkml_meta": {'alias': 'date', 'domain_of': ['KnowledgeTransfer']} })
+    status: Optional[str] = Field(default=None, description="""Current status""", json_schema_extra = { "linkml_meta": {'alias': 'status',
+         'domain_of': ['Project',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Issue',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'TestCase',
+                       'Phase',
+                       'Documentation',
+                       'KnowledgeTransfer']} })
+
+    @field_validator('name')
+    def pattern_name(cls, v):
+        pattern=re.compile(r"^.+$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid name format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid name format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+
+class Edge(ConfiguredBaseModel):
+    """
+    Represents a relationship (edge) between two entities in the graph.
+    """
+    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'https://example.org/software_project_management'})
+
+    id: str = Field(default=..., description="""Unique identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
+         'domain_of': ['Project',
+                       'BusinessCase',
+                       'Requirement',
+                       'Epic',
+                       'UserStory',
+                       'Backlog',
+                       'BacklogItem',
+                       'Sprint',
+                       'Issue',
+                       'Team',
+                       'Risk',
+                       'Milestone',
+                       'Deliverable',
+                       'ChangeRequest',
+                       'Baseline',
+                       'TestCase',
+                       'Phase',
+                       'WorkStream',
+                       'Documentation',
+                       'Repository',
+                       'Metric',
+                       'Person',
+                       'CommunicationPlan',
+                       'AIWorkProduct',
+                       'ReleasePlan',
+                       'KnowledgeTransfer',
+                       'Edge']} })
+    edge_source: Optional[str] = Field(default=None, description="""The source entity id (UUIDv4) of the relationship""", json_schema_extra = { "linkml_meta": {'alias': 'edge_source', 'domain_of': ['Edge']} })
+    edge_target: Optional[str] = Field(default=None, description="""The target entity id (UUIDv4) of the relationship""", json_schema_extra = { "linkml_meta": {'alias': 'edge_target', 'domain_of': ['Edge']} })
+    edge_label: Optional[str] = Field(default=None, description="""The type or label of the relationship""", json_schema_extra = { "linkml_meta": {'alias': 'edge_label', 'domain_of': ['Edge']} })
+
+    @field_validator('edge_source')
+    def pattern_edge_source(cls, v):
+        pattern=re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid edge_source format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid edge_source format: {v}"
+            raise ValueError(err_msg)
+        return v
+
+    @field_validator('edge_target')
+    def pattern_edge_target(cls, v):
+        pattern=re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid edge_target format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid edge_target format: {v}"
             raise ValueError(err_msg)
         return v
 
@@ -2554,4 +3170,7 @@ Stakeholder.model_rebuild()
 UserProfiler.model_rebuild()
 CommunicationPlan.model_rebuild()
 AIWorkProduct.model_rebuild()
+ReleasePlan.model_rebuild()
+KnowledgeTransfer.model_rebuild()
+Edge.model_rebuild()
 

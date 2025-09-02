@@ -77,7 +77,15 @@ class AIAgent(RoutedAgent):
         # Process the LLM result
         logger.info(f"{self.id.type}: Processing LLM result: {type(llm_result.content)}")
 
+        # Add iteration limit to prevent infinite loops
+        max_iterations = 100
+        iteration_count = 0
+        
         while isinstance(llm_result.content, list) and all(isinstance(m, FunctionCall) for m in llm_result.content):
+            iteration_count += 1
+            if iteration_count > max_iterations:
+                logger.warning(f"{self.id.type}: Maximum iterations ({max_iterations}) reached. Breaking loop to prevent infinite execution.")
+                break
             logger.info(f"{self.id.type}: Processing function calls: {[call.name for call in llm_result.content]}")
             tool_call_results: List[FunctionExecutionResult] = []
             delegate_targets: List[Tuple[str, UserTask]] = []
@@ -91,12 +99,20 @@ class AIAgent(RoutedAgent):
                 if call.name in self._tools:
                     # Execute the tool directly
                     logger.info(f"{self.id.type}: Executing tool: {call.name}")
-                    result = await self._tools[call.name].run_json(arguments, ctx.cancellation_token)
-                    result_as_str = self._tools[call.name].return_value_as_string(result)
-                    logger.info(f"{self.id.type}: Tool {call.name} result: {result_as_str}")
-                    tool_call_results.append(
-                        FunctionExecutionResult(call_id=call.id, content=result_as_str, is_error=False, name=call.name)
-                    )
+                    try:
+                        result = await self._tools[call.name].run_json(arguments, ctx.cancellation_token)
+                        result_as_str = self._tools[call.name].return_value_as_string(result)
+                        logger.info(f"{self.id.type}: Tool {call.name} result: {result_as_str}")
+                        tool_call_results.append(
+                            FunctionExecutionResult(call_id=call.id, content=result_as_str, is_error=False, name=call.name)
+                        )
+                    except Exception as tool_exc:
+                        error_str = f"Error executing tool '{call.name}': {str(tool_exc)}"
+                        logger.error(f"{self.id.type}: {error_str}", exc_info=True)
+                        tool_call_results.append(
+                            FunctionExecutionResult(call_id=call.id, content=error_str, is_error=True, name=call.name)
+                        )
+                        continue
                 elif call.name in self._delegate_tools:
                     # Execute the tool to get the delegate agent's topic type
                     logger.info(f"{self.id.type}: Executing delegate tool: {call.name}")

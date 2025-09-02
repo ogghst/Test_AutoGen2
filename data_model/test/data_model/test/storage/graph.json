@@ -1,0 +1,32 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "id": "4b3d95df-c6b6-47d8-8831-ccc37a1d2371",
+      "name": "Test Project"
+    },
+    {
+      "id": "da6312a7-9ca4-4059-a9d3-04ac3ed00cbe",
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    {
+      "id": "59b54019-bb47-404e-ac6d-ea28ded6dfd5",
+      "name": "Upsert Test"
+    },
+    {
+      "id": "23e0d153-9d0d-4266-b9aa-ff7ee4b69be6",
+      "name": "Transaction Project"
+    }
+  ],
+  "links": [
+    {
+      "id": "1d91f46b-90a6-4ce0-9bcf-f0650c54ac30",
+      "source": "da6312a7-9ca4-4059-a9d3-04ac3ed00cbe",
+      "target": "23e0d153-9d0d-4266-b9aa-ff7ee4b69be6",
+      "label": "assigned_to"
+    }
+  ]
+}

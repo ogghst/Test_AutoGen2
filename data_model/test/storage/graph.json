@@ -1,0 +1,202 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "name": "New Project",
+      "vision": null,
+      "description": "A new project",
+      "methodology": "Hybrid",
+      "sdlc_phase": "Concept",
+      "status": "Initiation",
+      "created_date": null,
+      "last_updated": null,
+      "business_case": null,
+      "release_plan": null,
+      "team": null,
+      "scope": null,
+      "stakeholders": null,
+      "risks": null,
+      "milestones": null,
+      "phases": null,
+      "knowledge_transfer": null,
+      "change_requests": null,
+      "baselines": null,
+      "repositories": null,
+      "ai_work_products": null,
+      "__type__": "Project",
+      "id": "cff3afd6-2a27-4ea4-9637-f9f779d0edcb"
+    },
+    {
+      "name": "Residential House Construction Project",
+      "vision": "To build a modern, energy-efficient single-family home that meets all local building codes and provides comfortable living space for a family of four",
+      "description": "Complete construction of a 2,500 sq ft single-family residence with 4 bedrooms, 3 bathrooms, modern kitchen, living room, dining area, and two-car garage. The project includes site preparation, foundation work, framing, roofing, electrical, plumbing, HVAC installation, interior finishing, and landscaping.",
+      "methodology": "Waterfall",
+      "sdlc_phase": "Concept",
+      "status": "Initiation",
+      "created_date": "2024-01-15",
+      "last_updated": null,
+      "business_case": null,
+      "release_plan": null,
+      "team": null,
+      "scope": {
+        "epics": null,
+        "inclusions": [
+          "Site preparation and grading",
+          "Foundation construction",
+          "Framing and structural work",
+          "Roofing installation",
+          "Electrical wiring and fixtures",
+          "Plumbing installation",
+          "HVAC system installation",
+          "Drywall and interior finishing",
+          "Flooring installation",
+          "Kitchen and bathroom cabinetry",
+          "Painting and trim work",
+          "Landscaping and exterior finishing"
+        ],
+        "exclusions": [
+          "Furniture and appliances",
+          "Window treatments",
+          "Decorative lighting fixtures",
+          "Outdoor furniture",
+          "Audio/visual equipment"
+        ],
+        "assumptions": [
+          "Building permits will be obtained within 30 days",
+          "Weather conditions will be favorable for construction",
+          "Material availability will not cause significant delays",
+          "Local building codes will be followed throughout construction"
+        ],
+        "constraints": [
+          "Budget not to exceed $350,000",
+          "Project completion within 9 months",
+          "Compliance with local zoning regulations",
+          "Energy efficiency standards must be met"
+        ],
+        "acceptance_criteria": [
+          "All building inspections passed successfully",
+          "Certificate of occupancy obtained",
+          "All systems (electrical, plumbing, HVAC) functioning properly",
+          "No construction defects or issues identified",
+          "Project completed within budget and timeline"
+        ],
+        "requirements": null
+      },
+      "stakeholders": null,
+      "risks": null,
+      "milestones": null,
+      "phases": null,
+      "knowledge_transfer": null,
+      "change_requests": null,
+      "baselines": null,
+      "repositories": null,
+      "ai_work_products": null,
+      "__type__": "project",
+      "id": "74ac6f15-820d-4169-baf2-4179475e8855"
+    },
+    {
+      "id": "14dc5ee4-ff99-4fb3-b40b-6b2e1ca4e71c",
+      "name": "New Project",
+      "vision": null,
+      "description": "A new project",
+      "methodology": "Hybrid",
+      "sdlc_phase": "Concept",
+      "status": "Initiation",
+      "created_date": null,
+      "last_updated": null,
+      "business_case": null,
+      "release_plan": null,
+      "team": null,
+      "scope": null,
+      "stakeholders": null,
+      "risks": null,
+      "milestones": null,
+      "phases": null,
+      "knowledge_transfer": null,
+      "change_requests": null,
+      "baselines": null,
+      "repositories": null,
+      "ai_work_products": null,
+      "__type__": "Project"
+    },
+    {
+      "id": "9b5da70f-7fd5-4cd4-81c0-f6ed5209c7ee",
+      "name": "House Construction Project",
+      "vision": "To build a modern, energy-efficient single-family home that meets all building codes and provides comfortable living space for a family of four",
+      "description": "Complete construction of a 2,500 sq ft single-family home with 4 bedrooms, 3 bathrooms, modern kitchen, living room, dining room, and 2-car garage. The project includes site preparation, foundation work, framing, roofing, electrical, plumbing, HVAC, insulation, drywall, flooring, painting, and landscaping.",
+      "methodology": "Waterfall",
+      "sdlc_phase": "Concept",
+      "status": "Initiation",
+      "created_date": "2024-01-15",
+      "last_updated": "2024-01-15",
+      "business_case": null,
+      "release_plan": null,
+      "team": null,
+      "scope": {
+        "epics": null,
+        "inclusions": [
+          "Site preparation and grading",
+          "Foundation construction",
+          "Framing and structural work",
+          "Roofing installation",
+          "Electrical wiring and fixtures",
+          "Plumbing installation",
+          "HVAC system installation",
+          "Insulation and drywall",
+          "Flooring installation",
+          "Painting and finishing",
+          "Kitchen and bathroom fixtures",
+          "Landscaping and exterior work"
+        ],
+        "exclusions": [
+          "Furniture and appliances",
+          "Window treatments",
+          "Decor items",
+          "Security system installation",
+          "Audio/video system installation"
+        ],
+        "assumptions": [
+          "Building permits will be obtained timely",
+          "Weather conditions will be favorable for construction",
+          "Material availability will be consistent",
+          "Contractor availability will be maintained"
+        ],
+        "constraints": [
+          "Budget limit of $350,000",
+          "Timeline of 9 months",
+          "Local building codes and regulations",
+          "Environmental restrictions"
+        ],
+        "acceptance_criteria": [
+          "House passes all building inspections",
+          "All systems function properly",
+          "Meets energy efficiency standards",
+          "Completion within budget and timeline"
+        ],
+        "requirements": [
+          "4 bedrooms minimum",
+          "3 bathrooms minimum",
+          "2-car garage",
+          "Energy-efficient windows and insulation",
+          "Modern kitchen with appliances",
+          "Central HVAC system",
+          "Hardwood flooring in main areas",
+          "Landscaped yard"
+        ]
+      },
+      "stakeholders": null,
+      "risks": null,
+      "milestones": null,
+      "phases": null,
+      "knowledge_transfer": null,
+      "change_requests": null,
+      "baselines": null,
+      "repositories": null,
+      "ai_work_products": null,
+      "__type__": "project"
+    }
+  ],
+  "links": []
+}

@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d6" for="edge" attr.name="label" attr.type="string" />
+  <key id="d5" for="edge" attr.name="target" attr.type="string" />
+  <key id="d4" for="edge" attr.name="source" attr.type="string" />
+  <key id="d3" for="edge" attr.name="id" attr.type="string" />
+  <key id="d2" for="node" attr.name="email" attr.type="string" />
+  <key id="d1" for="node" attr.name="name" attr.type="string" />
+  <key id="d0" for="node" attr.name="id" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="4b3d95df-c6b6-47d8-8831-ccc37a1d2371">
+      <data key="d0">4b3d95df-c6b6-47d8-8831-ccc37a1d2371</data>
+      <data key="d1">Test Project</data>
+    </node>
+    <node id="da6312a7-9ca4-4059-a9d3-04ac3ed00cbe">
+      <data key="d0">da6312a7-9ca4-4059-a9d3-04ac3ed00cbe</data>
+      <data key="d1">John Doe</data>
+      <data key="d2">john@example.com</data>
+    </node>
+    <node id="59b54019-bb47-404e-ac6d-ea28ded6dfd5">
+      <data key="d0">59b54019-bb47-404e-ac6d-ea28ded6dfd5</data>
+      <data key="d1">Upsert Test</data>
+    </node>
+    <node id="23e0d153-9d0d-4266-b9aa-ff7ee4b69be6">
+      <data key="d0">23e0d153-9d0d-4266-b9aa-ff7ee4b69be6</data>
+      <data key="d1">Transaction Project</data>
+    </node>
+    <edge source="da6312a7-9ca4-4059-a9d3-04ac3ed00cbe" target="23e0d153-9d0d-4266-b9aa-ff7ee4b69be6">
+      <data key="d3">1d91f46b-90a6-4ce0-9bcf-f0650c54ac30</data>
+      <data key="d4">da6312a7-9ca4-4059-a9d3-04ac3ed00cbe</data>
+      <data key="d5">23e0d153-9d0d-4266-b9aa-ff7ee4b69be6</data>
+      <data key="d6">assigned_to</data>
+    </edge>
+  </graph>
+</graphml>

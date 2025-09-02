@@ -55,8 +55,35 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown logic
+    logger.info("Shutting down handoffs pattern system")
+    
+    # Close all active sessions gracefully
+    if user_session_manager:
+        try:
+            # Get all session IDs to close
+            session_ids = list(user_session_manager.sessions.keys())
+            logger.info(f"Closing {len(session_ids)} active sessions")
+            
+            # Close each session
+            for session_id in session_ids:
+                try:
+                    await user_session_manager.close_session(session_id)
+                except Exception as e:
+                    logger.error(f"Error closing session {session_id} during shutdown: {e}")
+            
+            logger.info("All sessions closed")
+        except Exception as e:
+            logger.error(f"Error during session cleanup: {e}")
+    
+    # Close the model client
     if model_client:
-        await model_client.close()
+        try:
+            await model_client.close()
+            logger.info("Model client closed")
+        except Exception as e:
+            logger.error(f"Error closing model client: {e}")
+    
+    logger.info("Shutdown complete")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -100,15 +127,20 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
     # Task to send agent responses to the client
     async def send_responses():
-        while True:
-            response = await session.response_queue.get()
-            if response is None:
-                break
-            if response.context and len(response.context) > 0:
-                import json
-                agent_reply = json.dumps(response.context[-1].model_dump())
-                logger.info(f"Sending agent reply to client: {agent_reply}")
-                await websocket.send_text(agent_reply)
+        try:
+            while True:
+                response = await session.response_queue.get()
+                if response is None:
+                    break
+                if response.context and len(response.context) > 0:
+                    import json
+                    agent_reply = json.dumps(response.context[-1].model_dump())
+                    logger.info(f"Sending agent reply to client: {agent_reply}")
+                    await websocket.send_text(agent_reply)
+        except Exception as e:
+            logger.error(f"Error in send_responses for session {session_id}: {e}")
+        finally:
+            logger.info(f"Send responses task completed for session {session_id}")
 
     send_task = asyncio.create_task(send_responses())
 
@@ -120,11 +152,30 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 
     except WebSocketDisconnect:
         logger.info(f"Client disconnected: {session_id}")
+    except Exception as e:
+        logger.error(f"Error in websocket endpoint for session {session_id}: {e}")
     finally:
         logger.info(f"Closing connection for {session_id}")
-        await session.response_queue.put(None)
-        send_task.cancel()
-        await user_session_manager.close_session(session_id)
+        
+        # Cancel the send task first
+        if not send_task.done():
+            send_task.cancel()
+            try:
+                await send_task
+            except asyncio.CancelledError:
+                pass
+        
+        # Signal the send task to stop
+        try:
+            await session.response_queue.put(None)
+        except Exception as e:
+            logger.warning(f"Could not put None in response queue for session {session_id}: {e}")
+        
+        # Close the session properly
+        try:
+            await user_session_manager.close_session(session_id)
+        except Exception as e:
+            logger.error(f"Error closing session {session_id}: {e}")
 
 
 if __name__ == "__main__":

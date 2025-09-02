@@ -1,0 +1,66 @@
+id: http://example.org/my_schema
+name: my_schema
+
+imports:
+  - linkml:types
+
+slots:
+  id:
+    identifier: true
+    description: Unique UUIDv4 identifier
+    range: string
+    pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  name:
+    description: Name
+    range: string
+  email:
+    description: Email address
+    range: string
+    pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+  title:
+    description: Title
+    range: string
+  description:
+    description: Description
+    range: string
+  source:
+    description: The source entity id (UUIDv4) of the relationship
+    range: string
+    pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  target:
+    description: The target entity id (UUIDv4) of the relationship
+    range: string
+    pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  label:
+    description: The type or label of the relationship
+    range: string
+
+classes:
+  Project:
+    description: A project entity in the graph.
+    slots:
+      - id
+      - name
+
+  User:
+    description: A user entity in the graph.
+    slots:
+      - id
+      - name
+      - email
+
+  Issue:
+    description: An issue or ticket entity in the graph.
+    slots:
+      - id
+      - title
+      - description
+
+  Edge:
+    description: Represents a relationship (edge) between two entities in the graph.
+    slots:
+      - id
+      - source
+      - target
+      - label
+

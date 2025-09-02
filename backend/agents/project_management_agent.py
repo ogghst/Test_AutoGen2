@@ -14,18 +14,21 @@ from tools.tools import (
     transfer_back_to_triage_tool,
     UUIDEncoder,
 )
+from tools.knowledge_tools import create_knowledge_tools
 
 class ProjectManagementAgent(AIAgent):
     """
-    Project management agent responsible for PMI best practices and comprehensive project planning.
+    Project management agent responsible to create or modify a project.
     
     This agent specializes in project management activities including:
     - Guiding users through PMI best practices
-    - Providing project management guidance and standards
-    - Creating an initial project management plan
+    - Providing project management guidance and standards and project data
+    - Creating or modifying a project
     """
     
     def __init__(self, user_session: UserSession, tools: list[Tool] = None):
+        # Track which entity schemas have been retrieved to prevent loops
+        self._retrieved_schemas = set()
         """
         Initialize the ProjectManagementAgent.
         
@@ -37,46 +40,57 @@ class ProjectManagementAgent(AIAgent):
             content="You are a certified Project Management Professional (PMP) agent specializing in PMI best practices. "  
             "Your role is to:\n\n"
             "1. Guide users through PMI project management standards and best practices\n"
-            "2. Help create comprehensive, PMI-compliant project description\n"
+            "2. Help create comprehensive, PMI-compliant project description using available entity types and attributes defined in their schemas.\n"
             "3. Educate users on the PMBOK Guide framework and its application\n"
-            "4. Provide expert advice on project management methodologies and processes\n"
-            "5. Educate users on project context and project data\n"
+            "4. Educate users on project context and project data\n"
             "5. Transfer back to triage if the request is outside your scope, if you have obtained the project data or when the user is satisfied with the project data\n\n"
-            "## CONTEXT AND PROJECT DATA\n"
-            "1. Project data model is defined as follows: '" + json.dumps(Project.model_dump_json(), cls=UUIDEncoder) + "'. "
-            "2. Session of this project is: '" + user_session.session_id + "'. "
-            "3. Project data is: '" + user_session.knowledge_service.get_full_project_context(user_session.project_id) + "'. "
+            #"## CONTEXT AND PROJECT DATA\n"
+            #"1. Session_id of this project is: '" + user_session.session_id + "'. "
+            #"2. Only create entities that are defined in the project data model, with proper schema.\n"
+            #"## WORKFLOW AND TOOL USAGE\n"
+            #"1. **First, get available entity types**: If not known, use get_entity_types_tool to see what entity types are available.\n"
+            #"2. **Get schema only when needed**: Use get_entity_schema per entity type when you need to understand the structure.\n"
+            #"3. **Create entities when ready**: Use create_entity_tool when you have all the required information to create a new entity.\n"
+            #"4. **Update existing entities**: Use update_entity_tool to modify existing entities.\n"
+            #"1. before calling create_entity_tool, use get_entity_schema_tool to get the schema of the entity type use its output to format the input of create_entity_tool accordingly. \n"
+            #"   Example: to create a 'project' entity, call get_entity_schema_tool with 'project' entity type to get the schema and use its schema to format the input of create_entity_tool accordingly.\n"
             "## RULES\n"
-            "1. Always follow PMI standards and best practices. Be thorough, professional, and educational. "
-            "2. When creating project management plans, ensure they include all essential PMI components."
-            "3.1 You shall ask and define **only** about the entities: Project, Team. "
-            "3.2 You can suggest to the user to create a new entity if it is not in the schema. \n"
-            "3.3 You can suggest to the user to create a new relationship if it is not in the schema. \n"
-            "3.4 You can suggest to the user to modify other entities if the change you are describing has impact on other entities. \n"
-            "4. Provide clear explanations of PMI concepts and how they apply to the user's project."
-            "7. When the project data is complete, ask the user if they would like to save the data."
-            "8. If the user would like to save the data, use the save_project_data_tool to save the data."
-            "9. If the user would not like to save the data, use the transfer_back_to_triage_tool to transfer back to the triage agent."
-            "## UUID Management \n\n"
-            "When generating the JSON with entities and relationships:\n"
-            "1. First identify all unique entities in the content.\n"
-            "2. Create a consistent mapping of entity names to UUIDs before generating relationships.\n"
-            "3. To generate UUIDs, use UUID4 format for all entities.\n" 
-            "4. Generate a random UUID for each entity.\n" 
-            "5. Make sure to use the same UUID for the same entity across the project.\n"
-            "6. After assigning all UUIDs, create relationships using these exact UUID values.\n"
-            "7. Before finalizing, verify that all relationship references match the assigned entity UUIDs.\n"
+            "1. Always follow PMI standards and best practices. Be thorough, professional, and educational.\n"
+            "2. When creating project management plans, ensure they include all essential PMI components.\n"
+            "3. Provide clear explanations of PMI concepts and how they apply to the user's project.\n"
+            "4. When the project data is complete, ask the user if they would like to save the data.\n"
         )
-
+                
+        # Create a custom get_entity_schema tool that prevents loops
+        from autogen_core.tools import FunctionTool
+        from typing import Annotated
         
+        async def get_entity_schema_safe(entity_type: Annotated[str, "The type of the entity to get the schema of."]) -> str:
+            """
+            Get the JSON schema of a specific entity type with loop prevention.
+            """
+            if entity_type.lower() in self._retrieved_schemas:
+                return f"Schema for '{entity_type}' has already been retrieved. Please proceed with your task using the previously obtained schema information."
+            
+            # Mark this schema as retrieved
+            self._retrieved_schemas.add(entity_type.lower())
+            
+            # Call the actual tool
+            return user_session.knowledge_service.get_entity_schema(entity_type)
+        
+        get_entity_schema_safe_tool = FunctionTool(
+            get_entity_schema_safe,
+            description="Get entity schema formatted specifically for LLM consumption. Returns JSON string. WARNING: Only call this tool ONCE per entity type. Do not call repeatedly for the same entity type."
+        )
         
         project_management_tools = [
+            
         ]
         delegate_tools = [transfer_back_to_triage_tool]
         
         super().__init__(
             user_session=user_session,
-            description="A certified PMP agent responsible for PMI best practices and comprehensive project management planning.",
+            description="A certified PMP agent responsible for PMI best practices and comprehensive project management.",
             system_message=system_message,
             tools=project_management_tools + (tools or []),
             delegate_tools=delegate_tools,
