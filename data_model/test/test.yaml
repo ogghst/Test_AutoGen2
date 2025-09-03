@@ -10,6 +10,10 @@ slots:
     description: Unique UUIDv4 identifier
     range: string
     pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  class_name:
+    description: The class name of the entity (automatically populated during serialization)
+    range: string
+    designates_type: true
   name:
     description: Name
     range: string
@@ -40,26 +44,53 @@ classes:
     description: A project entity in the graph.
     slots:
       - id
+      - class_name
+      - name
+
+  ProjectCreate:
+    description: A project entity in the graph.
+    slots:
+      - class_name
       - name
 
   User:
     description: A user entity in the graph.
     slots:
       - id
+      - class_name
       - name
       - email
+
+  UserCreate:
+    description: A user entity in the graph.
+    slots:
+      - class_name
+      - name
+      - email
+
 
   Issue:
     description: An issue or ticket entity in the graph.
     slots:
       - id
+      - class_name
       - title
       - description
+
+  IssueCreate:
+    description: An issue or ticket entity in the graph.
+    slots:
+      - id
+      - class_name
+      - title
+      - description
+
 
   Edge:
     description: Represents a relationship (edge) between two entities in the graph.
     slots:
       - id
+      - class_name
       - source
       - target
       - label

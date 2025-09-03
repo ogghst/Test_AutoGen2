@@ -3,6 +3,7 @@ from .messaging import AgentResponse, UserTask
 from autogen_core import FunctionCall, MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import AssistantMessage, ChatCompletionClient, FunctionExecutionResult, FunctionExecutionResultMessage, SystemMessage
 from autogen_core.tools import Tool
+from pydantic import ValidationError
 
 import json
 from config.logging_config import get_logger
@@ -106,6 +107,15 @@ class AIAgent(RoutedAgent):
                         tool_call_results.append(
                             FunctionExecutionResult(call_id=call.id, content=result_as_str, is_error=False, name=call.name)
                         )
+ 
+                    except ValidationError as val_exc:
+                        logger.error(f"{self.id.type}: Validation error executing tool '{call.name}': {val_exc.json()}")
+                        error_str = f"Please rectify the following errors in the tool call: '{call.name}': {val_exc.json()}"
+                        #error_str += "\n" + "\n".join([f"Error: {err['msg']} for field '{err['loc'][0]}'" for err in val_exc.errors()])
+                        tool_call_results.append(
+                            FunctionExecutionResult(call_id=call.id, content=error_str, is_error=True, name=call.name)
+                        )
+                        continue
                     except Exception as tool_exc:
                         error_str = f"Error executing tool '{call.name}': {str(tool_exc)}"
                         logger.error(f"{self.id.type}: {error_str}", exc_info=True)

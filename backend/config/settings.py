@@ -48,7 +48,7 @@ class DeepSeekConfig:
                 "json_output": True,
                 "structured_output": True
             })
-    temperature: float = 0.0
+    temperature: float = 1.0
     
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)

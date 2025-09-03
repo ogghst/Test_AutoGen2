@@ -40,13 +40,16 @@ class ProjectManagementAgent(AIAgent):
             content="You are a certified Project Management Professional (PMP) agent specializing in PMI best practices. "  
             "Your role is to:\n\n"
             "1. Guide users through PMI project management standards and best practices\n"
-            "2. Help create comprehensive, PMI-compliant project description using available entity types and attributes defined in their schemas.\n"
+            "2. Help create comprehensive, PMI-compliant project\n"
             "3. Educate users on the PMBOK Guide framework and its application\n"
             "4. Educate users on project context and project data\n"
             "5. Transfer back to triage if the request is outside your scope, if you have obtained the project data or when the user is satisfied with the project data\n\n"
-            #"## CONTEXT AND PROJECT DATA\n"
+            "## CONTEXT AND PROJECT DATA\n"
             #"1. Session_id of this project is: '" + user_session.session_id + "'. "
-            #"2. Only create entities that are defined in the project data model, with proper schema.\n"
+            #"1. Create and update entities, using **only** available entity types and attributes defined in get_all_entities_with_schemas_tool.\n"
+            "1. Create entites (nodes) and relationships (edges) using available tools.\n"
+            "2. After creating entities, make sure to create appropriate relationships between them. Example: after creating an user, make sure it has the proper project role and create the relationship with label 'assigned_to' between the user and the project \n"
+            "3. When the task is completed, return with TERMINATE."
             #"## WORKFLOW AND TOOL USAGE\n"
             #"1. **First, get available entity types**: If not known, use get_entity_types_tool to see what entity types are available.\n"
             #"2. **Get schema only when needed**: Use get_entity_schema per entity type when you need to understand the structure.\n"
@@ -56,32 +59,15 @@ class ProjectManagementAgent(AIAgent):
             #"   Example: to create a 'project' entity, call get_entity_schema_tool with 'project' entity type to get the schema and use its schema to format the input of create_entity_tool accordingly.\n"
             "## RULES\n"
             "1. Always follow PMI standards and best practices. Be thorough, professional, and educational.\n"
-            "2. When creating project management plans, ensure they include all essential PMI components.\n"
-            "3. Provide clear explanations of PMI concepts and how they apply to the user's project.\n"
-            "4. When the project data is complete, ask the user if they would like to save the data.\n"
+            "2. Provide clear explanations of PMI concepts and how they apply to the user's project.\n"
+            "3. When the user task is completed, ask the user if they would like to save the data.\n"
         )
                 
         # Create a custom get_entity_schema tool that prevents loops
         from autogen_core.tools import FunctionTool
         from typing import Annotated
         
-        async def get_entity_schema_safe(entity_type: Annotated[str, "The type of the entity to get the schema of."]) -> str:
-            """
-            Get the JSON schema of a specific entity type with loop prevention.
-            """
-            if entity_type.lower() in self._retrieved_schemas:
-                return f"Schema for '{entity_type}' has already been retrieved. Please proceed with your task using the previously obtained schema information."
-            
-            # Mark this schema as retrieved
-            self._retrieved_schemas.add(entity_type.lower())
-            
-            # Call the actual tool
-            return user_session.knowledge_service.get_entity_schema(entity_type)
-        
-        get_entity_schema_safe_tool = FunctionTool(
-            get_entity_schema_safe,
-            description="Get entity schema formatted specifically for LLM consumption. Returns JSON string. WARNING: Only call this tool ONCE per entity type. Do not call repeatedly for the same entity type."
-        )
+
         
         project_management_tools = [
             

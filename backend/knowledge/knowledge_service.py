@@ -66,13 +66,25 @@ class KnowledgeService:
         result_data = json.loads(result)
         
         # Add the entity type to the result data for tracking
-        result_data['__type__'] = entity_type
+        #result_data['__type__'] = entity_type
         
         # Convert any remaining date objects to strings
-        result_data = self.entity_service._convert_dates_to_strings(result_data)
+        #result_data = self.entity_service._convert_dates_to_strings(result_data)
         
         logger.info(f"Successfully created entity {result_data.get('id')} of type {entity_type}")
         return json.dumps(result_data)
+    
+    def create_relationship(self, source: str, target: str, label: str, json_data: str) -> str:
+        """
+        Create a new relationship.
+        
+        Args:
+            source: The source entity ID
+            target: The target entity ID
+            label: The relationship label
+            json_data: JSON string containing relationship attributes
+        """
+        return self.entity_service.create_relationship(source, target, label, json_data)
     
     def get_entity_by_id(self, entity_type: str, entity_id: str, include_relationships: bool = False) -> str:
         """
@@ -316,12 +328,14 @@ class EntityService:
             raise ValueError(f"Invalid JSON format: {e}")
         
         # Generate ID if requested and not provided
-        if generate_id and ('id' not in data or not data['id']):
-            data['id'] = self._generate_id()
-            logger.debug(f"Generated ID: {data['id']}")
+        #if generate_id and ('id' not in data or not data['id']):
+        data['id'] = self._generate_id()
+        logger.debug(f"Generated ID: {data['id']}")
         
         # Remove __type__ field before validation as it's not part of the Pydantic model
-        data_for_validation = {k: v for k, v in data.items() if k != '__type__'}
+        #data_for_validation = {k: v for k, v in data.items() if k != '__type__'}
+        
+        data_for_validation = data
         
         entity_class = self._get_entity_class(entity_type)
         try:
@@ -330,8 +344,8 @@ class EntityService:
             validated_data = validated_entity.model_dump()
             
             # Restore __type__ field if it was present
-            if '__type__' in data:
-                validated_data['__type__'] = data['__type__']
+            #if '__type__' in data:
+            #    validated_data['__type__'] = data['__type__']
             
             logger.debug(f"Successfully validated {entity_type} entity")
             return validated_data
@@ -358,10 +372,15 @@ class EntityService:
         logger.info(f"Creating entity: {entity_type} with data: {json_data}")   
         
         try:
+            # Parse the JSON string to a dict before adding 'class_name'
+
+            data = json.loads(json_data)
+            data['class_name'] = entity_type
+            json_data = json.dumps(data)
             validated_data = self._validate_json_input(json_data, entity_type, generate_id=True)
             
             # Add entity type to the data for tracking
-            validated_data['__type__'] = entity_type
+            #validated_data['__type__'] = entity_type
             
             # Convert any date objects to strings for JSON serialization
             validated_data = self._convert_dates_to_strings(validated_data)
@@ -649,12 +668,12 @@ class EntityService:
                     raise ValueError(f"Invalid additional data JSON: {e}")
             
             # Validate using Edge model
-            try:
-                validated_edge = Edge(**edge_data)
-                edge_data = validated_edge.model_dump()
-            except ValidationError as e:
-                logger.error(f"Edge validation error: {e}")
-                raise ValueError(f"Edge validation error: {e}")
+            #try:
+            #    validated_edge = Edge(**edge_data)
+            #    edge_data = validated_edge.model_dump()
+            #except ValidationError as e:
+            #    logger.error(f"Edge validation error: {e}")
+            #    raise ValueError(f"Edge validation error: {e}")
             
             # Add edge to graph
             self.graph.add_edge(source_id, target_id, **edge_data)
@@ -1034,6 +1053,7 @@ class EntityService:
             graphml_path = self.storage_path / "graph.graphml"
             nx.write_graphml(graph_copy, graphml_path)
             logger.debug(f"Saved GraphML to {graphml_path}")
+            
             
             # Save as JSON (original graph with all data, converting dates to strings)
             json_path = self.storage_path / "graph.json"

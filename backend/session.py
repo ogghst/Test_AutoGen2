@@ -14,7 +14,7 @@ class UserSession:
     def __init__(self, session_id: str, model_client: ChatCompletionClient, tracer_provider):
         self.session_id = session_id
         self.runtime = SingleThreadedAgentRuntime(tracer_provider=tracer_provider)
-        self.knowledge_service = KnowledgeService()
+        self.knowledge_service = KnowledgeService("../knowledge_base")
         self.model_client = model_client
         self.input_queue = asyncio.Queue()
         self.response_queue = asyncio.Queue()
@@ -37,25 +37,25 @@ class UserSession:
                 logger.info(f"Runtime started for session {self.session_id}")
 
                 # Create a new project for the session
-                project_data = json.dumps({
-                    "name": "New Project",
-                    "description": "A new project",
-                    "methodology": "Hybrid",
-                    "sdlc_phase": "Concept",
-                    "status": "Initiation"
-                })
-                project_id_json = self.knowledge_service.create_entity('Project', project_data)
-                project_id_data = json.loads(project_id_json)
+                #project_data = json.dumps({
+                #    "name": "New Project",
+                #    "description": "A new project",
+                #    "methodology": "Hybrid",
+                #    "sdlc_phase": "Concept",
+                #    "status": "Initiation"
+                #})
+                #project_id_json = self.knowledge_service.create_entity('Project', project_data)
+                #project_id_data = json.loads(project_id_json)
                 
                 # Check if creation was successful
-                if "error" in project_id_data:
-                    raise RuntimeError(f"Failed to create project: {project_id_data['error']}")
+                #if "error" in project_id_data:
+                #    raise RuntimeError(f"Failed to create project: {project_id_data['error']}")
                 
-                if "id" not in project_id_data:
-                    raise RuntimeError(f"Invalid response from create_entity: {project_id_data}")
+                #if "id" not in project_id_data:
+                #    raise RuntimeError(f"Invalid response from create_entity: {project_id_data}")
                 
-                self.project_id = project_id_data["id"]
-                logger.info(f"Project created for session {self.session_id}: {self.project_id}")
+                #self.project_id = project_id_data["id"]
+                #logger.info(f"Project created for session {self.session_id}: {self.project_id}")
 
                 # Publish initial login message
                 await self.runtime.publish_message(

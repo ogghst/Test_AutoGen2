@@ -5,8 +5,6 @@ from autogen_core.tools import Tool
 
 from session import UserSession
 
-from models.data_models import UserProfiler
-
 from base.AIAgent import AIAgent
 from tools.tools import (
     USER_PROFILER_AGENT_TOPIC_TYPE,

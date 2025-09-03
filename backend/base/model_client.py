@@ -51,7 +51,7 @@ def create_model_client(config_manager: ConfigManager) -> ChatCompletionClient:
     else:
         raise ValueError(f"Unsupported LLM provider: {config_manager.llm_provider.value}")
     
-    logger.info(f"LLM Client created: {json.dumps(client._raw_config, indent=2)}")
+    logger.info(f"LLM Client created: {json.dumps(client._raw_config)}")
     
     return client
                 
