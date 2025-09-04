@@ -1,6 +1,7 @@
 from asyncio.log import logger
 from typing import Dict, List, Any, Optional, Annotated, Literal
 from autogen_core.tools import FunctionTool
+from tools.tools import ToolResponse
 from knowledge.knowledge_service import KnowledgeService
 from session import UserSession
 import json
@@ -24,27 +25,36 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
         """
         return user_session.session_id
     
-    async def get_current_project_id() -> str:
+    async def get_current_project_id() -> ToolResponse:
         """
         Get the ID of the current project.
         
         Args:
             None
             
-        Returns:
-            str: The ID of the current project.
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
-        return user_session.project_id
+        return ToolResponse(success=True, message="Current project ID successfully retrieved", data=user_session.project_id)
     
-    async def set_current_project_id(project_id: Annotated[str, "The ID of the project to set as current."]) -> str:
+    async def set_current_project_id(project_id: Annotated[str, "The ID of the project to set as current."]) -> ToolResponse:
         """
         Set the ID of the current project.
         
         Args:
             project_id: The ID of the project to set as current.
+            
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
         user_session.project_id = project_id
-        return project_id
+        return ToolResponse(success=True, message="Current project ID successfully set", data=project_id)
     
     async def get_session_project_context() -> str:
         """
@@ -54,7 +64,10 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
             None
             
         Returns:
-            str: The full context of the project for the current session.
+            A JSON message with 
+                - success: True or False
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
         return user_session.knowledge_service.get_full_project_context(user_session.project_id)
 
@@ -66,7 +79,10 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
             project_id: The ID of the project to get the full context of.
             
         Returns:
-            str: The full context of the project including all related entities.
+            A JSON message with 
+                - success: True or False
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
         return user_session.knowledge_service.get_full_project_context(project_id)
 
@@ -112,72 +128,87 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
         """     
         return user_session.knowledge_service.create_entity(entity_type, entity_data_json)
 
-    async def create_project(project: Annotated[ProjectCreate, "The JSON string representation of the project to create."]) -> str:
+    async def create_project(project: Annotated[ProjectCreate, "The JSON string representation of the project to create."]) -> ToolResponse:
         """
         Create a new Project entity.
         
         Args:
             project: The Project object to create.
             
-        Returns:
-            str: A message stating that the project was successfully created, with the content of the created project.
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
         project_data = user_session.knowledge_service.create_entity("Project", project.model_dump_json())
         user_session.project_id = json.loads(project_data)['id']
-        return "Project successfully created, with content: " + project_data
+        return ToolResponse(success=True, message="Project successfully created", data=project_data)
 
-    async def create_issue(issue: Annotated[IssueCreate, "The JSON string representation of the issue to create."]) -> str:
+    async def create_issue(issue: Annotated[IssueCreate, "The JSON string representation of the issue to create."]) -> ToolResponse:
         """
         Create a new Issue entity.
         
         Args:
             issue: The Issue object to create.
             
-        Returns:
-            str: A message stating that the issue was successfully created, with the content of the created issue.
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
-        return "Issue successfully created, with content: " + user_session.knowledge_service.create_entity("Issue", issue.model_dump_json())
+        return ToolResponse(success=True, message="Issue successfully created", data=user_session.knowledge_service.create_entity("Issue", issue.model_dump_json()))
     
-    async def create_edge(edge: Annotated[Edge, "The JSON string representation of the edge to create."]) -> str:
+    async def create_edge(edge: Annotated[Edge, "The JSON string representation of the edge to create."]) -> ToolResponse:
         """
         Create a new Edge entity.
         
         Args:
             edge: The Edge object to create.
             
-        Returns:
-            str: A message stating that the edge was successfully created, with the content of the created edge.
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
         #return user_session.knowledge_service.create_relationship(edge.source, edge.target, edge.label, edge.)
-        return "Edge successfully created, with content: " + user_session.knowledge_service.create_entity("Edge", edge.model_dump_json())
+        return ToolResponse(success=True, message="Edge successfully created", data=user_session.knowledge_service.create_entity("Edge", edge.model_dump_json()))
     
 
-    async def create_relationship(source: Annotated[str, "The source entity ID"], target: Annotated[str, "The target entity ID"], label: Annotated[str, "The relationship label, example: 'assigned_to'"], json_data: Annotated[str, "The JSON string representation of the relationassociated data."]) -> str:
+    async def create_relationship(source: Annotated[str, "The source entity ID, must be an existing entity id"], target: Annotated[str, "The target entity ID, must be an existing entity id"], label: Annotated[str, "The relationship label, example: 'assigned_to'"], json_data: Annotated[str, "The JSON string representation of the relationassociated data."]) -> ToolResponse:
         """
         Create a new relationship.
         
         Args:
-            source: The source entity ID.
-            target: The target entity ID.
+            source: The source entity ID, must be an existing entity id.
+            target: The target entity ID, must be an existing entity id.
             label: The relationship label.
             json_data: The JSON string representation of the relationship associated data.
             
-        Returns:
-            str: A message stating that the relationship was successfully created, with the content of the created relationship.
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
-        return "Relationship successfully created, with content: " + user_session.knowledge_service.create_relationship(source, target, label, json_data)
+        return ToolResponse(success=True, message="Relationship successfully created", data=user_session.knowledge_service.create_relationship(source, target, label, json_data))
     
-    async def create_user(user: Annotated[UserCreate, "The JSON string representation of the user to create."]) -> str:
+    async def create_user(user: Annotated[UserCreate, "The JSON string representation of the user to create."]) -> ToolResponse:
         """
         Create a new User entity.
         
         Args:
             user: The User object to create.
             
-        Returns:
-            str: A message stating that the user was successfully created, with the content of the created user.
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
-        return "User successfully created, with content: " + user_session.knowledge_service.create_entity("User", user.model_dump_json())
+        return ToolResponse(success=True, message="User successfully created", data=user_session.knowledge_service.create_entity("User", user.model_dump_json()))
     
     async def create_edge(edge: Annotated[Edge, "The JSON string representation of the edge to create."]) -> str:
         """
@@ -288,7 +319,7 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
     
     
 
-    async def export_project_data(project_id: Annotated[str, "The ID of the project to export data from."]) -> str:
+    async def export_project_data(project_id: Annotated[str, "The ID of the project to export data from."]) -> ToolResponse:
         """
         Export all project data.
 
@@ -296,23 +327,26 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
             project_id: The ID of the project to export data from.
 
         Returns:
-            str: Path to the exported file
+            ToolResponse: A message stating that the project data was successfully exported, with the path to the exported file.
         """
-        return user_session.knowledge_service.entity_service.export_graph(filename=project_id+".json", format='json')
+        return ToolResponse(success=True, message="Project data successfully exported", data=user_session.knowledge_service.entity_service.export_graph(filename=project_id+".json", format='json'))   
 
-    async def import_project_data(project_id: Annotated[str, "The ID of the project to import data to."]) -> str:
+    async def import_project_data(project_id: Annotated[str, "The ID of the project to import data to."]) -> ToolResponse:
         """
         Import project data from a file, replacing current data.
         
         Args:
             project_id: The ID of the project to import data to.
             
-        Returns:
-            str: json representation of the project data
+        Returns: 
+            A JSON message with 
+                - success: whether the task was successful (True) or not (False)    
+                - message: the accomplished task
+                - data: The JSON string representation of the created data
         """
         user_session.project_id = project_id
         user_session.knowledge_service.entity_service.import_graph(filename=project_id+".json", format='json')
-        return project_id
+        return ToolResponse(success=True, message="Project data successfully imported", data=project_id)
 
     async def clear_project_data() -> str:
         """
@@ -415,12 +449,20 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
 
     export_project_data_tool = FunctionTool(
         export_project_data,
-        description="Export all project data in json format. Returns file path."
+        description="""Export all project data in json format. Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)    
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
 
     import_project_data_tool = FunctionTool(
         import_project_data,
-        description="Import project data. Returns json representation of the project data."
+        description="""Import project data. Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)    
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
 
     clear_project_data_tool = FunctionTool(
@@ -440,7 +482,12 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
     
     create_issue_tool = FunctionTool(
         create_issue,
-        description="Create a new Issue entity. Returns JSON representation of the generated issue data."
+        description="""Create a new Issue entity.     
+                        Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)    
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
 
     create_edge_tool = FunctionTool(
@@ -450,34 +497,50 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
     
     create_user_tool = FunctionTool(
         create_user,
-        description="Create a new User entity. Returns JSON representation of the generated user data."
+        description="""Create a new User entity.             
+                        Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)    
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
     
     create_relationship_tool = FunctionTool(
         create_relationship,
-        description="Create a new relationship between two entities. Returns JSON representation of the generated relationship data."
+        description="""Create a new relationship between two entities already existing with valid id.             
+                        Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
     
     set_current_project_id_tool = FunctionTool(
         set_current_project_id,
-        description="Set the ID of the current project. Returns project ID."
+        description="""Set the ID of the current project. Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
     
     get_current_project_id_tool = FunctionTool(
         get_current_project_id,
-        description="Get the ID of the current project. Returns project ID."
+        description="""Get the ID of the current project. Returns A JSON message with 
+                        - success: True or False
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
-    
-    
-    
-    
-    
-    
-    
-    
+
     create_project_tool = FunctionTool(
         create_project,
-        description="Create a new Project entity. Returns JSON representation of the generated project data."
+        description="""Create a new Project entity.             
+                        Returns A JSON message with 
+                        - success: whether the task was successful (True) or not (False)
+                        - message: the accomplished task
+                        - data: The JSON string representation of the created data
+                        """
     )
 
     return [        
@@ -528,7 +591,7 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
         export_project_data_tool,
         import_project_data_tool,
         #set_current_project_id_tool,
-        get_current_project_id_tool,
+        #get_current_project_id_tool,
         #clear_project_data_tool,
         #get_project_statistics_tool,
         #get_project_schema_tool,

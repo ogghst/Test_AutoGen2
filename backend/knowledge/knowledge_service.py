@@ -644,10 +644,10 @@ class EntityService:
             # Validate that both nodes exist
             if not self.graph.has_node(source_id):
                 logger.error(f"Source entity {source_id} not found")
-                raise ValueError(f"Source entity {source_id} not found")
+                raise ValueError(f"Source entity {source_id} not found. Please revise the source entity id with an existing one.")
             if not self.graph.has_node(target_id):
                 logger.error(f"Target entity {target_id} not found")
-                raise ValueError(f"Target entity {target_id} not found")
+                raise ValueError(f"Target entity {target_id} not found. Please revise the target entity id with an existing one.")
             
             # Create edge data
             edge_data = {

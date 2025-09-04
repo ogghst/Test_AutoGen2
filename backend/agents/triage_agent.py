@@ -11,6 +11,7 @@ from tools.tools import (
     transfer_to_execution_tool,
     transfer_to_quality_tool,
     transfer_to_project_management_tool,
+    transfer_to_knowledge_graph_tool,
     transfer_to_user_stories_tool,
     transfer_to_user_profiler_tool,
     escalate_to_human_tool,
@@ -46,6 +47,7 @@ class TriageAgent(AIAgent):
             "- User Stories Agent: For generating comprehensive user stories with EARS notation acceptance criteria\n"
             "- User Profiler Agent: For understanding the user's capabilities and knowledge\n"
             "- Human Agent: For complex requests requiring human intervention\n\n"
+            "- Knowledge Graph Agent: For creating or modifying a knowledge graph, entities and relationships\n"
             "Always be helpful and professional. Route users to the most appropriate agent."
         )
         
@@ -54,6 +56,7 @@ class TriageAgent(AIAgent):
             transfer_to_execution_tool,
             transfer_to_quality_tool,
             transfer_to_project_management_tool,
+            transfer_to_knowledge_graph_tool,
             transfer_to_user_stories_tool,
             transfer_to_user_profiler_tool,
             escalate_to_human_tool,

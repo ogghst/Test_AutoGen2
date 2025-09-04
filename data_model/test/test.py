@@ -61,32 +61,16 @@ class LinkMLMeta(RootModel):
         return key in self.root
 
 
-linkml_meta = LinkMLMeta({'default_prefix': 'http://example.org/my_schema/',
-     'id': 'http://example.org/my_schema',
-     'imports': ['linkml:types'],
-     'name': 'my_schema',
-     'source_file': 'test.yaml'} )
+linkml_meta = None
 
 
 class Project(ConfiguredBaseModel):
     """
     A project entity in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    id: str = Field(default=..., description="""Unique UUIDv4 identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
-         'domain_of': ['Project', 'User', 'Issue', 'IssueCreate', 'Edge']} })
-    class_name: Literal["Project"] = Field(default="Project", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    name: Optional[str] = Field(default=None, description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
-         'domain_of': ['Project', 'ProjectCreate', 'User', 'UserCreate']} })
+    id: str = Field(default=..., description="""Unique UUIDv4 identifier""")
+    class_name: Literal["Project"] = Field(default="Project", description="""The class name of the entity (automatically populated during serialization)""")
+    name: Optional[str] = Field(default=None, description="""Name""")
 
     @field_validator('id')
     def pattern_id(cls, v):
@@ -106,41 +90,18 @@ class ProjectCreate(ConfiguredBaseModel):
     """
     A project entity in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    class_name: Literal["ProjectCreate"] = Field(default="ProjectCreate", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    name: Optional[str] = Field(default=None, description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
-         'domain_of': ['Project', 'ProjectCreate', 'User', 'UserCreate']} })
+    class_name: Literal["ProjectCreate"] = Field(default="ProjectCreate", description="""The class name of the entity (automatically populated during serialization)""")
+    name: Optional[str] = Field(default=None, description="""Name""")
 
 
 class User(ConfiguredBaseModel):
     """
     A user entity in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    id: str = Field(default=..., description="""Unique UUIDv4 identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
-         'domain_of': ['Project', 'User', 'Issue', 'IssueCreate', 'Edge']} })
-    class_name: Literal["User"] = Field(default="User", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    name: Optional[str] = Field(default=None, description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
-         'domain_of': ['Project', 'ProjectCreate', 'User', 'UserCreate']} })
-    email: Optional[str] = Field(default=None, description="""Email address""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['User', 'UserCreate']} })
+    id: str = Field(default=..., description="""Unique UUIDv4 identifier""")
+    class_name: Literal["User"] = Field(default="User", description="""The class name of the entity (automatically populated during serialization)""")
+    name: Optional[str] = Field(default=None, description="""Name""")
+    email: Optional[str] = Field(default=None, description="""Email address""")
 
     @field_validator('id')
     def pattern_id(cls, v):
@@ -173,20 +134,9 @@ class UserCreate(ConfiguredBaseModel):
     """
     A user entity in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    class_name: Literal["UserCreate"] = Field(default="UserCreate", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    name: Optional[str] = Field(default=None, description="""Name""", json_schema_extra = { "linkml_meta": {'alias': 'name',
-         'domain_of': ['Project', 'ProjectCreate', 'User', 'UserCreate']} })
-    email: Optional[str] = Field(default=None, description="""Email address""", json_schema_extra = { "linkml_meta": {'alias': 'email', 'domain_of': ['User', 'UserCreate']} })
+    class_name: Literal["UserCreate"] = Field(default="UserCreate", description="""The class name of the entity (automatically populated during serialization)""")
+    name: Optional[str] = Field(default=None, description="""Name""")
+    email: Optional[str] = Field(default=None, description="""Email address""")
 
     @field_validator('email')
     def pattern_email(cls, v):
@@ -206,21 +156,10 @@ class Issue(ConfiguredBaseModel):
     """
     An issue or ticket entity in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    id: str = Field(default=..., description="""Unique UUIDv4 identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
-         'domain_of': ['Project', 'User', 'Issue', 'IssueCreate', 'Edge']} })
-    class_name: Literal["Issue"] = Field(default="Issue", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    title: Optional[str] = Field(default=None, description="""Title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['Issue', 'IssueCreate']} })
-    description: Optional[str] = Field(default=None, description="""Description""", json_schema_extra = { "linkml_meta": {'alias': 'description', 'domain_of': ['Issue', 'IssueCreate']} })
+    id: str = Field(default=..., description="""Unique UUIDv4 identifier""")
+    class_name: Literal["Issue"] = Field(default="Issue", description="""The class name of the entity (automatically populated during serialization)""")
+    title: Optional[str] = Field(default=None, description="""Title""")
+    description: Optional[str] = Field(default=None, description="""Description""")
 
     @field_validator('id')
     def pattern_id(cls, v):
@@ -240,21 +179,10 @@ class IssueCreate(ConfiguredBaseModel):
     """
     An issue or ticket entity in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    id: str = Field(default=..., description="""Unique UUIDv4 identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
-         'domain_of': ['Project', 'User', 'Issue', 'IssueCreate', 'Edge']} })
-    class_name: Literal["IssueCreate"] = Field(default="IssueCreate", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    title: Optional[str] = Field(default=None, description="""Title""", json_schema_extra = { "linkml_meta": {'alias': 'title', 'domain_of': ['Issue', 'IssueCreate']} })
-    description: Optional[str] = Field(default=None, description="""Description""", json_schema_extra = { "linkml_meta": {'alias': 'description', 'domain_of': ['Issue', 'IssueCreate']} })
+    id: str = Field(default=..., description="""Unique UUIDv4 identifier""")
+    class_name: Literal["IssueCreate"] = Field(default="IssueCreate", description="""The class name of the entity (automatically populated during serialization)""")
+    title: Optional[str] = Field(default=None, description="""Title""")
+    description: Optional[str] = Field(default=None, description="""Description""")
 
     @field_validator('id')
     def pattern_id(cls, v):
@@ -274,22 +202,11 @@ class Edge(ConfiguredBaseModel):
     """
     Represents a relationship (edge) between two entities in the graph.
     """
-    linkml_meta: ClassVar[LinkMLMeta] = LinkMLMeta({'from_schema': 'http://example.org/my_schema'})
-
-    id: str = Field(default=..., description="""Unique UUIDv4 identifier""", json_schema_extra = { "linkml_meta": {'alias': 'id',
-         'domain_of': ['Project', 'User', 'Issue', 'IssueCreate', 'Edge']} })
-    class_name: Literal["Edge"] = Field(default="Edge", description="""The class name of the entity (automatically populated during serialization)""", json_schema_extra = { "linkml_meta": {'alias': 'class_name',
-         'designates_type': True,
-         'domain_of': ['Project',
-                       'ProjectCreate',
-                       'User',
-                       'UserCreate',
-                       'Issue',
-                       'IssueCreate',
-                       'Edge']} })
-    source: Optional[str] = Field(default=None, description="""The source entity id (UUIDv4) of the relationship""", json_schema_extra = { "linkml_meta": {'alias': 'source', 'domain_of': ['Edge']} })
-    target: Optional[str] = Field(default=None, description="""The target entity id (UUIDv4) of the relationship""", json_schema_extra = { "linkml_meta": {'alias': 'target', 'domain_of': ['Edge']} })
-    label: Optional[str] = Field(default=None, description="""The type or label of the relationship""", json_schema_extra = { "linkml_meta": {'alias': 'label', 'domain_of': ['Edge']} })
+    id: str = Field(default=..., description="""Unique UUIDv4 identifier""")
+    class_name: Literal["Edge"] = Field(default="Edge", description="""The class name of the entity (automatically populated during serialization)""")
+    source: Optional[str] = Field(default=None, description="""The source entity id (UUIDv4) of the relationship""")
+    target: Optional[str] = Field(default=None, description="""The target entity id (UUIDv4) of the relationship""")
+    label: Optional[str] = Field(default=None, description="""The type or label of the relationship""")
 
     @field_validator('id')
     def pattern_id(cls, v):

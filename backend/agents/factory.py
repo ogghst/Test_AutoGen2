@@ -21,9 +21,9 @@ from .project_management_agent import ProjectManagementAgent
 from .user_stories_agent import UserStoriesAgent
 from .user_profiler_agent import UserProfilerAgent
 from .user_agent import UserAgent
+from .knowledge_graph_agent import KnowledgeGraphAgent
 from session import UserSession
 
-from knowledge.knowledge_service import KnowledgeService
 from tools.tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
     PLANNING_AGENT_TOPIC_TYPE,
@@ -34,6 +34,7 @@ from tools.tools import (
     USER_STORIES_AGENT_TOPIC_TYPE,
     USER_PROFILER_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
+    KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE,
 )
 from tools.knowledge_tools import create_knowledge_tools
 
@@ -95,6 +96,9 @@ class AgentFactory:
         # Register the user agent
         #self.registered_agents[USER_TOPIC_TYPE] = await self._register_user_agent()
         
+        # Register the knowledge graph agent
+        self.registered_agents[KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE] = await self._register_knowledge_graph_agent()
+        
         self.registered_agents[USER_TOPIC_TYPE] = await self._register_websocket_agent()
         
         return self.registered_agents
@@ -145,6 +149,16 @@ class AgentFactory:
             type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
             factory=lambda: ProjectManagementAgent(
                 user_session=self.user_session,
+            ),
+        )
+    
+    async def _register_knowledge_graph_agent(self):
+        """Register the knowledge graph agent."""
+        return await AIAgent.register(
+            self.runtime,
+            type=KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE,
+            factory=lambda: KnowledgeGraphAgent(
+                user_session=self.user_session,
                 tools=create_knowledge_tools(self.user_session),
             ),
         )
@@ -155,8 +169,7 @@ class AgentFactory:
             self.runtime,
             type=USER_STORIES_AGENT_TOPIC_TYPE,
             factory=lambda: UserStoriesAgent(
-                user_session=self.user_session,
-                tools=create_knowledge_tools(self.user_session),
+                user_session=self.user_session
             ),
         )
 
@@ -166,8 +179,7 @@ class AgentFactory:
             self.runtime,
             type=USER_PROFILER_AGENT_TOPIC_TYPE,
             factory=lambda: UserProfilerAgent(
-                user_session=self.user_session,
-                tools=create_knowledge_tools(self.user_session),
+                user_session=self.user_session
             ),
         )
     
@@ -177,6 +189,7 @@ class AgentFactory:
             self.runtime,
             type=HUMAN_AGENT_TOPIC_TYPE,
             factory=lambda: HumanAgent(
+                user_session=self.user_session,
                 agent_topic_type=HUMAN_AGENT_TOPIC_TYPE,
                 user_topic_type=USER_TOPIC_TYPE,
             ),
@@ -188,6 +201,7 @@ class AgentFactory:
             self.runtime,
             type=USER_TOPIC_TYPE,
             factory=lambda: UserAgent(
+                user_session=self.user_session,
                 user_topic_type=USER_TOPIC_TYPE,
                 agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,  # Start with the triage agent
             ),

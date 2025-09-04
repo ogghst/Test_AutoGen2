@@ -11,7 +11,8 @@ import { ScrollArea } from '../components/ui/scroll-area';
 interface Message {
   id: string;
   text: string;
-  type: 'user' | 'system' | 'thinking' | 'log' | 'triage_agent' | "project_management_agent";
+  source: string;
+  type: string;
 }
 
 // Define a type for the session response
@@ -19,9 +20,9 @@ interface SessionResponse {
   session_id: string;
 }
 
-const getAvatarForType = (type: Message['type']) => {
-  switch (type) {
-    case 'user':
+const getAvatarForSource = (source: Message['source']) => {
+  switch (source) {
+    case 'User':
       return 'U';
     case 'triage_agent':
       return 'A';
@@ -31,23 +32,25 @@ const getAvatarForType = (type: Message['type']) => {
       return 'T';
     case 'log':
       return 'L';
+    case 'debug':
+      return 'D';
+    case 'knowledge_graph_agent':
+      return 'K';
     default:
       return '?';
   }
 };
 
-const getCardColorForType = (type: Message['type']) => {
-  switch (type) {
-    case 'user':
+const getCardColorForSource = (source: Message['source']) => {
+  switch (source) {
+    case 'User':
       return 'bg-primary text-primary-foreground';
     case 'triage_agent':
       return 'bg-secondary text-secondary-foreground';
     case 'project_management_agent':
       return 'bg-muted text-muted-foreground';
-    case 'thinking':
+    case 'knowledge_graph_agent':
       return 'bg-accent text-accent-foreground';
-    case 'log':
-      return 'bg-card text-card-foreground';
     default:
       return 'bg-card text-card-foreground';
   }
@@ -98,16 +101,47 @@ const ChatPage: React.FC = () => {
 
       ws.current.onopen = () => {
         console.log('WebSocket connection established');
-        setMessages(prev => [...prev, { id: uuidv4(), text: "Hello! How can I help you with your project today?", type: 'triage_agent' }]);
+        setMessages(prev => [...prev, { id: uuidv4(), text: "Hello! How can I help you with your project today?", type: 'triage_agent', source: 'triage_agent' }]);
       };
 
       ws.current.onmessage = (event) => {
         console.log('WebSocket message received:', event.data);
         const data = JSON.parse(event.data);
+        
+        // The backend sends the entire model dump of the message object
+        // We need to extract the content and source from the message structure
+        let content = '';
+        let source = 'User';
+        let type = 'AssistantMessage';
+        
+        if (data.content) {
+          // Handle different content types
+          if (typeof data.content === 'string') {
+            content = data.content;
+          } else if (Array.isArray(data.content)) {
+            // If content is an array, join the elements
+            content = data.content.map((item: any) => 
+              typeof item === 'string' ? item : JSON.stringify(item)
+            ).join(' ');
+          } else {
+            // If content is an object, stringify it
+            content = JSON.stringify(data.content);
+          }
+        }
+        
+        if (data.source) {
+          source = data.source;
+        }
+
+        if (data.type) {
+          type = data.type;
+        }
+        
         const newMessage: Message = {
           id: uuidv4(),
-          text: data.content,
-          type: data.source,
+          text: content,
+          type: type,
+          source: source,
         };
         setMessages(prev => [...prev, newMessage]);
       };
@@ -145,7 +179,8 @@ const ChatPage: React.FC = () => {
       const newMessage: Message = {
         id: uuidv4(),
         text: input,
-        type: 'user',
+        type: 'UserMessage',
+        source: 'User',
       };
       setMessages(prev => [...prev, newMessage]);
       ws.current.send(input);
@@ -170,22 +205,32 @@ const ChatPage: React.FC = () => {
             <div
               key={message.id}
               className={`flex items-start gap-4 ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
+                message.source === 'User' ? 'justify-end' : 'justify-start'
               }`}
             >
-              {message.type !== 'user' && (
+              {message.source !== 'User' && message.type !== 'debug' && (
                 <Avatar>
-                  <AvatarFallback>{getAvatarForType(message.type)}</AvatarFallback>
+                  <AvatarFallback>{getAvatarForSource(message.source)}</AvatarFallback>
                 </Avatar>
               )}
-              <Card className={`w-3/4 ${getCardColorForType(message.type)}`}>
-                <CardContent className="p-4">
-                  <ReactMarkdown>{message.text}</ReactMarkdown>
-                </CardContent>
-              </Card>
-              {message.type === 'user' && (
+              {message.type === 'debug' ? (
+                <Card className="w-full bg-gray-100 border-gray-300">
+                  <CardContent className="p-2">
+                    <div className="text-xs text-gray-600 font-mono">
+                      <ReactMarkdown>{message.text}</ReactMarkdown>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className={`w-3/4 ${getCardColorForSource(message.source)}`}>
+                  <CardContent className="p-4">
+                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                  </CardContent>
+                </Card>
+              )}
+              {message.source === 'User' && (
                 <Avatar>
-                  <AvatarFallback>{getAvatarForType(message.type)}</AvatarFallback>
+                  <AvatarFallback>{getAvatarForSource(message.source)}</AvatarFallback>
                 </Avatar>
               )}
             </div>
