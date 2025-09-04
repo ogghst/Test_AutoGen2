@@ -38,13 +38,13 @@ class KnowledgeGraphAgent(AIAgent):
             1. Analyze user request and identify entities and relationships to create or modify.
             2. Make a plan breaking down the request into smaller tasks, one per each entities and relationships to create or update.
                Example: if user asks to create a project with two users A and B, then you shall create a project, create a user A, create another user B, create a relationship between the user A and the project, create a relationship between the user B and the project.            
-            2. Call all the appropriate tools to create or modify the knowledge graph, call them in the order of the plan and call them only once for each task.
-            3. After creating entities, remember their id and make sure to create appropriate relationships between them.
+            3. Call all the appropriate tools to create or modify the knowledge graph, call them in the order of the plan and call them only once for each task.
+            4. After creating entities, remember their id and make sure to create appropriate relationships between them.
                Example: after creating a user, make sure it has the proper project role and create the relationship with label 'assigned_to' between the user and the project.
-            4. When the tool returns a success message, move to the next task until the plan is completed.
+            5. When the tool returns a success message, move to the next task until the plan is completed.
                Example of a successful user creation return message: {\"success\": true, \"message\": \"User successfully created\"}
-            5. After each tool execution, update the plan with success tasks and failed tasks and check whether other tool calls are needed.
-            6. terminate the conversation and transfer back to triage at each task completion.
+            6. After each tool execution, update the plan with success tasks and failed tasks and check whether other tool calls are needed.
+            7. Once all tasks in the plan are completed, terminate the conversation by transferring back to the triage agent.
            
             ## CONTEXT AND KNOWLEDGE GRAPH DATA
             1. Session_id of this project is: '{user_session.session_id}'. 

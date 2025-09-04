@@ -209,18 +209,6 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
                 - data: The JSON string representation of the created data
         """
         return ToolResponse(success=True, message="User successfully created", data=user_session.knowledge_service.create_entity("User", user.model_dump_json()))
-    
-    async def create_edge(edge: Annotated[Edge, "The JSON string representation of the edge to create."]) -> str:
-        """
-        Create a new Edge entity.
-        
-        Args:
-            edge: The Edge object to create.
-            
-        Returns:
-            str: A message stating that the edge was successfully created, with the content of the created edge.
-        """
-        return user_session.knowledge_service.create_entity("Edge", edge.model_dump_json())
 
     async def update_entity(entity_type: Annotated[str, "The type of the entity to update."], entity_id: Annotated[str, "The ID of the entity to update."], updates_json: Annotated[str, "The JSON string representation of the updates to apply."]) -> str:
         """
@@ -415,16 +403,15 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
         create_entity,
         description="Create a new entity without providing an ID. The system will generate a UUID."
     )
-    
 
     update_entity_tool = FunctionTool(
         update_entity,
-        description="Update an existing entity by ID. Returns JSON string with success status."
+        description="Update an existing entity by ID. Returns the JSON representation of the updated entity."
     )
 
     delete_entity_tool = FunctionTool(
         delete_entity,
-        description="Delete an entity by ID. Returns JSON string with success status."
+        description="Delete an entity by ID. Returns the JSON representation of the deleted entity."
     )
 
     #query_entities_tool = FunctionTool(
@@ -482,37 +469,22 @@ def create_knowledge_tools(user_session: UserSession) -> List[FunctionTool]:
     
     create_issue_tool = FunctionTool(
         create_issue,
-        description="""Create a new Issue entity.     
-                        Returns A JSON message with 
-                        - success: whether the task was successful (True) or not (False)    
-                        - message: the accomplished task
-                        - data: The JSON string representation of the created data
-                        """
+        description="Create a new Issue entity. Returns a ToolResponse with the result."
     )
 
     create_edge_tool = FunctionTool(
         create_edge,
-        description="Create a new Edge entity. Returns JSON representation of the generated edge data."
+        description="Create a new Edge entity. Returns a ToolResponse with the result."
     )
     
     create_user_tool = FunctionTool(
         create_user,
-        description="""Create a new User entity.             
-                        Returns A JSON message with 
-                        - success: whether the task was successful (True) or not (False)    
-                        - message: the accomplished task
-                        - data: The JSON string representation of the created data
-                        """
+        description="Create a new User entity. Returns a ToolResponse with the result."
     )
     
     create_relationship_tool = FunctionTool(
         create_relationship,
-        description="""Create a new relationship between two entities already existing with valid id.             
-                        Returns A JSON message with 
-                        - success: whether the task was successful (True) or not (False)
-                        - message: the accomplished task
-                        - data: The JSON string representation of the created data
-                        """
+        description="Create a new relationship between two existing entities. Returns a ToolResponse with the result."
     )
     
     set_current_project_id_tool = FunctionTool(
