@@ -241,6 +241,9 @@ class AIAgent(RoutedAgent):
                 AgentResponse(context=message.context, reply_to_topic_type=self._agent_topic_type),
                 topic_id=TopicId(self._user_topic_type, source=self.id.key),
             )
+        elif isinstance(llm_result.content, list) and all(isinstance(m, FunctionCall) for m in llm_result.content):
+            # All function calls were processed, task was delegated
+            logger.info(f"{self.id.type}: Task delegated via function calls, no final response needed")
         else:
             logger.warning(f"{self.id.type}: Unexpected LLM response format: {type(llm_result.content)}")
             

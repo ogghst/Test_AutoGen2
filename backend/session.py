@@ -20,6 +20,7 @@ class UserSession:
         self.response_queue = asyncio.Queue()
         self.agent_factory = None
         self.project_id = None
+        self.task_list = {}
 
     async def initialize(self):
         """Initialize the session with agents and runtime."""

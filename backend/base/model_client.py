@@ -44,7 +44,7 @@ def create_model_client(config_manager: ConfigManager) -> ChatCompletionClient:
         
         client = OllamaChatCompletionClient(
             model=ollama_config.model,
-            base_url=ollama_config.base_url,
+            host=ollama_config.base_url,
             model_info=ollama_config.model_info
         )
 

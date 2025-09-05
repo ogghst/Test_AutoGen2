@@ -214,13 +214,17 @@ const ChatPage: React.FC = () => {
                 </Avatar>
               )}
               {message.type === 'debug' ? (
-                <Card className="w-full bg-gray-100 border-gray-300">
-                  <CardContent className="p-2">
-                    <div className="text-xs text-gray-600 font-mono">
-                      <ReactMarkdown>{message.text}</ReactMarkdown>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="w-full bg-transparent text-green-600 font-mono text-xs p-2 rounded border-l-2 border-green-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-green-500">[DEBUG]</span>
+                    <span className="text-gray-500">{new Date().toLocaleTimeString()}</span>
+                    <span className="text-gray-400">|</span>
+                    <span className="text-yellow-600">{message.source}</span>
+                  </div>
+                  <div className="text-green-600 whitespace-pre-wrap">
+                    {message.text}
+                  </div>
+                </div>
               ) : (
                 <Card className={`w-3/4 ${getCardColorForSource(message.source)}`}>
                   <CardContent className="p-4">
