@@ -531,4 +531,311 @@ class GraphTools:
             matches = re.findall(pattern, prompt)
             concepts.extend(matches)
 
-        # Rimuovi duplicati e parole troppo c
+        # Rimuovi duplicati e parole troppo comuni
+        common_words = {"the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by"}
+        concepts = list(set([c for c in concepts if c.lower() not in common_words]))
+
+        return concepts[:10]  # Limita a 10 concetti
+
+    def _analyze_relationship(self, entity1: Dict, entity2: Dict, prompt: str) -> Optional[Dict]:
+        """Analizza la relazione tra due entitÃ """
+        name1, name2 = entity1["name"], entity2["name"]
+
+        # Calcola distanza nel testo
+        pos1 = prompt.find(name1)
+        pos2 = prompt.find(name2)
+
+        if pos1 == -1 or pos2 == -1:
+            return None
+
+        distance = abs(pos1 - pos2)
+
+        # Se le entitÃ  sono vicine, c'Ã¨ probabilmente una relazione
+        if distance < 100:  # Soglia di prossimitÃ 
+            # Cerca parole chiave di relazione tra le entitÃ 
+            start, end = min(pos1, pos2), max(pos1, pos2)
+            between_text = prompt[start:end].lower()
+
+            relationship_type = "related_to"  # Default
+            strength = 1.0
+
+            for keyword in self.relationship_keywords:
+                if keyword in between_text:
+                    relationship_type = keyword.replace(" ", "_")
+                    strength = 1.5
+                    break
+
+            return {
+                "source": name1,
+                "target": name2,
+                "type": relationship_type,
+                "strength": strength,
+                "distance": distance
+            }
+
+        return None
+
+    def _extract_linguistic_relationships(self, prompt: str, entities: List[Dict]) -> List[Dict]:
+        """Estrae relazioni basate su pattern linguistici"""
+        relationships = []
+        entity_names = [e["name"] for e in entities]
+
+        # Pattern semplici per relazioni
+        patterns = [
+            (r'(\w+)\s+Ã¨\s+un(?:a)?\s+(\w+)', "is_a"),
+            (r'(\w+)\s+ha\s+(\w+)', "has"),
+            (r'(\w+)\s+contiene\s+(\w+)', "contains"),
+            (r'(\w+)\s+causa\s+(\w+)', "causes"),
+            (r'(\w+)\s+utilizza\s+(\w+)', "uses"),
+        ]
+
+        for pattern, rel_type in patterns:
+            matches = re.findall(pattern, prompt, re.IGNORECASE)
+            for match in matches:
+                source, target = match
+                # Verifica che le entitÃ  siano nella lista estratta
+                if source in entity_names and target in entity_names:
+                    relationships.append({
+                        "source": source,
+                        "target": target,
+                        "type": rel_type,
+                        "strength": 2.0  # Pattern linguistici hanno alta confidenza
+                    })
+
+        return relationships
+
+# SIMULAZIONE AUTOGEN CORE (per testing - rimuovere in produzione)
+class MessageContext:
+    def __init__(self, topic_id=None):
+        self.topic_id = topic_id
+
+class RoutedAgent:
+    def __init__(self, description: str):
+        self.description = description
+        self._message_handlers = {}
+
+    async def handle_message(self, message, ctx):
+        message_type = type(message).__name__
+        if message_type in self._message_handlers:
+            return await self._message_handlers[message_type](self, message, ctx)
+        else:
+            raise ValueError(f"No handler for message type: {message_type}")
+
+def message_handler(func):
+    """Decorator per registrare i message handlers"""
+    return func
+
+# IMPLEMENTAZIONE PRINCIPALE: PromptToGraphRoutedAgent
+class PromptToGraphRoutedAgent(RoutedAgent):
+    """
+    Agente AutoGen per trasformazione di prompt in strutture di grafi.
+
+    Implementa l'architettura proposta per il controllo del contesto e del flusso
+    in agenti LLM multi-tool, con particolare focus sulla manipolazione di grafi.
+
+    Caratteristiche:
+    - Progressive Context Disclosure
+    - Tool auto-descrittivi con intelligence degli errori  
+    - Escalation intelligente dei fallimenti
+    - Gestione controllata del contesto
+
+    Usage:
+        agent = PromptToGraphRoutedAgent()
+        request = PromptToGraphRequest(prompt="Il machine learning...")
+        response = await agent.handle_prompt_to_graph_request(request, ctx)
+    """
+
+    def __init__(self, llm_client=None):
+        super().__init__("PromptToGraphAgent")
+        self.llm_client = llm_client
+        self.context_manager = GraphContextManager()
+        self.graph_tools = GraphTools()
+        self.attempt_counter = {}
+        self.max_attempts = 3
+
+    @message_handler
+    async def handle_prompt_to_graph_request(self, message: PromptToGraphRequest, ctx: MessageContext) -> PromptToGraphResponse:
+        """
+        Handler principale per le richieste di conversione prompt-to-graph.
+        Implementa il principio di progressive context disclosure.
+        """
+        try:
+            # Fase 1: Inizializzazione del contesto
+            context_id = self.context_manager.create_context(
+                original_prompt=message.prompt,
+                request_params=message,
+                objective="Transform prompt into structured graph representation"
+            )
+
+            # Fase 2: Pianificazione con controllo del contesto
+            execution_plan = await self._create_execution_plan(message, context_id)
+
+            # Fase 3: Esecuzione controllata con escalation
+            graph_result = await self._execute_with_progressive_context(
+                execution_plan, context_id, ctx
+            )
+
+            return PromptToGraphResponse(
+                graph=graph_result,
+                processing_info={
+                    "context_id": context_id,
+                    "execution_steps": len(execution_plan.steps),
+                    "attempts": self.attempt_counter.get(context_id, 1)
+                },
+                success=True
+            )
+
+        except Exception as e:
+            return PromptToGraphResponse(
+                graph=GraphStructure(nodes=[], edges=[]),
+                success=False,
+                error_message=str(e)
+            )
+
+    async def _create_execution_plan(self, request: PromptToGraphRequest, context_id: str):
+        """Crea un piano di esecuzione per la trasformazione del prompt"""
+        return ExecutionPlan(
+            steps=[
+                ExecutionStep("analyze_prompt", "Analizza il prompt per identificare entitÃ  e concetti"),
+                ExecutionStep("extract_entities", "Estrai entitÃ  principali e loro proprietÃ "),
+                ExecutionStep("identify_relationships", "Identifica relazioni tra entitÃ "),
+                ExecutionStep("construct_graph", "Costruisci la struttura del grafo"),
+                ExecutionStep("optimize_layout", "Ottimizza il layout e la visualizzazione")
+            ],
+            context_id=context_id
+        )
+
+    async def _execute_with_progressive_context(self, plan, context_id: str, ctx: MessageContext):
+        """
+        Esecuzione con progressive context disclosure.
+        Implementa il principio architetturale del controllo del contesto.
+        """
+        attempt_count = 0
+
+        while not self.context_manager.is_complete(context_id) and attempt_count < self.max_attempts:
+            try:
+                # Preparazione del contesto minimo per LLM
+                llm_context = self.context_manager.prepare_minimal_context(context_id)
+
+                # Aggiunta contesto di errore se tentativi precedenti
+                if attempt_count > 0:
+                    llm_context = self.context_manager.add_error_context(llm_context, context_id)
+
+                # Aggiunta contesto storico per fallimenti ripetuti
+                if attempt_count > 1:
+                    llm_context = self.context_manager.add_historical_context(llm_context, context_id)
+
+                # Esecuzione step corrente
+                current_step = self.context_manager.get_current_step(context_id)
+                result = await self._execute_step(current_step, llm_context, ctx)
+
+                # Aggiornamento contesto con risultato
+                self.context_manager.update_with_result(context_id, result)
+
+                # Valutazione progresso
+                if result.success:
+                    attempt_count = 0  # Reset per nuovo step
+                    self.context_manager.advance_step(context_id)
+                else:
+                    attempt_count += 1
+                    self.context_manager.record_failure(context_id, result.error)
+
+            except Exception as e:
+                attempt_count += 1
+                self.context_manager.record_failure(context_id, str(e))
+
+        # Costruzione del risultato finale
+        return self.context_manager.get_final_result(context_id)
+
+    async def _execute_step(self, step_name: str, llm_context: Dict[str, Any], ctx: MessageContext) -> StepResult:
+        """
+        Esegue uno step specifico del processo di trasformazione.
+        Implementa la logica di escalation intelligente.
+        """
+
+        if step_name == "analyze_prompt":
+            return await self.graph_tools.analyze_prompt(
+                llm_context["current_prompt"], 
+                llm_context
+            )
+
+        elif step_name == "extract_entities":
+            return await self.graph_tools.extract_entities(
+                llm_context["current_prompt"],
+                llm_context
+            )
+
+        elif step_name == "identify_relationships":
+            entities = llm_context.get("extracted_entities", [])
+            return await self.graph_tools.identify_relationships(
+                entities,
+                llm_context["current_prompt"],
+                llm_context
+            )
+
+        elif step_name == "construct_graph":
+            entities = llm_context.get("extracted_entities", [])
+            relationships = llm_context.get("identified_relationships", [])
+            return await self.graph_tools.construct_graph(
+                entities, relationships, llm_context
+            )
+
+        elif step_name == "optimize_layout":
+            # Placeholder per ottimizzazione layout
+            return StepResult(success=True, data={"layout": "optimized"})
+
+        else:
+            return StepResult(
+                success=False,
+                error=f"Step non riconosciuto: {step_name}. Gli step validi sono: analyze_prompt, extract_entities, identify_relationships, construct_graph, optimize_layout."
+            )
+
+# ESEMPIO DI UTILIZZO
+async def example_usage():
+    """
+    Esempio di utilizzo del PromptToGraphRoutedAgent
+    """
+
+    # Creazione dell'agente
+    agent = PromptToGraphRoutedAgent()
+
+    # Creazione della richiesta
+    request = PromptToGraphRequest(
+        prompt="""
+        Il machine learning Ã¨ una branca dell'intelligenza artificiale che utilizza algoritmi 
+        per imparare dai dati. I neural networks sono un tipo di algoritmo di machine learning 
+        che imita il cervello umano. Il deep learning Ã¨ una sottocategoria del machine learning 
+        che usa reti neurali profonde. TensorFlow e PyTorch sono framework per implementare 
+        questi algoritmi.
+        """,
+        graph_type="knowledge_graph",
+        max_nodes=15,
+        include_relationships=True
+    )
+
+    # Simulazione del MessageContext  
+    ctx = MessageContext(topic_id="example_topic")
+
+    # Esecuzione della trasformazione
+    response = await agent.handle_prompt_to_graph_request(request, ctx)
+
+    if response.success:
+        print("âœ… Grafo generato con successo!")
+        print(f"Nodi: {len(response.graph.nodes)}")
+        print(f"Archi: {len(response.graph.edges)}")
+
+        # Esporta in JSON
+        json_output = response.graph.to_json()
+        print("ðŸ“„ Export JSON:", json_output[:200] + "...")
+
+        # Esporta in Cypher per Neo4j
+        cypher_output = response.graph.export_to_cypher()
+        print("ðŸ—„ï¸ Export Cypher:", cypher_output[:200] + "...")
+
+    else:
+        print(f"âŒ Errore: {response.error_message}")
+
+if __name__ == "__main__":
+    # Per eseguire l'esempio:
+    # asyncio.run(example_usage())
+    pass
