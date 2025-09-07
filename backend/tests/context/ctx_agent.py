@@ -22,13 +22,12 @@ import json
 import asyncio
 import re
 import uuid
+from pydantic import BaseModel, Field
 
-# Per integrazione con AutoGen reale, decommentare:
-# from autogen_core import RoutedAgent, MessageContext, message_handler
+from autogen_core import RoutedAgent, MessageContext, message_handler
 
 # STRUTTURE DATI PER IL SISTEMA DI MESSAGGI
-@dataclass
-class PromptToGraphRequest:
+class PromptToGraphRequest(BaseModel):
     """Richiesta per convertire un prompt in struttura a grafo"""
     prompt: str
     context: Optional[str] = None
@@ -37,59 +36,35 @@ class PromptToGraphRequest:
     max_depth: int = 3
     include_relationships: bool = True
 
-@dataclass 
-class GraphNode:
+class GraphNode(BaseModel):
     """Nodo del grafo"""
     id: str
     label: str
     type: str
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: Dict[str, Any] = Field(default_factory=dict)
     position: Optional[Dict[str, float]] = None
 
-@dataclass
-class GraphEdge:
+class GraphEdge(BaseModel):
     """Arco del grafo"""
     id: str
     source: str
     target: str
     relationship: str
     weight: float = 1.0
-    properties: Dict[str, Any] = field(default_factory=dict)
+    properties: Dict[str, Any] = Field(default_factory=dict)
 
-@dataclass
-class GraphStructure:
+class GraphStructure(BaseModel):
     """Struttura completa del grafo"""
     nodes: List[GraphNode]
     edges: List[GraphEdge]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self):
-        return {
-            "nodes": [
-                {
-                    "id": node.id,
-                    "label": node.label,
-                    "type": node.type,
-                    "properties": node.properties,
-                    "position": node.position
-                } for node in self.nodes
-            ],
-            "edges": [
-                {
-                    "id": edge.id,
-                    "source": edge.source,
-                    "target": edge.target,
-                    "relationship": edge.relationship,
-                    "weight": edge.weight,
-                    "properties": edge.properties
-                } for edge in self.edges
-            ],
-            "metadata": self.metadata
-        }
+        return self.dict()
 
     def to_json(self) -> str:
         """Esporta il grafo in formato JSON"""
-        return json.dumps(self.to_dict(), indent=2)
+        return self.model_dump_json(indent=2)
 
     def export_to_cypher(self) -> str:
         """Esporta il grafo come script Cypher per Neo4j"""
@@ -112,11 +87,10 @@ class GraphStructure:
 
         return "\n".join(cypher_commands)
 
-@dataclass
-class PromptToGraphResponse:
+class PromptToGraphResponse(BaseModel):
     """Risposta con il grafo generato"""
     graph: GraphStructure
-    processing_info: Dict[str, Any] = field(default_factory=dict)
+    processing_info: Dict[str, Any] = Field(default_factory=dict)
     success: bool = True
     error_message: Optional[str] = None
 
@@ -604,26 +578,6 @@ class GraphTools:
 
         return relationships
 
-# SIMULAZIONE AUTOGEN CORE (per testing - rimuovere in produzione)
-class MessageContext:
-    def __init__(self, topic_id=None):
-        self.topic_id = topic_id
-
-class RoutedAgent:
-    def __init__(self, description: str):
-        self.description = description
-        self._message_handlers = {}
-
-    async def handle_message(self, message, ctx):
-        message_type = type(message).__name__
-        if message_type in self._message_handlers:
-            return await self._message_handlers[message_type](self, message, ctx)
-        else:
-            raise ValueError(f"No handler for message type: {message_type}")
-
-def message_handler(func):
-    """Decorator per registrare i message handlers"""
-    return func
 
 # IMPLEMENTAZIONE PRINCIPALE: PromptToGraphRoutedAgent
 class PromptToGraphRoutedAgent(RoutedAgent):
