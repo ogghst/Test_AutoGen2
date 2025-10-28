@@ -7,8 +7,10 @@ This agent is responsible for creating project plans and gathering requirements.
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
+
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     PLANNING_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
     create_project_plan_tool,
@@ -26,7 +28,7 @@ class PlanningAgent(AIAgent):
     - Creating project timelines and milestones
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the PlanningAgent.
         
@@ -50,7 +52,6 @@ class PlanningAgent(AIAgent):
         super().__init__(
             description="A project planning agent responsible for creating project plans and gathering requirements.",
             system_message=system_message,
-            model_client=model_client,
             tools=planning_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=PLANNING_AGENT_TOPIC_TYPE,

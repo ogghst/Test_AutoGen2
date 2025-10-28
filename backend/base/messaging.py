@@ -5,7 +5,7 @@ This module contains the core message classes and the base AIAgent class that al
 specialized agents inherit from.
 """
 
-from typing import List
+from typing import List, Literal
 
 from pydantic import BaseModel
 
@@ -26,5 +26,16 @@ class AgentResponse(BaseModel):
     """Message class for agent responses."""
     reply_to_topic_type: str
     context: List[LLMMessage]
+    
+
+class DebugMessage(BaseModel):
+    """Message class for debug messages."""
+    content: str
+    source: str
+    type: Literal['debug'] = 'debug'    
+class DebugResponse(BaseModel):
+    """Message class for debug messages."""
+    reply_to_topic_type: str
+    context: List[DebugMessage]
 
 

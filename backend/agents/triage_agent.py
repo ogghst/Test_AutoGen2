@@ -1,21 +1,17 @@
-"""
-Triage Agent for the handoffs pattern.
-
-This agent is responsible for understanding user requests and routing them to
-appropriate specialized agents.
-"""
-
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
+
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
     #transfer_to_planning_tool,
     transfer_to_execution_tool,
     transfer_to_quality_tool,
     transfer_to_project_management_tool,
+    transfer_to_knowledge_graph_tool,
     transfer_to_user_stories_tool,
     transfer_to_user_profiler_tool,
     escalate_to_human_tool,
@@ -30,12 +26,12 @@ class TriageAgent(AIAgent):
     specialized agent should handle the request based on the content and context.
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the TriageAgent.
         
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard delegation tools
         """
         system_message = SystemMessage(
@@ -51,6 +47,7 @@ class TriageAgent(AIAgent):
             "- User Stories Agent: For generating comprehensive user stories with EARS notation acceptance criteria\n"
             "- User Profiler Agent: For understanding the user's capabilities and knowledge\n"
             "- Human Agent: For complex requests requiring human intervention\n\n"
+            "- Knowledge Graph Agent: For creating or modifying a knowledge graph, entities and relationships\n"
             "Always be helpful and professional. Route users to the most appropriate agent."
         )
         
@@ -59,15 +56,16 @@ class TriageAgent(AIAgent):
             transfer_to_execution_tool,
             transfer_to_quality_tool,
             transfer_to_project_management_tool,
+            transfer_to_knowledge_graph_tool,
             transfer_to_user_stories_tool,
             transfer_to_user_profiler_tool,
             escalate_to_human_tool,
         ]
         
         super().__init__(
+            user_session=user_session,
             description="A triage agent responsible for understanding user requests and routing to appropriate agents.",
             system_message=system_message,
-            model_client=model_client,
             tools=tools or [],
             delegate_tools=delegate_tools,
             agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,

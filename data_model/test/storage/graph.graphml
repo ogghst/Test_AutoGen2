@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d9" for="node" attr.name="last_updated" attr.type="string" />
+  <key id="d8" for="node" attr.name="id" attr.type="string" />
+  <key id="d7" for="node" attr.name="created_date" attr.type="string" />
+  <key id="d6" for="node" attr.name="vision" attr.type="string" />
+  <key id="d5" for="node" attr.name="__type__" attr.type="string" />
+  <key id="d4" for="node" attr.name="status" attr.type="string" />
+  <key id="d3" for="node" attr.name="sdlc_phase" attr.type="string" />
+  <key id="d2" for="node" attr.name="methodology" attr.type="string" />
+  <key id="d1" for="node" attr.name="description" attr.type="string" />
+  <key id="d0" for="node" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="cff3afd6-2a27-4ea4-9637-f9f779d0edcb">
+      <data key="d0">New Project</data>
+      <data key="d1">A new project</data>
+      <data key="d2">Hybrid</data>
+      <data key="d3">Concept</data>
+      <data key="d4">Initiation</data>
+      <data key="d5">Project</data>
+    </node>
+    <node id="74ac6f15-820d-4169-baf2-4179475e8855">
+      <data key="d0">Residential House Construction Project</data>
+      <data key="d6">To build a modern, energy-efficient single-family home that meets all local building codes and provides comfortable living space for a family of four</data>
+      <data key="d1">Complete construction of a 2,500 sq ft single-family residence with 4 bedrooms, 3 bathrooms, modern kitchen, living room, dining area, and two-car garage. The project includes site preparation, foundation work, framing, roofing, electrical, plumbing, HVAC installation, interior finishing, and landscaping.</data>
+      <data key="d2">Waterfall</data>
+      <data key="d3">Concept</data>
+      <data key="d4">Initiation</data>
+      <data key="d7">2024-01-15</data>
+      <data key="d5">project</data>
+    </node>
+    <node id="14dc5ee4-ff99-4fb3-b40b-6b2e1ca4e71c">
+      <data key="d8">14dc5ee4-ff99-4fb3-b40b-6b2e1ca4e71c</data>
+      <data key="d0">New Project</data>
+      <data key="d1">A new project</data>
+      <data key="d2">Hybrid</data>
+      <data key="d3">Concept</data>
+      <data key="d4">Initiation</data>
+      <data key="d5">Project</data>
+    </node>
+    <node id="9b5da70f-7fd5-4cd4-81c0-f6ed5209c7ee">
+      <data key="d8">9b5da70f-7fd5-4cd4-81c0-f6ed5209c7ee</data>
+      <data key="d0">House Construction Project</data>
+      <data key="d6">To build a modern, energy-efficient single-family home that meets all building codes and provides comfortable living space for a family of four</data>
+      <data key="d1">Complete construction of a 2,500 sq ft single-family home with 4 bedrooms, 3 bathrooms, modern kitchen, living room, dining room, and 2-car garage. The project includes site preparation, foundation work, framing, roofing, electrical, plumbing, HVAC, insulation, drywall, flooring, painting, and landscaping.</data>
+      <data key="d2">Waterfall</data>
+      <data key="d3">Concept</data>
+      <data key="d4">Initiation</data>
+      <data key="d7">2024-01-15</data>
+      <data key="d9">2024-01-15</data>
+      <data key="d5">project</data>
+    </node>
+  </graph>
+</graphml>

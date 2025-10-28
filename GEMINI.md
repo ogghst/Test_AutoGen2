@@ -100,7 +100,7 @@ To update the data models, you need to:
 2.  Run the following command to regenerate the pydantic models:
 
 ```bash
-linkml-generate-pydantic data_model/data_model.yaml > backend/models/data_models.py
+gen-pydantic data_model/data_model.yaml > backend/models/data_models.py
 ```
 
 ### File Structure

@@ -104,7 +104,8 @@ def run_unittest_tests(test_paths: List[str]) -> bool:
 def run_specific_test_category(category: str, output_format: str = "verbose") -> bool:
     """Run tests for a specific category."""
     test_mapping = {
-        "knowledge_base": ["test_knowledge_base.py"],
+        "knowledge_base": ["test_knowledge_base.py", "test_knowledge_service.py"],
+        "knowledge_service": ["test_knowledge_service.py"],
         "document_store": ["test_document_store.py"],
         "agents": ["test_agents.py"],
         "unit": ["-m", "unit"],
@@ -149,6 +150,7 @@ def main():
 Examples:
   python run_tests.py                    # Run all tests
   python run_tests.py -c knowledge_base # Run only knowledge base tests
+  python run_tests.py -c knowledge_service # Run only knowledge service tests
   python run_tests.py -m unit           # Run only unit tests
   python run_tests.py -o quiet          # Run tests with quiet output
   python run_tests.py --coverage        # Run tests with coverage report
@@ -158,7 +160,7 @@ Examples:
     
     parser.add_argument(
         "-c", "--category",
-        choices=["knowledge_base", "document_store", "agents", "unit", "integration", "performance", "all"],
+        choices=["knowledge_base", "knowledge_service", "document_store", "agents", "unit", "integration", "performance", "all"],
         default="all",
         help="Test category to run (default: all)"
     )

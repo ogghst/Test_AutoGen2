@@ -10,7 +10,8 @@ import json
 import re
 import uuid
 from datetime import datetime, date
-
+from enum import Enum
+from pydantic import BaseModel
 from config.logging_config import get_logger
 from autogen_core.tools import FunctionTool
 from models.data_models import Project
@@ -40,6 +41,12 @@ PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE = "project_management_agent"
 USER_STORIES_AGENT_TOPIC_TYPE = "user_stories_agent"
 USER_PROFILER_AGENT_TOPIC_TYPE = "user_profiler_agent"
 USER_TOPIC_TYPE = "user"
+KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE = "knowledge_graph_agent"
+
+class ToolResponse(BaseModel):
+    success: bool
+    message: str
+    data: str
 
 
 # Tool functions for agent delegation
@@ -81,6 +88,10 @@ async def transfer_to_user_stories_agent() -> str:
 async def transfer_to_user_profiler_agent() -> str:
     """Transfer control to the user profiler agent."""
     return USER_PROFILER_AGENT_TOPIC_TYPE
+
+async def transfer_to_knowledge_graph_agent() -> str:
+    """Transfer control to the knowledge graph agent."""
+    return KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE
 
 
 # Tool functions for project management tasks
@@ -445,7 +456,7 @@ transfer_to_quality_tool = FunctionTool(
 
 transfer_to_project_management_tool = FunctionTool(
     transfer_to_project_management_agent,
-    description="Only call this if explicitly asked to create a PMI-compliant project management plan or follow PMI best practices.",
+    description="Only call this if explicitly asked to create or modify a project.",
 )
 
 transfer_back_to_triage_tool = FunctionTool(
@@ -503,4 +514,9 @@ transfer_to_user_stories_tool = FunctionTool(
 transfer_to_user_profiler_tool = FunctionTool(
     transfer_to_user_profiler_agent,
     description="Only call this if explicitly asked to create a user profile.",
+)
+
+transfer_to_knowledge_graph_tool = FunctionTool(
+    transfer_to_knowledge_graph_agent,
+    description="Only call this if explicitly asked to create or modify a knowledge graph, entities and relationships.",
 )

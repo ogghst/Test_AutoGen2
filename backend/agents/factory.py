@@ -21,7 +21,10 @@ from .project_management_agent import ProjectManagementAgent
 from .user_stories_agent import UserStoriesAgent
 from .user_profiler_agent import UserProfilerAgent
 from .user_agent import UserAgent
-from .tools import (
+from .knowledge_graph_agent import KnowledgeGraphAgent
+from session import UserSession
+
+from tools.tools import (
     TRIAGE_AGENT_TOPIC_TYPE,
     PLANNING_AGENT_TOPIC_TYPE,
     EXECUTION_AGENT_TOPIC_TYPE,
@@ -31,7 +34,9 @@ from .tools import (
     USER_STORIES_AGENT_TOPIC_TYPE,
     USER_PROFILER_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
+    KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE,
 )
+from tools.knowledge_tools import create_knowledge_tools
 
 
 class AgentFactory:
@@ -42,19 +47,20 @@ class AgentFactory:
     making the system more maintainable and configurable.
     """
     
-    def __init__(self, runtime: SingleThreadedAgentRuntime, model_client: ChatCompletionClient):
+    def __init__(self, user_session: UserSession):
         """
         Initialize the AgentFactory.
         
         Args:
-            runtime: The agent runtime for registration
-            model_client: The LLM client for AI agents
+            user_session: The user session object.
         """
-        self.runtime = runtime
-        self.model_client = model_client
+        self.user_session = user_session
+        self.runtime = user_session.runtime
+        self.model_client = user_session.model_client
+        self.knowledge_service = user_session.knowledge_service
         self.registered_agents = {}
-        self.input_queue = asyncio.Queue()
-        self.response_queue = asyncio.Queue()
+        self.input_queue = user_session.input_queue
+        self.response_queue = user_session.response_queue
     
     async def register_all_agents(self):
         """
@@ -90,6 +96,9 @@ class AgentFactory:
         # Register the user agent
         #self.registered_agents[USER_TOPIC_TYPE] = await self._register_user_agent()
         
+        # Register the knowledge graph agent
+        self.registered_agents[KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE] = await self._register_knowledge_graph_agent()
+        
         self.registered_agents[USER_TOPIC_TYPE] = await self._register_websocket_agent()
         
         return self.registered_agents
@@ -106,7 +115,7 @@ class AgentFactory:
         return await AIAgent.register(
             self.runtime,
             type=TRIAGE_AGENT_TOPIC_TYPE,
-            factory=lambda: TriageAgent(self.model_client),
+            factory=lambda: TriageAgent(self.user_session),
         )
     
     #async def _register_planning_agent(self):
@@ -114,7 +123,7 @@ class AgentFactory:
     #    return await AIAgent.register(
     #        self.runtime,
     #        type=PLANNING_AGENT_TOPIC_TYPE,
-    #        factory=lambda: PlanningAgent(self.model_client),
+    #        factory=lambda: PlanningAgent(self.user_session),
     #    )
     
     async def _register_execution_agent(self):
@@ -122,7 +131,7 @@ class AgentFactory:
         return await AIAgent.register(
             self.runtime,
             type=EXECUTION_AGENT_TOPIC_TYPE,
-            factory=lambda: ExecutionAgent(self.model_client),
+            factory=lambda: ExecutionAgent(self.user_session),
         )
     
     async def _register_quality_agent(self):
@@ -130,7 +139,7 @@ class AgentFactory:
         return await AIAgent.register(
             self.runtime,
             type=QUALITY_AGENT_TOPIC_TYPE,
-            factory=lambda: QualityAgent(self.model_client),
+            factory=lambda: QualityAgent(self.user_session),
         )
     
     async def _register_project_management_agent(self):
@@ -138,7 +147,20 @@ class AgentFactory:
         return await AIAgent.register(
             self.runtime,
             type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
-            factory=lambda: ProjectManagementAgent(self.model_client),
+            factory=lambda: ProjectManagementAgent(
+                user_session=self.user_session,
+            ),
+        )
+    
+    async def _register_knowledge_graph_agent(self):
+        """Register the knowledge graph agent."""
+        return await AIAgent.register(
+            self.runtime,
+            type=KNOWLEDGE_GRAPH_AGENT_TOPIC_TYPE,
+            factory=lambda: KnowledgeGraphAgent(
+                user_session=self.user_session,
+                tools=create_knowledge_tools(self.user_session),
+            ),
         )
     
     async def _register_user_stories_agent(self):
@@ -146,7 +168,9 @@ class AgentFactory:
         return await AIAgent.register(
             self.runtime,
             type=USER_STORIES_AGENT_TOPIC_TYPE,
-            factory=lambda: UserStoriesAgent(self.model_client),
+            factory=lambda: UserStoriesAgent(
+                user_session=self.user_session
+            ),
         )
 
     async def _register_user_profiler_agent(self):
@@ -154,7 +178,9 @@ class AgentFactory:
         return await AIAgent.register(
             self.runtime,
             type=USER_PROFILER_AGENT_TOPIC_TYPE,
-            factory=lambda: UserProfilerAgent(self.model_client),
+            factory=lambda: UserProfilerAgent(
+                user_session=self.user_session
+            ),
         )
     
     async def _register_human_agent(self):
@@ -163,6 +189,7 @@ class AgentFactory:
             self.runtime,
             type=HUMAN_AGENT_TOPIC_TYPE,
             factory=lambda: HumanAgent(
+                user_session=self.user_session,
                 agent_topic_type=HUMAN_AGENT_TOPIC_TYPE,
                 user_topic_type=USER_TOPIC_TYPE,
             ),
@@ -174,6 +201,7 @@ class AgentFactory:
             self.runtime,
             type=USER_TOPIC_TYPE,
             factory=lambda: UserAgent(
+                user_session=self.user_session,
                 user_topic_type=USER_TOPIC_TYPE,
                 agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,  # Start with the triage agent
             ),
@@ -185,8 +213,7 @@ class AgentFactory:
             self.runtime,
             type=USER_TOPIC_TYPE,
             factory=lambda: WebSocketAgent(
-                input_queue=self.input_queue,
-                response_queue=self.response_queue,
+                user_session=self.user_session,
                 user_topic_type=USER_TOPIC_TYPE,
                 agent_topic_type=TRIAGE_AGENT_TOPIC_TYPE,
             )

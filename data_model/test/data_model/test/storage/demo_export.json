@@ -1,0 +1,41 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "id": "bcf0f417-4c7d-44b5-9efa-63e5001a2e88",
+      "name": "Test Project"
+    },
+    {
+      "id": "59c7f35d-6c95-4a9a-bf79-a86b6cf442fb",
+      "name": "John Doe",
+      "email": "john.doe@example.com"
+    },
+    {
+      "id": "39d13a80-f89a-479a-83ca-b32dad5e7825",
+      "title": "Bug in authentication",
+      "description": "Users cannot log in with special characters in password"
+    }
+  ],
+  "links": [
+    {
+      "id": "4ae7681c-33af-45fd-a3b7-c18231bf54f7",
+      "source": "59c7f35d-6c95-4a9a-bf79-a86b6cf442fb",
+      "target": "bcf0f417-4c7d-44b5-9efa-63e5001a2e88",
+      "label": "assigned_to"
+    },
+    {
+      "id": "7e5405f2-c35b-4731-8e53-bfe97e213b1e",
+      "source": "59c7f35d-6c95-4a9a-bf79-a86b6cf442fb",
+      "target": "39d13a80-f89a-479a-83ca-b32dad5e7825",
+      "label": "created"
+    },
+    {
+      "id": "9e3329f0-5f7c-4842-9ca1-4c9d6ce29382",
+      "source": "39d13a80-f89a-479a-83ca-b32dad5e7825",
+      "target": "bcf0f417-4c7d-44b5-9efa-63e5001a2e88",
+      "label": "belongs_to"
+    }
+  ]
+}

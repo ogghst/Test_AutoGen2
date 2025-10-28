@@ -179,11 +179,23 @@ class IssueCreate(ConfiguredBaseModel):
     """
     An issue or ticket entity in the graph.
     """
-
+    id: str = Field(default=..., description="""Unique UUIDv4 identifier""")
     class_name: Literal["IssueCreate"] = Field(default="IssueCreate", description="""The class name of the entity (automatically populated during serialization)""")
     title: Optional[str] = Field(default=None, description="""Title""")
     description: Optional[str] = Field(default=None, description="""Description""")
 
+    @field_validator('id')
+    def pattern_id(cls, v):
+        pattern=re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+        if isinstance(v, list):
+            for element in v:
+                if isinstance(element, str) and not pattern.match(element):
+                    err_msg = f"Invalid id format: {element}"
+                    raise ValueError(err_msg)
+        elif isinstance(v, str) and not pattern.match(v):
+            err_msg = f"Invalid id format: {v}"
+            raise ValueError(err_msg)
+        return v
 
 
 class Edge(ConfiguredBaseModel):

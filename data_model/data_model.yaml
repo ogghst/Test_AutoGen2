@@ -3,7 +3,7 @@ name: software_project_management
 title: Enhanced Agile Project Management Data Model
 description: Comprehensive data model integrating PMI standards with Agile practices, supporting hybrid methodologies and full lifecycle documentation generation
 license: https://creativecommons.org/publicdomain/zero/1.0/
-default_range: string
+# default_range: string  # Commented out to allow proper class references
 prefixes:
   linkml: https://w3id.org/linkml/
   schema: http://schema.org/
@@ -24,16 +24,6 @@ types:
     base: str
     pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     description: A valid email address
-  datetime:
-    uri: xsd:dateTime
-    base: str
-    description: A date with time information
-    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
-  date:
-    uri: xsd:date
-    base: str
-    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
-    description: Date in YYYY-MM-DD format
   percentage:
     uri: xsd:float
     base: float
@@ -251,21 +241,18 @@ slots:
     range: string
     required: true
     description: Name
-    minimum_value: 1
-    maximum_value: 100
+    pattern: "^.+$"  # At least one character, no numeric constraints
   title:
     range: string
     required: true
     description: Short descriptive title
-    minimum_value: 1
-    maximum_value: 100
+    pattern: "^.+$"  # At least one character, no numeric constraints
   description:
     range: string
     description: Detailed description
   vision:
     range: string
     description: Project vision statement
-    maximum_value: 500
   methodology:
     range: MethodologyEnum
     description: Project methodology
@@ -274,10 +261,9 @@ slots:
     range: SDLCPhaseEnum
     description: Current SDLC phase
   release_plan:
-    range: string
+    range: ReleasePlan
     description: High-level release plan
     required: false
-    maximum_value: 1000
   team:
     range: Team
     description: Assigned project team
@@ -300,16 +286,15 @@ slots:
     range: string
     description: Current status
   created_date:
-    range: datetime
+    range: date
     description: Creation timestamp
   last_updated:
-    range: datetime
+    range: date
     description: Last update timestamp
   knowledge_transfer:
-    range: string
+    range: KnowledgeTransfer
     description: Knowledge transfer activities
     required: false
-    maximum_value: 1000
   epics:
     range: Epic
     multivalued: true
@@ -318,12 +303,10 @@ slots:
     range: string
     multivalued: true
     description: Included items in scope
-    maximum_value: 50
   exclusions:
     range: string
     multivalued: true
     description: Excluded items from scope
-    maximum_value: 50
   assumptions:
     range: string
     multivalued: true
@@ -352,7 +335,6 @@ slots:
     range: string
     description: Definition of done criteria
     required: false
-    maximum_value: 1000
   story_points:
     range: StoryPointsEnum # ✅ Reference the enum here
     description: Relative complexity estimate using Fibonacci sequence.
@@ -362,10 +344,10 @@ slots:
     multivalued: true
     description: Associated issues
   epic_id:
-    range: uuid
+    range: Epic
     description: Parent epic reference
   sprint_id:
-    range: uuid
+    range: Sprint
     description: Sprint assignment reference
     required: false
   type:
@@ -404,7 +386,7 @@ slots:
   role:
     range: RoleEnum
     description: Primary role
-  email:
+  contact_email:
     range: email
     description: Contact email
   is_active:
@@ -449,7 +431,6 @@ slots:
   goal:
     range: string
     description: Goal description
-    maximum_value: 200
   start_date:
     range: date
     description: Start date
@@ -464,12 +445,10 @@ slots:
     range: string
     description: Daily standup notes
     required: false
-    maximum_value: 2000
   review_notes:
     range: string
     description: Review notes
     required: false
-    maximum_value: 2000
   acceptance_date:
     range: date
     description: Acceptance date
@@ -478,8 +457,7 @@ slots:
     range: string
     required: true
     description: Person's name
-    minimum_value: 1
-    maximum_value: 100
+    pattern: "^.+$"  # At least one character, no numeric constraints
   business_case:
     range: BusinessCase
     description: Project business case
@@ -765,6 +743,32 @@ slots:
   feedback_mechanism:
     range: string
     description: Feedback mechanism for communication
+  target_releases:
+    range: string
+    multivalued: true
+    description: Target release versions
+  activities:
+    range: string
+    multivalued: true
+    description: Knowledge transfer activities
+  participants:
+    range: Person
+    multivalued: true
+    description: Participants in knowledge transfer
+  date:
+    range: date
+    description: Date of the activity
+  edge_source:
+    description: The source entity id (UUIDv4) of the relationship
+    range: string
+    pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  edge_target:
+    description: The target entity id (UUIDv4) of the relationship
+    range: string
+    pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+  edge_label:
+    description: The type or label of the relationship
+    range: string
 
 classes:
   Project:
@@ -773,10 +777,13 @@ classes:
       - id
       - name
       - vision
-      - methodology
       - description
-      - business_case
+      - methodology
       - sdlc_phase
+      - status
+      - created_date
+      - last_updated
+      - business_case
       - release_plan
       - team
       - scope
@@ -784,23 +791,68 @@ classes:
       - risks
       - milestones
       - phases
-      - status
-      - created_date
-      - last_updated
       - knowledge_transfer
       - change_requests
       - baselines
       - repositories
       - ai_work_products
     slot_usage:
-      status:
-        range: ProjectStatusEnum
+      id:
+        range: uuid
+        required: true
+      name:
+        range: string
+        required: true
+      vision:
+        range: string
+      description:
+        range: string
       methodology:
         range: MethodologyEnum
         required: true
       sdlc_phase:
         range: SDLCPhaseEnum
         required: true
+      status:
+        range: ProjectStatusEnum
+      business_case:
+        range: BusinessCase
+      release_plan:
+        range: ReleasePlan
+      team:
+        range: Team
+      scope:
+        range: Scope
+      stakeholders:
+        range: Stakeholder
+        multivalued: true
+      risks:
+        range: Risk
+        multivalued: true
+      milestones:
+        range: Milestone
+        multivalued: true
+      phases:
+        range: Phase
+        multivalued: true
+      created_date:
+        range: date
+      last_updated:
+        range: date
+      knowledge_transfer:
+        range: KnowledgeTransfer
+      change_requests:
+        range: ChangeRequest
+        multivalued: true
+      baselines:
+        range: Baseline
+        multivalued: true
+      repositories:
+        range: Repository
+        multivalued: true
+      ai_work_products:
+        range: AIWorkProduct
+        multivalued: true
 
   BusinessCase:
     description: Justification for the project including financial and strategic considerations
@@ -827,6 +879,13 @@ classes:
       - constraints
       - acceptance_criteria
       - requirements
+    slot_usage:
+      epics:
+        range: Epic
+        multivalued: true
+      requirements:
+        range: Requirement
+        multivalued: true
 
   Requirement:
     description: Single discrete requirement with unique identifier and traceability
@@ -840,6 +899,25 @@ classes:
       - acceptance_criteria
       - created_date
       - last_updated
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      category:
+        range: string
+      priority:
+        range: PriorityEnum
+      status:
+        range: string
+      source:
+        range: string
+      acceptance_criteria:
+        range: string
+        multivalued: true
+      created_date:
+        range: date
+      last_updated:
+        range: date
 
   Epic:
     description: Large work body capturing major capability with traceability to business objectives
@@ -854,10 +932,17 @@ classes:
       - created_date
       - target_release
     slot_usage:
+      id:
+        range: uuid
+        required: true
+      name:
+        range: string
+        required: true
       status:
         range: EpicStatusEnum
-      description:
-        maximum_value: 500
+      user_stories:
+        range: UserStory
+        multivalued: true
 
   UserStory:
     description: End-user perspective feature description with acceptance criteria
@@ -876,15 +961,22 @@ classes:
       - tests
       - technical_notes
     slot_usage:
+      id:
+        range: uuid
+        required: true
+      title:
+        range: string
+        required: true
       status:
         range: UserStoryStatusEnum
-      description:
-        maximum_value: 1000
       acceptance_criteria:
         required: true
-        minimum_value: 1
-        maximum_value: 10
-
+      issues:
+        range: Issue
+        multivalued: true
+      tests:
+        range: TestCase
+        multivalued: true
   Backlog:
     description: Ordered list of work items awaiting execution
     slots:
@@ -894,6 +986,13 @@ classes:
       - items
       - prioritization_method
       - last_prioritized_date
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      items:
+        range: BacklogItem
+        multivalued: true
 
   BacklogItem:
     description: Single item in a backlog with estimation and prioritization data
@@ -906,6 +1005,20 @@ classes:
       - business_value
       - dependencies
       - tags
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      priority:
+        range: PriorityEnum
+      risk_level:
+        range: SeverityEnum
+      dependencies:
+        range: string
+        multivalued: true
+      tags:
+        range: string
+        multivalued: true
 
   Sprint:
     description: Time-boxed iteration typically 1-4 weeks in duration
@@ -923,8 +1036,12 @@ classes:
       - committed_velocity
       - actual_velocity
     slot_usage:
-      name:
-        maximum_value: 50
+      id:
+        range: uuid
+        required: true
+      backlog_items:
+        range: BacklogItem
+        multivalued: true
 
   Issue:
     description: Technical task or problem resolution item
@@ -950,8 +1067,6 @@ classes:
         range: IssueTypeEnum
       status:
         range: IssueStatusEnum
-      description:
-        maximum_value: 500
 
   Team:
     description: Cross-functional team responsible for project delivery
@@ -964,6 +1079,16 @@ classes:
       - focus_factor
       - process_maturity
       - collaboration_tools
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      members:
+        range: TeamMember
+        multivalued: true
+      collaboration_tools:
+        range: string
+        multivalued: true
 
   TeamMember:
     description: Individual team member with role responsibilities and capacity
@@ -991,6 +1116,19 @@ classes:
       - engagement_plan
       - concerns
       - expectations
+    slot_usage:
+      role:
+        range: RoleEnum
+      influence:
+        range: InfluenceLevelEnum
+      interest:
+        range: InterestLevelEnum
+      concerns:
+        range: string
+        multivalued: true
+      expectations:
+        range: string
+        multivalued: true
 
   UserProfiler:
     is_a: Person
@@ -1000,6 +1138,17 @@ classes:
       - experience
       - skills
       - expectations
+    slot_usage:
+      role:
+        range: RoleEnum
+      experience:
+        range: ExperienceLevelEnum
+      skills:
+        range: string
+        multivalued: true
+      expectations:
+        range: string
+        multivalued: true
 
   Risk:
     description: Project risk following PMI risk management framework
@@ -1019,8 +1168,6 @@ classes:
         range: RiskStatusEnum
       description:
         required: true
-        minimum_value: 1
-        maximum_value: 500
 
   Milestone:
     description: Significant point in project timeline with deliverable tracking
@@ -1034,10 +1181,17 @@ classes:
       - status
       - acceptance_criteria
     slot_usage:
+      id:
+        range: uuid
+        required: true
       status:
         range: MilestoneStatusEnum
-      description:
-        maximum_value: 500
+      deliverables:
+        range: Deliverable
+        multivalued: true
+      acceptance_criteria:
+        range: string
+        multivalued: true
 
   Deliverable:
     description: Tangible or intangible product produced as part of project completion
@@ -1051,10 +1205,11 @@ classes:
       - storage_location
       - version
     slot_usage:
+      id:
+        range: uuid
+        required: true
       status:
         range: DeliverableStatusEnum
-      description:
-        maximum_value: 500
 
   ChangeRequest:
     description: Formal request to modify project baselines
@@ -1087,6 +1242,13 @@ classes:
       - approved_date
       - approved_by
       - elements
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      elements:
+        range: string
+        multivalued: true
 
   TestCase:
     description: Verifiable condition for requirement validation
@@ -1104,8 +1266,16 @@ classes:
       - automated
       - last_tested
     slot_usage:
+      id:
+        range: uuid
+        required: true
       type:
         range: TestTypeEnum
+      test_steps:
+        range: string
+        multivalued: true
+      priority:
+        range: PriorityEnum
 
   Phase:
     description: Distinct time period in predictive project lifecycles
@@ -1119,6 +1289,13 @@ classes:
       - entrance_criteria
       - exit_criteria
       - status
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      deliverables:
+        range: Deliverable
+        multivalued: true
 
   WorkStream:
     description: Parallel work track focusing on specific project aspect
@@ -1130,6 +1307,20 @@ classes:
       - team
       - deliverables
       - dependencies
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      lead:
+        range: Person
+      team:
+        range: Team
+      deliverables:
+        range: Deliverable
+        multivalued: true
+      dependencies:
+        range: string
+        multivalued: true
 
   Documentation:
     description: Project artifact serving various stakeholder needs
@@ -1145,10 +1336,15 @@ classes:
       - version
       - audience
     slot_usage:
+      id:
+        range: uuid
+        required: true
       type:
         range: DocumentationTypeEnum
       status:
         range: AgileArtifactStatusEnum
+      owner:
+        range: Person
 
   Repository:
     description: Storage location for project artifacts and code
@@ -1160,6 +1356,9 @@ classes:
       - access_controls
       - last_sync_date
     slot_usage:
+      id:
+        range: uuid
+        required: true
       type:
         range: RepositoryTypeEnum
 
@@ -1174,15 +1373,28 @@ classes:
       - unit
       - measurement_date
       - trend
+    slot_usage:
+      id:
+        range: uuid
+        required: true
 
   Person:
     description: Human individual involved in the project environment
     slots:
       - id
       - person_name
-      - email
+      - contact_email
       - communication_preferences
     class_uri: schema:Person
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      person_name:
+        range: string
+        required: true
+      contact_email:
+        range: email
 
   CommunicationPlan:
     description: Structured approach to project information distribution
@@ -1195,6 +1407,12 @@ classes:
       - channel
       - owner
       - feedback_mechanism
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      owner:
+        range: Person
 
   AIWorkProduct:
     description: AI-generated artifacts and their provenance information
@@ -1208,3 +1426,65 @@ classes:
       - confidence_score
       - validation_status
       - associated_requirement
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      validation_status:
+        range: ApprovalStatusEnum
+      associated_requirement:
+        range: uuid
+
+  ReleasePlan:
+    description: High-level plan for project releases
+    slots:
+      - id
+      - name
+      - description
+      - target_releases
+      - created_date
+      - last_updated
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      target_releases:
+        range: string
+        multivalued: true
+      created_date:
+        range: date
+      last_updated:
+        range: date
+
+  KnowledgeTransfer:
+    description: Knowledge transfer activities and documentation
+    slots:
+      - id
+      - name
+      - description
+      - activities
+      - participants
+      - date
+      - status
+    slot_usage:
+      id:
+        range: uuid
+        required: true
+      activities:
+        range: string
+        multivalued: true
+      participants:
+        range: Person
+        multivalued: true
+      date:
+        range: date
+      status:
+        range: string
+
+  Edge:
+    description: Represents a relationship (edge) between two entities in the graph.
+    slots:
+      - id
+      - edge_source
+      - edge_target
+      - edge_label

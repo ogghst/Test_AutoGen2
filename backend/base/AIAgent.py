@@ -1,13 +1,14 @@
-
-from .messaging import AgentResponse, UserTask
+from .messaging import AgentResponse, DebugMessage, DebugResponse, UserTask
 from autogen_core import FunctionCall, MessageContext, RoutedAgent, TopicId, message_handler
 from autogen_core.models import AssistantMessage, ChatCompletionClient, FunctionExecutionResult, FunctionExecutionResultMessage, SystemMessage
 from autogen_core.tools import Tool
+from pydantic import ValidationError
 
 import json
 from config.logging_config import get_logger
 from typing import List, Tuple
 
+from session import UserSession
 
 class AIAgent(RoutedAgent):
     """
@@ -21,17 +22,18 @@ class AIAgent(RoutedAgent):
 
     def __init__(
         self,
+        user_session: UserSession,
         description: str,
         system_message: SystemMessage,
-        model_client: ChatCompletionClient,
         tools: List[Tool],
         delegate_tools: List[Tool],
         agent_topic_type: str,
         user_topic_type: str,
     ) -> None:
         super().__init__(description)
+        self.user_session = user_session
         self._system_message = system_message
-        self._model_client = model_client
+        self._model_client = user_session.model_client
         self._tools = dict([(tool.name, tool) for tool in tools])
         self._tool_schema = [tool.schema for tool in tools]
         self._delegate_tools = dict([(tool.name, tool) for tool in delegate_tools])
@@ -55,6 +57,9 @@ class AIAgent(RoutedAgent):
 
             # Send the task to the LLM
             logger.info(f"{self.id.type}: Sending request to LLM")
+            
+            await self._debug_message("Sending request to LLM", [msg.content for msg in message.context] if message.context else "")
+            
             llm_result = await self._model_client.create(
                 messages=[self._system_message] + message.context,
                 tools=self._tool_schema + self._delegate_tool_schema,
@@ -62,11 +67,18 @@ class AIAgent(RoutedAgent):
             )
             logger.info(f"{self.id.type}: LLM response received - content: {llm_result.content}")
             #print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+            
+            await self._debug_message("LLM response received", llm_result)  
+            
         except Exception as e:
-            logger.error(f"Error in {self.id.type}: {e}", exc_info=True)
-                        # Send error response to user instead of just returning
+            logger.error(f"Error in {self.id.type}: {str(e)}", exc_info=True)
+            # Send error response to user instead of just returning
             error_message = f"I encountered an error while processing your request: {str(e)}. Please try again or contact support."
+            
             message.context.append(AssistantMessage(content=error_message, source=self.id.type))
+            
+            await self._debug_message("Error in LLM response", message)
+            
             await self.publish_message(
                 AgentResponse(context=message.context, reply_to_topic_type=self._agent_topic_type),
                 topic_id=TopicId(self._user_topic_type, source=self.id.key),
@@ -76,7 +88,16 @@ class AIAgent(RoutedAgent):
         # Process the LLM result
         logger.info(f"{self.id.type}: Processing LLM result: {type(llm_result.content)}")
 
+        # Add iteration limit to prevent infinite loops
+        max_iterations = 100
+        iteration_count = 0
+        
         while isinstance(llm_result.content, list) and all(isinstance(m, FunctionCall) for m in llm_result.content):
+            iteration_count += 1
+            if iteration_count > max_iterations:
+                logger.warning(f"{self.id.type}: Maximum iterations ({max_iterations}) reached. Breaking loop to prevent infinite execution.")
+                #TODO: add a tool call to the model to explain the error and the solution
+                break
             logger.info(f"{self.id.type}: Processing function calls: {[call.name for call in llm_result.content]}")
             tool_call_results: List[FunctionExecutionResult] = []
             delegate_targets: List[Tuple[str, UserTask]] = []
@@ -85,24 +106,58 @@ class AIAgent(RoutedAgent):
             for call in llm_result.content:
                 logger.info(f"{self.id.type}: Processing function call: {call.name}")
                 arguments = json.loads(call.arguments)
+                
                 logger.debug(f"{self.id.type}: Function arguments: {arguments}")
 
                 if call.name in self._tools:
                     # Execute the tool directly
                     logger.info(f"{self.id.type}: Executing tool: {call.name}")
-                    result = await self._tools[call.name].run_json(arguments, ctx.cancellation_token)
-                    result_as_str = self._tools[call.name].return_value_as_string(result)
-                    logger.info(f"{self.id.type}: Tool {call.name} result: {result_as_str}")
-                    tool_call_results.append(
-                        FunctionExecutionResult(call_id=call.id, content=result_as_str, is_error=False, name=call.name)
-                    )
+                    try:
+                        await self._debug_message("Executing tool", call)
+                        result = await self._tools[call.name].run_json(arguments, ctx.cancellation_token)
+                        result_as_str = self._tools[call.name].return_value_as_string(result)
+                        logger.info(f"{self.id.type}: Tool {call.name} result: {result_as_str}")
+                        
+                        await self._debug_message("Tool result", result)
+                        
+                        tool_call_results.append(
+                            FunctionExecutionResult(call_id=call.id, content=result_as_str, is_error=False, name=call.name)
+                        )
+ 
+                    except ValidationError as val_exc:
+                        logger.error(f"{self.id.type}: Validation error executing tool '{call.name}': {val_exc.json()}")
+                        error_str = f"Please rectify the following errors in the tool call: '{call.name}': {val_exc.json()}"
+                        #error_str += "\n" + "\n".join([f"Error: {err['msg']} for field '{err['loc'][0]}'" for err in val_exc.errors()])
+                        
+                        await self._debug_message("Validation error executing tool", error_str)
+                        
+                        tool_call_results.append(
+                            FunctionExecutionResult(call_id=call.id, content=error_str, is_error=True, name=call.name)
+                        )
+                        continue
+                    except Exception as tool_exc:
+                        error_str = f"Please rectify the following errors in the tool call: '{call.name}': {str(tool_exc)}"
+                        logger.error(f"{self.id.type}: {error_str}", exc_info=True)
+                        
+                        await self._debug_message("Error executing tool", error_str)
+                        
+                        tool_call_results.append(
+                            FunctionExecutionResult(call_id=call.id, content=error_str, is_error=True, name=call.name)
+                        )
+                        continue
+                    
                 elif call.name in self._delegate_tools:
                     # Execute the tool to get the delegate agent's topic type
                     logger.info(f"{self.id.type}: Executing delegate tool: {call.name}")
+                    
+                    await self._debug_message("Executing delegate tool", call)
+                    
                     result = await self._delegate_tools[call.name].run_json(arguments, ctx.cancellation_token)
                     topic_type = self._delegate_tools[call.name].return_value_as_string(result)
                     logger.info(f"{self.id.type}: Delegating to: {topic_type}")
-
+                    
+                    await self._debug_message("Delegating to", result)
+                    
                     # Create the context for the delegate agent, including the function call and the result
                     delegate_messages = list(message.context) + [
                         AssistantMessage(content=[call], source=self.id.type),
@@ -124,18 +179,27 @@ class AIAgent(RoutedAgent):
 
             if len(delegate_targets) > 0:
                 # Delegate the task to other agents by publishing messages to the corresponding topics
+                
                 logger.info(f"{self.id.type}: Delegating to {len(delegate_targets)} agents")
+                
+                await self._debug_message("Delegating to", delegate_targets)
+                
                 for topic_type, task in delegate_targets:
                     topic_id = TopicId(topic_type, source=self.id.key)
                     #print(f"{'-'*80}\n{self.id.type}:\nDelegating to {topic_type}", flush=True)
                     logger.info(f"{self.id.type}: Publishing to topic: {topic_type}")
+                    
+                    await self._debug_message("Delegating to", {"topic_id": str(topic_id), "task": str(task)})
+                    
                     await self.publish_message(task, topic_id=topic_id)
 
             if len(tool_call_results) > 0:
                 #print(f"{'-'*80}\n{self.id.type}:\n{tool_call_results}", flush=True)
                 # Make another call to the model with the tool results
                 logger.info(f"{self.id.type}: Making follow-up LLM call with tool results - {tool_call_results}")
-
+                
+                await self._debug_message("Making follow-up LLM call, tool results: ", tool_call_results)
+                
                 llm_result = await self._model_client.create(
                     messages=[self._system_message] + message.context + [
                         AssistantMessage(content=llm_result.content, source=self.id.type),
@@ -145,7 +209,19 @@ class AIAgent(RoutedAgent):
                     cancellation_token=ctx.cancellation_token,
                 )
                 logger.info(f"{self.id.type}: Follow-up LLM response received - {llm_result.content}")
+
+                await self._debug_message("Making follow-up LLM call, messages: ", [self._system_message] + message.context + [
+                        AssistantMessage(content=llm_result.content, source=self.id.type),
+                        FunctionExecutionResultMessage(content=tool_call_results),
+                    ])
+                
+                await self._debug_message("Follow-up LLM call, results", llm_result)
+                
                 #print(f"{'-'*80}\n{self.id.type}:\n{llm_result.content}", flush=True)
+                
+                #publish the tool responses to the user
+
+     
             else:
                 logger.info(f"{self.id.type}: No more tool calls to process")
                 break
@@ -153,11 +229,31 @@ class AIAgent(RoutedAgent):
         # Send the final response to the customer
         if not isinstance(llm_result.content, list):
             logger.info(f"{self.id.type}: Sending final response to user - {llm_result.content}")
+            
+            await self._debug_message("Sending final response to user", llm_result)
+            
             message.context.append(AssistantMessage(content=llm_result.content, source=self.id.type))
             logger.info(f"{self.id.type}: Publishing AgentResponse to topic {self._user_topic_type} for user {self.id.key}")
+            
+            await self._debug_message("Publishing AgentResponse to topic", message)
+            
             await self.publish_message(
                 AgentResponse(context=message.context, reply_to_topic_type=self._agent_topic_type),
                 topic_id=TopicId(self._user_topic_type, source=self.id.key),
             )
         else:
             logger.warning(f"{self.id.type}: Unexpected LLM response format: {type(llm_result.content)}")
+            
+            await self._debug_message("Unexpected LLM response format", type(llm_result))
+            
+    async def _debug_message(self, text: str, message: str):
+        
+        _debug_message = DebugMessage(content=f"{text}: {json.dumps(message, default=str, indent=2)}", source=self.id.type)
+        
+        _response_message = DebugResponse(context=[_debug_message], reply_to_topic_type=self._agent_topic_type)
+        
+        #await self.publish_message(
+        #    AgentResponse(context=[_debug_message], reply_to_topic_type=self._agent_topic_type),
+        #    topic_id=TopicId(self._user_topic_type, source=self.id.key) )
+        
+        await self.user_session.response_queue.put(_response_message)

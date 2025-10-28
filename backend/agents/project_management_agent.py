@@ -1,89 +1,86 @@
-"""
-Project Management Agent for the handoffs pattern.
-
-This agent is responsible for guiding users through PMI best practices and creating
-comprehensive project management plans in markdown format.
-"""
-
 import json
 
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
 
 from models.data_models import Project
 
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
-    retrieve_project_data_tool,
-    save_project_data_tool,
     transfer_back_to_triage_tool,
     UUIDEncoder,
 )
+from tools.knowledge_tools import create_knowledge_tools
 
 class ProjectManagementAgent(AIAgent):
     """
-    Project management agent responsible for PMI best practices and comprehensive project planning.
+    Project management agent responsible to create or modify a project.
     
     This agent specializes in project management activities including:
     - Guiding users through PMI best practices
-    - Providing project management guidance and standards
-    - Creating an initial project management plan
+    - Providing project management guidance and standards and project data
+    - Creating or modifying a project
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
+        # Track which entity schemas have been retrieved to prevent loops
+        self._retrieved_schemas = set()
         """
         Initialize the ProjectManagementAgent.
         
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard project management tools
         """
         system_message = SystemMessage(
-            content="You are a certified Project Management Professional (PMP) agent specializing in PMI best practices. Your role is to:\n\n"
+            content="You are a certified Project Management Professional (PMP) agent specializing in PMI best practices. "  
+            "Your role is to:\n\n"
             "1. Guide users through PMI project management standards and best practices\n"
-            "2. Help create comprehensive, PMI-compliant project management plans\n"
+            "2. Help create comprehensive, PMI-compliant project\n"
             "3. Educate users on the PMBOK Guide framework and its application\n"
-            "4. Use the retrieve_project_data_tool and save project data tool to initiate and revise project data\n"
-            "5. Provide expert advice on project management methodologies and processes\n"
-            "6. Transfer back to triage if the request is outside your scope or when the user is satisfied with the project data\n\n"
+            "4. Educate users on project context and project data\n"
+            "5. Transfer back to triage if the request is outside your scope, if you have obtained the project data or when the user is satisfied with the project data\n\n"
+            "## CONTEXT AND PROJECT DATA\n"
+            #"1. Session_id of this project is: '" + user_session.session_id + "'. "
+            #"1. Create and update entities, using **only** available entity types and attributes defined in get_all_entities_with_schemas_tool.\n"
+            "1. Make a plan of which entities and relationships to create or update.\n"
+            "    Example: if user asks to create a project with two users A and B, then you shall create a project, create a user A, create another user B, create a relationship between the user A and the project, create a relationship between the user B and the project.\n"
+            "2. After creating entities, make sure to create appropriate relationships between them."
+            "    Example: after creating a user, make sure it has the proper project role and create the relationship with label 'assigned_to' between the user and the project.\n"
+            "3. When the tool returns a success message, move to the next task until the plan is completed."
+            "    Example of a successful user creation return message: {\"status\": \"success\", \"message\": \"User successfully created\", \"task_completed\": true}\n"
+            "4. provide a summary of the plan and the task completed and check whether other tool calls are needed."
+            "5. stop calling tools when the plan is completed."
+            #"4. **Update existing entities**: Use update_entity_tool to modify existing entities.\n"
+            #"1. before calling create_entity_tool, use get_entity_schema_tool to get the schema of the entity type use its output to format the input of create_entity_tool accordingly. \n"
+            #"   Example: to create a 'project' entity, call get_entity_schema_tool with 'project' entity type to get the schema and use its schema to format the input of create_entity_tool accordingly.\n"
             "## RULES\n"
-            "1. Always follow PMI standards and best practices. Be thorough, professional, and educational. "
-            "2. When creating project management plans, ensure they include all essential PMI components "
-            "such as scope, schedule, cost, quality, risk, communication, and stakeholder management. "
-            "3. Project data schema is defined as follows: '" + json.dumps(Project.model_json_schema(), cls=UUIDEncoder) + "'. "
-            "3.1 You shall manage only Project, Team, Person, Stakeholder, and Issue entities. "
-            "3.2 You can suggest to the user to create a new entity if it is not in the schema. \n"
-            "3.3 You can suggest to the user to create a new relationship if it is not in the schema. \n"
-            "3.4 You can suggest to the user to modify other entities if the change you are describing has impact on other entities. \n"
-            "4. Provide clear explanations of PMI concepts and how they apply to the user's project."
-            "5. If the user asks for project data, use the retrieve_project_data_tool to retrieve the data."
-            "6. If the user asks to save project data, use the save_project_data_tool to save the data."
-            "7. When the project data is complete, ask the user if they would like to save the data."
-            "8. If the user would like to save the data, use the save_project_data_tool to save the data."
-            "9. If the user would not like to save the data, use the transfer_back_to_triage_tool to transfer back to the triage agent."
-            "## UUID Management \n\n"
-            "When generating the JSON with entities and relationships:\n"
-            "1. First identify all unique entities in the content.\n"
-            "2. Create a consistent mapping of entity names to UUIDs before generating relationships.\n"
-            "3. To generate UUIDs, use UUID4 format for all entities.\n" 
-            "4. Generate a random UUID for each entity.\n" 
-            "5. Make sure to use the same UUID for the same entity across the project.\n"
-            "6. After assigning all UUIDs, create relationships using these exact UUID values.\n"
-            "7. Before finalizing, verify that all relationship references match the assigned entity UUIDs.\n"
+            "1. Always follow PMI standards and best practices. Be thorough, professional, and educational.\n"
+            "2. Provide clear explanations of PMI concepts and how they apply to the user's project.\n"
+            "3. When the user task is completed, transfer back to triage.\n"
         )
+                
+        # Create a custom get_entity_schema tool that prevents loops
+        from autogen_core.tools import FunctionTool
+        from typing import Annotated
+        
 
         
-        
-        project_management_tools = [retrieve_project_data_tool, save_project_data_tool]
+        project_management_tools = [
+            
+        ]
         delegate_tools = [transfer_back_to_triage_tool]
         
+        
+        
         super().__init__(
-            description="A certified PMP agent responsible for PMI best practices and comprehensive project management planning.",
+            user_session=user_session,
+            description="A certified PMP agent responsible for PMI best practices and comprehensive project management.",
             system_message=system_message,
-            model_client=model_client,
             tools=project_management_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=PROJECT_MANAGEMENT_AGENT_TOPIC_TYPE,

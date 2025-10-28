@@ -1,15 +1,10 @@
-"""
-User Stories Gathering Agent for generating comprehensive user stories with EARS notation.
-
-This agent specializes in unpacking high-level requirements into detailed user stories
-with comprehensive acceptance criteria using the Easy Approach to Requirements Syntax (EARS).
-"""
-
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
+
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     USER_STORIES_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
 
@@ -29,12 +24,12 @@ class UserStoriesAgent(AIAgent):
     - Creating stories for complex systems like review systems
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the UserStoriesAgent.
         
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard user story generation tools
         """
         system_message = SystemMessage(
@@ -68,16 +63,12 @@ class UserStoriesAgent(AIAgent):
         )
         
         # These are regular tools that return content, not delegate tools
-        tools = [
-
-        ]
-        
         delegate_tools = [transfer_back_to_triage_tool]
         
         super().__init__(
+            user_session=user_session,
             description="A specialized agent for generating comprehensive user stories with EARS notation acceptance criteria.",
             system_message=system_message,
-            model_client=model_client,
             tools=tools or [],
             delegate_tools=delegate_tools,
             agent_topic_type=USER_STORIES_AGENT_TOPIC_TYPE,

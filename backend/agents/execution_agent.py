@@ -1,14 +1,10 @@
-"""
-Execution Agent for the handoffs pattern.
-
-This agent is responsible for task execution and project management.
-"""
-
 from autogen_core.models import SystemMessage
 from autogen_core.tools import Tool
 
+from session import UserSession
+
 from base.AIAgent import AIAgent
-from .tools import (
+from tools.tools import (
     EXECUTION_AGENT_TOPIC_TYPE,
     USER_TOPIC_TYPE,
     execute_project_task_tool,
@@ -26,12 +22,12 @@ class ExecutionAgent(AIAgent):
     - Task prioritization and management
     """
     
-    def __init__(self, model_client, tools: list[Tool] = None):
+    def __init__(self, user_session: UserSession, tools: list[Tool] = None):
         """
         Initialize the ExecutionAgent.
         
         Args:
-            model_client: The LLM client for processing requests
+            user_session: The user session object.
             tools: Additional tools beyond the standard execution tools
         """
         system_message = SystemMessage(
@@ -47,9 +43,9 @@ class ExecutionAgent(AIAgent):
         delegate_tools = [transfer_back_to_triage_tool]
         
         super().__init__(
+            user_session=user_session,
             description="A project execution agent responsible for task execution and project management.",
             system_message=system_message,
-            model_client=model_client,
             tools=execution_tools + (tools or []),
             delegate_tools=delegate_tools,
             agent_topic_type=EXECUTION_AGENT_TOPIC_TYPE,

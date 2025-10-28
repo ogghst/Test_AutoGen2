@@ -83,7 +83,12 @@ def setup_logging(
     # Set specific logger levels
     logging.getLogger("autogen").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    
+    #logging.getLogger("autogen_core").setLevel(logging.WARNING)
+    #logging.getLogger("autogen_core.events").setLevel(logging.WARNING)
+    #logging.getLogger("autogen_ext").setLevel(logging.WARNING)
     
     # Log the configuration
     logger = logging.getLogger(__name__)
